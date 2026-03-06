@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Automating Mobile App Releases with Fastlane: iOS & Android CI/CD — Your Name</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0a0a0a; --bg2:#111111; --bg3:#161616; --bg4:#1c1c1c;
+  --border:#222; --border2:#2a2a2a;
+  --accent:#00ff88; --accent2:#00ccff; --accent3:#ff6b35;
+  --muted:#555; --text:#d4d4d4; --text-dim:#888; --white:#f0f0f0;
+  --mono:'JetBrains Mono',monospace; --sans:'Space Grotesk',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);pointer-events:none;z-index:9999}
+
+/* Layout */
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sidebar-left{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-right{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--text-dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--text-dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted);transition:color .15s}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sidebar-footer{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sidebar-footer a{font-family:var(--mono);font-size:.7rem;color:var(--text-dim);transition:color .15s}
+.sidebar-footer a:hover{color:var(--accent)}
+.status-badge{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--text-dim);margin-top:1.2rem}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Article */
+article{padding:3rem 3.5rem;min-width:0;animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.back-link{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.back-link:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.post-header{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.post-meta-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.badge{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.badge-cat{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.badge-feat{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.badge-date,.badge-time{font-family:var(--mono);font-size:.68rem;color:var(--text-dim)}
+.dot-sep{color:var(--muted);font-size:.6rem}
+h1.post-title{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.post-subtitle{font-size:.95rem;color:var(--text-dim);max-width:640px;line-height:1.65}
+.author-row{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.author-name{font-size:.82rem;font-weight:600;color:var(--white)}
+.author-role{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.post-tags-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.ptag{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+
+/* Prose */
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose a{color:var(--accent);border-bottom:1px solid rgba(0,255,136,.3);transition:border-color .15s}
+.prose a:hover{border-color:var(--accent)}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+
+/* Callouts */
+.callout{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.callout-info{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--text-dim)}
+.callout-warn{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--text-dim)}
+.callout-tip{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--text-dim)}
+.callout-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+
+/* Diagram container */
+.diagram{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.diagram-title{font-family:var(--mono);font-size:.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.diagram-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+/* TOC */
+.toc-title{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.toc-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.toc-list li a{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.toc-list li a:hover{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.toc-list li a.active{color:var(--accent);border-color:var(--accent)}
+.related-title{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.related-post{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.related-post:hover{background:rgba(0,255,136,.04)}
+.related-post-cat{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.related-post-title{font-size:.78rem;color:var(--text);line-height:1.35}
+
+/* Progress bar */
+.read-progress{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sidebar-right{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sidebar-left{display:none}article{padding:2rem 1.25rem}}
+</style>
+</head>
+<body>
+<div class="read-progress" id="rp"></div>
+<div class="page">
+
+  <aside class="sidebar-left">
+    <div class="logo"><span>⚡</span> YourName.dev</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a>
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="status-badge"><span class="status-dot"></span>status: building</div>
+    <div class="sidebar-footer">
+      <a href="#">GitHub</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">Twitter / X</a>
+    </div>
+  </aside>
+
+  <article>
+    <a href="../index.html" class="back-link">← back to blog</a>
+    <div class="post-header">
+      <div class="post-meta-bar">
+        <span class="badge badge-cat">devops</span>
+        
+        <span class="dot-sep">·</span>
+        <span class="badge-date">Jul 3, 2025</span>
+        <span class="dot-sep">·</span>
+        <span class="badge-time">6 min read</span>
+      </div>
+      <h1 class="post-title">Automating Mobile App Releases with Fastlane: iOS & Android CI/CD</h1>
+      <p class="post-subtitle">A comprehensive guide to setting up Fastlane for automated iOS TestFlight and Android Play Store deployments with GitHub Actions, code signing, and version management.</p>
+      <div class="author-row">
+        <div class="avatar">YN</div>
+        <div><div class="author-name">Your Name</div><div class="author-role">Sr. DevOps Engineer</div></div>
+      </div>
+      <div class="post-tags-bar"><span class="ptag">#fastlane</span><span class="ptag">#mobile</span><span class="ptag">#ios</span><span class="ptag">#android</span><span class="ptag">#cicd</span><span class="ptag">#github-actions</span><span class="ptag">#code-signing</span></div>
+    </div>
+    <div class="prose">
+<h2 id="why">Why Fastlane?</h2>
+<p>Mobile releases are notoriously painful. Code signing certificates expire, provisioning profiles get out of sync, version numbers need manual bumping, screenshots need regenerating, and deploying to TestFlight takes 15 manual steps. Fastlane automates all of it.</p>
+<p>Before Fastlane, our mobile team spent <strong>4-6 hours per release</strong> on manual tasks. After: a merge to <code>main</code> triggers a full release to TestFlight and Play Store in <strong>under 45 minutes, fully unattended</strong>.</p>
+
+<h2 id="pipeline">Pipeline Architecture</h2>
+
+<div class="diagram">
+  <div class="diagram-title">Fastlane CI/CD Pipeline</div>
+  <svg viewBox="0 0 680 280" width="100%" style="max-width:680px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#555"/></marker><marker id="a4g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#00ff88"/></marker></defs>
+
+    <!-- PR merge -->
+    <rect x="20" y="110" width="100" height="50" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+    <text x="70" y="132" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">PR Merge</text>
+    <text x="70" y="147" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">→ main branch</text>
+
+    <!-- GitHub Actions -->
+    <rect x="165" y="90" width="110" height="90" rx="5" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.5"/>
+    <text x="220" y="112" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">GitHub Actions</text>
+    <text x="220" y="127" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">macOS runner (iOS)</text>
+    <text x="220" y="140" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">ubuntu runner (Android)</text>
+    <text x="220" y="155" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">parallel jobs</text>
+    <text x="220" y="168" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">secrets from AWS SSM</text>
+    <line x1="120" y1="135" x2="164" y2="135" stroke="#555" stroke-width="1.2" marker-end="url(#a4)"/>
+
+    <!-- Fastlane iOS -->
+    <rect x="330" y="50" width="120" height="90" rx="5" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.2"/>
+    <text x="390" y="72" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">Fastlane iOS</text>
+    <text x="390" y="87" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">match (code signing)</text>
+    <text x="390" y="100" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">increment_build_number</text>
+    <text x="390" y="113" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">gym (build .ipa)</text>
+    <text x="390" y="126" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">pilot (TestFlight)</text>
+    <line x1="275" y1="110" x2="329" y2="90" stroke="#ff6b35" stroke-width="1.2" marker-end="url(#a4)"/>
+
+    <!-- Fastlane Android -->
+    <rect x="330" y="165" width="120" height="80" rx="5" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.2"/>
+    <text x="390" y="185" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">Fastlane Android</text>
+    <text x="390" y="200" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">gradle (build .aab)</text>
+    <text x="390" y="213" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">sign_apk</text>
+    <text x="390" y="226" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">supply (Play Store)</text>
+    <line x1="275" y1="160" x2="329" y2="195" stroke="#00ccff" stroke-width="1.2" marker-end="url(#a4)"/>
+
+    <!-- TestFlight -->
+    <rect x="510" y="50" width="130" height="40" rx="5" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="575" y="66" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">TestFlight</text>
+    <text x="575" y="81" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">internal testers</text>
+    <line x1="450" y1="80" x2="509" y2="70" stroke="#555" stroke-width="1.2" marker-end="url(#a4)"/>
+
+    <!-- Play Store -->
+    <rect x="510" y="185" width="130" height="40" rx="5" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="575" y="201" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">Play Store</text>
+    <text x="575" y="216" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">internal track</text>
+    <line x1="450" y1="205" x2="509" y2="205" stroke="#555" stroke-width="1.2" marker-end="url(#a4)"/>
+
+    <!-- Slack notification -->
+    <rect x="510" y="120" width="130" height="40" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1"/>
+    <text x="575" y="136" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">Slack Notify</text>
+    <text x="575" y="151" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">build summary</text>
+    <line x1="575" y1="90" x2="575" y2="119" stroke="#444" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a4)"/>
+    <line x1="575" y1="160" x2="575" y2="184" stroke="#444" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a4)"/>
+  </svg>
+</div>
+
+<h2 id="setup">Project Setup</h2>
+<pre><code><span class="cmt"># Install Fastlane</span>
+gem install fastlane
+
+<span class="cmt"># Initialize in your project root</span>
+cd ios && fastlane init
+cd android && fastlane init</code></pre>
+
+<h2 id="match">Code Signing with Match</h2>
+<p>Code signing is the #1 source of iOS CI failures. Fastlane's <code>match</code> action solves this by storing all certificates and profiles in a private Git repository, encrypted with a passphrase. Every machine — developer laptops and CI runners — fetches signing credentials from the same source.</p>
+
+<pre><code><span class="cmt"># ios/fastlane/Matchfile</span>
+git_url(<span class="str">"https://github.com/yourorg/ios-signing"</span>)
+storage_mode(<span class="str">"git"</span>)
+type(<span class="str">"appstore"</span>)
+app_identifier([<span class="str">"com.yourcompany.app"</span>])
+username(<span class="str">"apple@yourcompany.com"</span>)
+
+<span class="cmt"># ios/fastlane/Fastfile</span>
+lane :<span class="fn">release</span> <span class="kw">do</span>
+  <span class="fn">match</span>(type: <span class="str">"appstore"</span>, readonly: <span class="prop">true</span>)
+  <span class="fn">increment_build_number</span>
+  <span class="fn">gym</span>(
+    scheme: <span class="str">"YourApp"</span>,
+    export_method: <span class="str">"app-store"</span>,
+    output_directory: <span class="str">"./build"</span>
+  )
+  <span class="fn">pilot</span>(
+    skip_waiting_for_build_processing: <span class="prop">true</span>,
+    changelog: <span class="fn">changelog_from_git_commits</span>
+  )
+  <span class="fn">slack</span>(
+    message: <span class="str">"🚀 iOS build #{lane_context[SharedValues::BUILD_NUMBER]} uploaded!"</span>
+  )
+<span class="kw">end</span></code></pre>
+
+<h2 id="android-lane">Android Lane</h2>
+<pre><code><span class="cmt"># android/fastlane/Fastfile</span>
+lane :<span class="fn">release</span> <span class="kw">do</span>
+  <span class="fn">gradle</span>(
+    task: <span class="str">"bundle"</span>,
+    build_type: <span class="str">"Release"</span>,
+    properties: {
+      <span class="str">"android.injected.signing.store.file"</span> => ENV[<span class="str">"KEYSTORE_PATH"</span>],
+      <span class="str">"android.injected.signing.key.alias"</span>  => ENV[<span class="str">"KEY_ALIAS"</span>],
+      <span class="str">"android.injected.signing.store.password"</span> => ENV[<span class="str">"STORE_PASSWORD"</span>]
+    }
+  )
+  <span class="fn">supply</span>(
+    track: <span class="str">"internal"</span>,
+    aab: <span class="str">"app/build/outputs/bundle/release/app-release.aab"</span>
+  )
+<span class="kw">end</span></code></pre>
+
+<h2 id="github-actions">GitHub Actions Workflow</h2>
+<pre><code><span class="cmt"># .github/workflows/release.yml</span>
+<span class="prop">on</span>:
+  <span class="prop">push</span>:
+    <span class="prop">branches</span>: [main]
+
+<span class="prop">jobs</span>:
+  <span class="prop">ios-release</span>:
+    <span class="prop">runs-on</span>: macos-14
+    <span class="prop">steps</span>:
+      - <span class="prop">uses</span>: actions/checkout@v4
+      - <span class="prop">name</span>: Install Fastlane
+        <span class="prop">run</span>: gem install fastlane
+      - <span class="prop">name</span>: Run Fastlane release
+        <span class="prop">run</span>: cd ios && fastlane release
+        <span class="prop">env</span>:
+          MATCH_PASSWORD: <span class="var">${{ secrets.MATCH_PASSWORD }}</span>
+          APP_STORE_CONNECT_API_KEY: <span class="var">${{ secrets.ASC_KEY }}</span>
+
+  <span class="prop">android-release</span>:
+    <span class="prop">runs-on</span>: ubuntu-latest
+    <span class="prop">steps</span>:
+      - <span class="prop">uses</span>: actions/checkout@v4
+      - <span class="prop">name</span>: Run Fastlane release
+        <span class="prop">run</span>: cd android && bundle exec fastlane release
+        <span class="prop">env</span>:
+          KEYSTORE_PATH: <span class="var">${{ secrets.KEYSTORE_PATH }}</span>
+          STORE_PASSWORD: <span class="var">${{ secrets.STORE_PASSWORD }}</span></code></pre>
+
+<div class="callout callout-tip"><span class="callout-icon">💡</span><span>Store your Android keystore in AWS Secrets Manager and download it at runtime using the AWS CLI in your GitHub Actions workflow. Never commit it to the repository, even an encrypted one.</span></div>
+
+<h2 id="results">The Result</h2>
+<p>What used to take half a day of an engineer's time now runs every time code merges. Our mobile team ships to TestFlight and the internal Play Store track on every merge to main. Full production releases happen weekly with a single label on the release PR. Engineering time saved: approximately <strong>20 hours per month</strong>.</p>
+</div>
+  </article>
+
+  <aside class="sidebar-right">
+    <div class="toc-title">On this page</div>
+    <ul class="toc-list" id="toc"></ul>
+    <div class="related-title">Related Posts</div>
+    <a href="multi-region-aws.html" class="related-post"><div class="related-post-cat">cloud</div><div class="related-post-title">Multi-Region AWS Infrastructure</div></a>
+    <a href="eks-zero-downtime.html" class="related-post"><div class="related-post-cat">kubernetes</div><div class="related-post-title">Zero-Downtime EKS Upgrades</div></a>
+    <a href="gitops-argocd.html" class="related-post"><div class="related-post-cat">devops</div><div class="related-post-title">GitOps with ArgoCD & Terraform</div></a>
+    <a href="pci-dss-aws.html" class="related-post"><div class="related-post-cat">security</div><div class="related-post-title">PCI-DSS on AWS</div></a>
+    <a href="cloud-finops.html" class="related-post"><div class="related-post-cat">cloud</div><div class="related-post-title">Cloud FinOps Framework</div></a>
+    <a href="fastlane-cicd.html" class="related-post"><div class="related-post-cat">devops</div><div class="related-post-title">Fastlane iOS & Android CI/CD</div></a>
+  </aside>
+
+</div>
+<script>
+// Read progress
+window.addEventListener('scroll', () => {
+  const art = document.querySelector('article');
+  const rect = art.getBoundingClientRect();
+  const total = art.offsetHeight - window.innerHeight;
+  const scrolled = Math.max(0, -rect.top);
+  document.getElementById('rp').style.width = Math.min(100, (scrolled/total)*100) + '%';
+});
+// Auto TOC
+const hs = document.querySelectorAll('.prose h2, .prose h3');
+const toc = document.getElementById('toc');
+hs.forEach((h, i) => {
+  h.id = h.id || 'section-' + i;
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+  a.href = '#' + h.id;
+  a.textContent = h.textContent;
+  if (h.tagName === 'H3') a.style.paddingLeft = '1.25rem';
+  li.appendChild(a);
+  toc.appendChild(li);
+});
+// Highlight active TOC item
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    const a = toc.querySelector('a[href="#'+e.target.id+'"]');
+    if (a) a.classList.toggle('active', e.isIntersecting);
+  });
+}, {rootMargin:'-20% 0px -70% 0px'});
+hs.forEach(h => obs.observe(h));
+</script>
+</body>
+</html>

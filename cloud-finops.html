@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Cloud FinOps Framework: AWS Cost Intelligence Dashboard & Anomaly Detection — Your Name</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0a0a0a; --bg2:#111111; --bg3:#161616; --bg4:#1c1c1c;
+  --border:#222; --border2:#2a2a2a;
+  --accent:#00ff88; --accent2:#00ccff; --accent3:#ff6b35;
+  --muted:#555; --text:#d4d4d4; --text-dim:#888; --white:#f0f0f0;
+  --mono:'JetBrains Mono',monospace; --sans:'Space Grotesk',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);pointer-events:none;z-index:9999}
+
+/* Layout */
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sidebar-left{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-right{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--text-dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--text-dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted);transition:color .15s}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sidebar-footer{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sidebar-footer a{font-family:var(--mono);font-size:.7rem;color:var(--text-dim);transition:color .15s}
+.sidebar-footer a:hover{color:var(--accent)}
+.status-badge{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--text-dim);margin-top:1.2rem}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Article */
+article{padding:3rem 3.5rem;min-width:0;animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.back-link{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.back-link:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.post-header{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.post-meta-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.badge{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.badge-cat{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.badge-feat{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.badge-date,.badge-time{font-family:var(--mono);font-size:.68rem;color:var(--text-dim)}
+.dot-sep{color:var(--muted);font-size:.6rem}
+h1.post-title{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.post-subtitle{font-size:.95rem;color:var(--text-dim);max-width:640px;line-height:1.65}
+.author-row{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.author-name{font-size:.82rem;font-weight:600;color:var(--white)}
+.author-role{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.post-tags-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.ptag{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+
+/* Prose */
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose a{color:var(--accent);border-bottom:1px solid rgba(0,255,136,.3);transition:border-color .15s}
+.prose a:hover{border-color:var(--accent)}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+
+/* Callouts */
+.callout{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.callout-info{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--text-dim)}
+.callout-warn{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--text-dim)}
+.callout-tip{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--text-dim)}
+.callout-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+
+/* Diagram container */
+.diagram{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.diagram-title{font-family:var(--mono);font-size:.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.diagram-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+/* TOC */
+.toc-title{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.toc-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.toc-list li a{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.toc-list li a:hover{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.toc-list li a.active{color:var(--accent);border-color:var(--accent)}
+.related-title{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.related-post{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.related-post:hover{background:rgba(0,255,136,.04)}
+.related-post-cat{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.related-post-title{font-size:.78rem;color:var(--text);line-height:1.35}
+
+/* Progress bar */
+.read-progress{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sidebar-right{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sidebar-left{display:none}article{padding:2rem 1.25rem}}
+</style>
+</head>
+<body>
+<div class="read-progress" id="rp"></div>
+<div class="page">
+
+  <aside class="sidebar-left">
+    <div class="logo"><span>⚡</span> YourName.dev</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a>
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="status-badge"><span class="status-dot"></span>status: building</div>
+    <div class="sidebar-footer">
+      <a href="#">GitHub</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">Twitter / X</a>
+    </div>
+  </aside>
+
+  <article>
+    <a href="../index.html" class="back-link">← back to blog</a>
+    <div class="post-header">
+      <div class="post-meta-bar">
+        <span class="badge badge-cat">cloud</span>
+        <span class="badge badge-feat">Featured</span>
+        <span class="dot-sep">·</span>
+        <span class="badge-date">Jun 22, 2025</span>
+        <span class="dot-sep">·</span>
+        <span class="badge-time">11 min read</span>
+      </div>
+      <h1 class="post-title">Cloud FinOps Framework: AWS Cost Intelligence Dashboard & Anomaly Detection</h1>
+      <p class="post-subtitle">Architecting a FinOps framework that reduced cloud costs by 30% — featuring Cost Intelligence Dashboard, automated anomaly detection, chargeback mechanisms, and executive-level cost visibility.</p>
+      <div class="author-row">
+        <div class="avatar">YN</div>
+        <div><div class="author-name">Your Name</div><div class="author-role">Sr. DevOps Engineer</div></div>
+      </div>
+      <div class="post-tags-bar"><span class="ptag">#aws</span><span class="ptag">#finops</span><span class="ptag">#cost-optimization</span><span class="ptag">#quicksight</span><span class="ptag">#cost-explorer</span><span class="ptag">#anomaly-detection</span></div>
+    </div>
+    <div class="prose">
+<h2 id="problem">The Cloud Cost Problem</h2>
+<p>Cloud bills are opaque. You get a 300-line invoice from AWS and no one knows which team is responsible for the $40K spike in the EC2 section. Finance is unhappy, engineers are confused, and nobody has visibility until the bill arrives.</p>
+<p>This FinOps framework gave every team real-time cost visibility, automated alert on anomalies, and a chargeback model that tied cloud spend to business units — resulting in a <strong>30% cost reduction in 6 months</strong>.</p>
+
+<h2 id="architecture">FinOps Architecture</h2>
+
+<div class="diagram">
+  <div class="diagram-title">AWS FinOps Data Pipeline</div>
+  <svg viewBox="0 0 700 340" width="100%" style="max-width:700px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#555"/></marker></defs>
+
+    <!-- Cost & Usage Reports -->
+    <rect x="20" y="100" width="130" height="50" rx="5" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.5"/>
+    <text x="85" y="122" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">Cost &amp; Usage</text>
+    <text x="85" y="137" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Report (CUR)</text>
+
+    <!-- S3 raw -->
+    <rect x="200" y="100" width="110" height="50" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+    <text x="255" y="122" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">S3 Raw</text>
+    <text x="255" y="137" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">parquet format</text>
+    <line x1="150" y1="125" x2="199" y2="125" stroke="#555" stroke-width="1.2" marker-end="url(#a3)"/>
+
+    <!-- Glue ETL -->
+    <rect x="200" y="185" width="110" height="50" rx="5" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.2"/>
+    <text x="255" y="207" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">AWS Glue</text>
+    <text x="255" y="222" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">ETL + tagging</text>
+    <line x1="255" y1="150" x2="255" y2="184" stroke="#555" stroke-width="1.2" marker-end="url(#a3)"/>
+
+    <!-- Athena -->
+    <rect x="365" y="140" width="110" height="50" rx="5" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.2"/>
+    <text x="420" y="162" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">Athena</text>
+    <text x="420" y="177" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">SQL queries</text>
+    <line x1="310" y1="210" x2="364" y2="165" stroke="#555" stroke-width="1.2" marker-end="url(#a3)"/>
+
+    <!-- QuickSight -->
+    <rect x="530" y="80" width="130" height="60" rx="5" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="595" y="105" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ff88" text-anchor="middle">QuickSight</text>
+    <text x="595" y="120" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Cost Intelligence</text>
+    <text x="595" y="133" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Dashboard</text>
+    <line x1="475" y1="155" x2="529" y2="120" stroke="#555" stroke-width="1.2" marker-end="url(#a3)"/>
+
+    <!-- Cost Anomaly Detection -->
+    <rect x="365" y="230" width="130" height="50" rx="5" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.5"/>
+    <text x="430" y="252" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">Cost Anomaly</text>
+    <text x="430" y="267" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Detection</text>
+    <line x1="420" y1="190" x2="420" y2="229" stroke="#555" stroke-width="1.2" marker-end="url(#a3)"/>
+
+    <!-- SNS + Slack -->
+    <rect x="545" y="230" width="110" height="50" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+    <text x="600" y="252" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">SNS → Slack</text>
+    <text x="600" y="267" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">team alerts</text>
+    <line x1="495" y1="255" x2="544" y2="255" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#a3)"/>
+
+    <!-- Tag-based cost allocation -->
+    <rect x="20" y="230" width="130" height="50" rx="5" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.2"/>
+    <text x="85" y="252" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">Tag Policy</text>
+    <text x="85" y="267" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">env / team / product</text>
+    <line x1="85" y1="229" x2="210" y2="210" stroke="#444" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a3)"/>
+
+    <!-- Labels at top -->
+    <text x="350" y="30" font-family="JetBrains Mono,monospace" font-size="10" fill="#888" text-anchor="middle">AWS FinOps Data Pipeline</text>
+    <text x="350" y="48" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#555" text-anchor="middle">CUR → S3 → Glue → Athena → QuickSight + Anomaly Alerts</text>
+  </svg>
+</div>
+
+<h2 id="tagging">The Tagging Strategy</h2>
+<p>None of this works without consistent resource tagging. We enforce tags via AWS Organizations Service Control Policies (SCPs). Resources without required tags cannot be created.</p>
+
+<pre><code><span class="cmt"># Required tags enforced via SCP</span>
+{
+  <span class="prop">"Version"</span>: <span class="str">"2012-10-17"</span>,
+  <span class="prop">"Statement"</span>: [{
+    <span class="prop">"Effect"</span>: <span class="str">"Deny"</span>,
+    <span class="prop">"Action"</span>: [<span class="str">"ec2:RunInstances"</span>, <span class="str">"rds:CreateDBInstance"</span>],
+    <span class="prop">"Resource"</span>: <span class="str">"*"</span>,
+    <span class="prop">"Condition"</span>: {
+      <span class="prop">"Null"</span>: {
+        <span class="str">"aws:RequestedRegion"</span>: <span class="str">"false"</span>,
+        <span class="str">"aws:ResourceTag/team"</span>: <span class="str">"true"</span>,
+        <span class="str">"aws:ResourceTag/environment"</span>: <span class="str">"true"</span>,
+        <span class="str">"aws:ResourceTag/product"</span>: <span class="str">"true"</span>
+      }
+    }
+  }]
+}</code></pre>
+
+<h2 id="anomaly">Anomaly Detection Setup</h2>
+<p>AWS Cost Anomaly Detection uses ML to identify unexpected spend increases. We've tuned it per service: a 20% increase in EC2 costs is fine; a 20% increase in NAT Gateway costs means something is very wrong (likely a misconfigured log aggregation pipeline).</p>
+
+<h3 id="thresholds">Our Alert Thresholds</h3>
+<ul>
+  <li><strong>EC2/EKS:</strong> Alert if daily spend exceeds 30% of 14-day average</li>
+  <li><strong>Data Transfer:</strong> Alert on any increase &gt;15% — data transfer spikes are almost always bugs</li>
+  <li><strong>RDS:</strong> Alert on 25% increase — usually forgotten development snapshots</li>
+  <li><strong>Lambda:</strong> Alert on 50% increase — invocation count anomalies</li>
+</ul>
+
+<h2 id="savings">Where the 30% Savings Came From</h2>
+<p>Once teams could see their costs in real time, behavior changed immediately. The biggest wins: <strong>Right-sizing EC2 instances</strong> (17% reduction), decommissioning orphaned resources (8%), and switching to Savings Plans for predictable workloads (12%). The total over 6 months exceeded $280K in savings on a ~$900K/month AWS bill.</p>
+
+<div class="callout callout-tip"><span class="callout-icon">💡</span><span>Make cost data visible to engineers, not just to finance. When teams see their service costs on a dashboard next to performance metrics, they optimize naturally. We added a cost widget to every team's Grafana dashboard.</span></div>
+</div>
+  </article>
+
+  <aside class="sidebar-right">
+    <div class="toc-title">On this page</div>
+    <ul class="toc-list" id="toc"></ul>
+    <div class="related-title">Related Posts</div>
+    <a href="multi-region-aws.html" class="related-post"><div class="related-post-cat">cloud</div><div class="related-post-title">Multi-Region AWS Infrastructure</div></a>
+    <a href="eks-zero-downtime.html" class="related-post"><div class="related-post-cat">kubernetes</div><div class="related-post-title">Zero-Downtime EKS Upgrades</div></a>
+    <a href="gitops-argocd.html" class="related-post"><div class="related-post-cat">devops</div><div class="related-post-title">GitOps with ArgoCD & Terraform</div></a>
+    <a href="pci-dss-aws.html" class="related-post"><div class="related-post-cat">security</div><div class="related-post-title">PCI-DSS on AWS</div></a>
+    <a href="cloud-finops.html" class="related-post"><div class="related-post-cat">cloud</div><div class="related-post-title">Cloud FinOps Framework</div></a>
+    <a href="fastlane-cicd.html" class="related-post"><div class="related-post-cat">devops</div><div class="related-post-title">Fastlane iOS & Android CI/CD</div></a>
+  </aside>
+
+</div>
+<script>
+// Read progress
+window.addEventListener('scroll', () => {
+  const art = document.querySelector('article');
+  const rect = art.getBoundingClientRect();
+  const total = art.offsetHeight - window.innerHeight;
+  const scrolled = Math.max(0, -rect.top);
+  document.getElementById('rp').style.width = Math.min(100, (scrolled/total)*100) + '%';
+});
+// Auto TOC
+const hs = document.querySelectorAll('.prose h2, .prose h3');
+const toc = document.getElementById('toc');
+hs.forEach((h, i) => {
+  h.id = h.id || 'section-' + i;
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+  a.href = '#' + h.id;
+  a.textContent = h.textContent;
+  if (h.tagName === 'H3') a.style.paddingLeft = '1.25rem';
+  li.appendChild(a);
+  toc.appendChild(li);
+});
+// Highlight active TOC item
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    const a = toc.querySelector('a[href="#'+e.target.id+'"]');
+    if (a) a.classList.toggle('active', e.isIntersecting);
+  });
+}, {rootMargin:'-20% 0px -70% 0px'});
+hs.forEach(h => obs.observe(h));
+</script>
+</body>
+</html>

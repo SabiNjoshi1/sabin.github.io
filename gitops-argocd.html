@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Unifying GitOps for AWS: ArgoCD, Terraform, and Crossplane — Your Name</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0a0a0a; --bg2:#111111; --bg3:#161616; --bg4:#1c1c1c;
+  --border:#222; --border2:#2a2a2a;
+  --accent:#00ff88; --accent2:#00ccff; --accent3:#ff6b35;
+  --muted:#555; --text:#d4d4d4; --text-dim:#888; --white:#f0f0f0;
+  --mono:'JetBrains Mono',monospace; --sans:'Space Grotesk',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);pointer-events:none;z-index:9999}
+
+/* Layout */
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sidebar-left{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-right{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--text-dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--text-dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted);transition:color .15s}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sidebar-footer{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sidebar-footer a{font-family:var(--mono);font-size:.7rem;color:var(--text-dim);transition:color .15s}
+.sidebar-footer a:hover{color:var(--accent)}
+.status-badge{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--text-dim);margin-top:1.2rem}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Article */
+article{padding:3rem 3.5rem;min-width:0;animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.back-link{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.back-link:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.post-header{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.post-meta-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.badge{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.badge-cat{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.badge-feat{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.badge-date,.badge-time{font-family:var(--mono);font-size:.68rem;color:var(--text-dim)}
+.dot-sep{color:var(--muted);font-size:.6rem}
+h1.post-title{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.post-subtitle{font-size:.95rem;color:var(--text-dim);max-width:640px;line-height:1.65}
+.author-row{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.author-name{font-size:.82rem;font-weight:600;color:var(--white)}
+.author-role{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.post-tags-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.ptag{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+
+/* Prose */
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose a{color:var(--accent);border-bottom:1px solid rgba(0,255,136,.3);transition:border-color .15s}
+.prose a:hover{border-color:var(--accent)}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+
+/* Callouts */
+.callout{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.callout-info{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--text-dim)}
+.callout-warn{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--text-dim)}
+.callout-tip{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--text-dim)}
+.callout-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+
+/* Diagram container */
+.diagram{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.diagram-title{font-family:var(--mono);font-size:.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.diagram-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+/* TOC */
+.toc-title{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.toc-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.toc-list li a{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.toc-list li a:hover{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.toc-list li a.active{color:var(--accent);border-color:var(--accent)}
+.related-title{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.related-post{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.related-post:hover{background:rgba(0,255,136,.04)}
+.related-post-cat{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.related-post-title{font-size:.78rem;color:var(--text);line-height:1.35}
+
+/* Progress bar */
+.read-progress{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sidebar-right{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sidebar-left{display:none}article{padding:2rem 1.25rem}}
+</style>
+</head>
+<body>
+<div class="read-progress" id="rp"></div>
+<div class="page">
+
+  <aside class="sidebar-left">
+    <div class="logo"><span>⚡</span> YourName.dev</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a>
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="status-badge"><span class="status-dot"></span>status: building</div>
+    <div class="sidebar-footer">
+      <a href="#">GitHub</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">Twitter / X</a>
+    </div>
+  </aside>
+
+  <article>
+    <a href="../index.html" class="back-link">← back to blog</a>
+    <div class="post-header">
+      <div class="post-meta-bar">
+        <span class="badge badge-cat">devops</span>
+        
+        <span class="dot-sep">·</span>
+        <span class="badge-date">Jun 19, 2025</span>
+        <span class="dot-sep">·</span>
+        <span class="badge-time">11 min read</span>
+      </div>
+      <h1 class="post-title">Unifying GitOps for AWS: ArgoCD, Terraform, and Crossplane</h1>
+      <p class="post-subtitle">A GitOps-driven infrastructure platform combining ArgoCD for application delivery, Terraform for foundational infrastructure, and Crossplane for Kubernetes-native AWS resource management.</p>
+      <div class="author-row">
+        <div class="avatar">YN</div>
+        <div><div class="author-name">Your Name</div><div class="author-role">Sr. DevOps Engineer</div></div>
+      </div>
+      <div class="post-tags-bar"><span class="ptag">#gitops</span><span class="ptag">#argocd</span><span class="ptag">#terraform</span><span class="ptag">#crossplane</span><span class="ptag">#kubernetes</span><span class="ptag">#drift-detection</span></div>
+    </div>
+    <div class="prose">
+<h2 id="why-gitops">Why a Unified GitOps Platform?</h2>
+<p>Most teams end up with two separate worlds: Terraform for infrastructure and a separate CI/CD pipeline for application deployment. This split creates a frustrating gap — infrastructure changes and application changes aren't correlated, drift is invisible, and rollbacks are manual and fragile.</p>
+<p>After 18 months of pain with this split, we unified everything under a single GitOps model. <strong>Every change — infrastructure or application — is a pull request, reviewed, and reconciled automatically.</strong></p>
+
+<h2 id="architecture">Platform Architecture</h2>
+
+<div class="diagram">
+  <div class="diagram-title">Unified GitOps Platform Flow</div>
+  <svg viewBox="0 0 700 380" width="100%" style="max-width:700px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#555"/></marker><marker id="a2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#00ff88"/></marker></defs>
+
+    <!-- Git repos -->
+    <rect x="20" y="20" width="130" height="50" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+    <text x="85" y="42" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">App Repo</text>
+    <text x="85" y="57" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">k8s manifests</text>
+
+    <rect x="20" y="90" width="130" height="50" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+    <text x="85" y="112" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">Infra Repo</text>
+    <text x="85" y="127" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">terraform + crossplane</text>
+
+    <!-- GitHub Actions / CI -->
+    <rect x="200" y="50" width="130" height="50" rx="5" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.2"/>
+    <text x="265" y="72" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">GitHub Actions</text>
+    <text x="265" y="87" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">CI: test, build, push</text>
+
+    <line x1="150" y1="45" x2="199" y2="70" stroke="#444" stroke-width="1.2" marker-end="url(#a2)"/>
+    <line x1="150" y1="115" x2="199" y2="80" stroke="#444" stroke-width="1.2" marker-end="url(#a2)"/>
+
+    <!-- ArgoCD -->
+    <rect x="200" y="160" width="130" height="60" rx="5" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="265" y="185" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ff88" text-anchor="middle">ArgoCD</text>
+    <text x="265" y="200" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">continuous reconcile</text>
+    <text x="265" y="213" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">drift detection</text>
+    <line x1="265" y1="100" x2="265" y2="159" stroke="#444" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a2)"/>
+
+    <!-- Terraform Cloud -->
+    <rect x="390" y="50" width="130" height="50" rx="5" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.2"/>
+    <text x="455" y="72" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">Terraform Cloud</text>
+    <text x="455" y="87" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">state + plans</text>
+    <line x1="330" y1="75" x2="389" y2="75" stroke="#444" stroke-width="1.2" marker-end="url(#a2)"/>
+
+    <!-- Crossplane -->
+    <rect x="390" y="160" width="130" height="60" rx="5" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.2"/>
+    <text x="455" y="185" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ccff" text-anchor="middle">Crossplane</text>
+    <text x="455" y="200" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">k8s-native AWS</text>
+    <text x="455" y="213" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">resource management</text>
+    <line x1="330" y1="190" x2="389" y2="190" stroke="#00ff88" stroke-width="1.5" marker-end="url(#a2g)"/>
+
+    <!-- AWS Resources -->
+    <rect x="570" y="50" width="110" height="50" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1"/>
+    <text x="625" y="72" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">AWS Infra</text>
+    <text x="625" y="87" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">VPC, RDS, EKS...</text>
+    <line x1="520" y1="75" x2="569" y2="75" stroke="#555" stroke-width="1.2" marker-end="url(#a2)"/>
+
+    <!-- EKS Cluster -->
+    <rect x="570" y="160" width="110" height="60" rx="5" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.2"/>
+    <text x="625" y="185" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ff88" text-anchor="middle">EKS Cluster</text>
+    <text x="625" y="200" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">apps + crossplane</text>
+    <text x="625" y="213" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">providers</text>
+    <line x1="330" y1="190" x2="569" y2="190" stroke="#444" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="520" y1="190" x2="569" y2="190" stroke="#00ccff" stroke-width="1.2" marker-end="url(#a2)"/>
+
+    <!-- Notification -->
+    <rect x="20" y="270" width="160" height="40" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1"/>
+    <text x="100" y="288" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">Slack / PagerDuty</text>
+    <text x="100" y="303" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">drift alerts</text>
+    <line x1="220" y1="221" x2="150" y2="280" stroke="#555" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a2)"/>
+    <line x1="450" y1="221" x2="200" y2="295" stroke="#555" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a2)"/>
+
+    <!-- Legend -->
+    <line x1="20" y1="340" x2="50" y2="340" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="56" y="344" font-family="JetBrains Mono,monospace" font-size="7" fill="#555">ArgoCD reconcile</text>
+    <line x1="160" y1="340" x2="190" y2="340" stroke="#444" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <text x="196" y="344" font-family="JetBrains Mono,monospace" font-size="7" fill="#555">CI trigger</text>
+    <line x1="280" y1="340" x2="310" y2="340" stroke="#00ccff" stroke-width="1.5"/>
+    <text x="316" y="344" font-family="JetBrains Mono,monospace" font-size="7" fill="#555">Crossplane provision</text>
+  </svg>
+</div>
+
+<h2 id="argocd">ArgoCD for Application Delivery</h2>
+<p>ArgoCD watches Git repositories and continuously reconciles the cluster state to match the desired state in Git. Any manual change to the cluster is automatically reverted — this is <strong>drift detection in action</strong>.</p>
+
+<pre><code><span class="cmt"># ArgoCD Application CRD</span>
+<span class="kw">apiVersion</span>: argoproj.io/v1alpha1
+<span class="kw">kind</span>: Application
+<span class="kw">metadata</span>:
+  <span class="prop">name</span>: api-service
+  <span class="prop">namespace</span>: argocd
+<span class="kw">spec</span>:
+  <span class="prop">project</span>: production
+  <span class="prop">source</span>:
+    <span class="prop">repoURL</span>: https://github.com/yourorg/app-repo
+    <span class="prop">targetRevision</span>: HEAD
+    <span class="prop">path</span>: k8s/overlays/production
+  <span class="prop">destination</span>:
+    <span class="prop">server</span>: https://kubernetes.default.svc
+    <span class="prop">namespace</span>: production
+  <span class="prop">syncPolicy</span>:
+    <span class="prop">automated</span>:
+      <span class="prop">prune</span>: <span class="prop">true</span>     <span class="cmt"># Remove resources deleted from Git</span>
+      <span class="prop">selfHeal</span>: <span class="prop">true</span>  <span class="cmt"># Auto-revert manual changes</span>
+    <span class="prop">syncOptions</span>:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground</code></pre>
+
+<h2 id="crossplane">Crossplane: Kubernetes-Native AWS</h2>
+<p>Crossplane lets you provision AWS resources (RDS, S3, SQS) using Kubernetes manifests — the same tooling your team already uses for application deployment. The magic: application teams can self-service infrastructure by submitting PRs, without learning Terraform.</p>
+
+<pre><code><span class="cmt"># Provision an RDS instance via Crossplane</span>
+<span class="kw">apiVersion</span>: rds.aws.upbound.io/v1beta1
+<span class="kw">kind</span>: Instance
+<span class="kw">metadata</span>:
+  <span class="prop">name</span>: team-alpha-db
+<span class="kw">spec</span>:
+  <span class="prop">forProvider</span>:
+    <span class="prop">region</span>: us-east-1
+    <span class="prop">instanceClass</span>: db.t3.medium
+    <span class="prop">engine</span>: postgres
+    <span class="prop">engineVersion</span>: <span class="str">"15.4"</span>
+    <span class="prop">allocatedStorage</span>: <span class="num">100</span>
+    <span class="prop">storageEncrypted</span>: <span class="prop">true</span>
+    <span class="prop">multiAz</span>: <span class="prop">true</span>
+  <span class="prop">writeConnectionSecretToRef</span>:
+    <span class="prop">namespace</span>: team-alpha
+    <span class="prop">name</span>: db-credentials</code></pre>
+
+<h2 id="terraform-role">Terraform's Role</h2>
+<p>Terraform handles the "heavy" foundational infrastructure — VPCs, IAM roles, EKS clusters themselves, and any resource that predates Crossplane or doesn't have a mature Crossplane provider. We run Terraform via GitHub Actions on merge to main, with plan output posted as PR comments for review.</p>
+
+<div class="callout callout-info"><span class="callout-icon">ℹ️</span><span>The rule of thumb: if a resource needs to exist before EKS boots, it's Terraform. If it can be provisioned after EKS is running, consider Crossplane.</span></div>
+
+<h2 id="results">Impact After 6 Months</h2>
+<p>Before this platform, infrastructure changes took 3–5 days due to manual review and deployment. After: average infrastructure PR-to-deployed is <strong>47 minutes</strong>. Drift incidents dropped from ~4 per month to zero. Developer satisfaction with infrastructure tooling went from 3.2/5 to 4.7/5 on our quarterly survey.</p>
+</div>
+  </article>
+
+  <aside class="sidebar-right">
+    <div class="toc-title">On this page</div>
+    <ul class="toc-list" id="toc"></ul>
+    <div class="related-title">Related Posts</div>
+    <a href="multi-region-aws.html" class="related-post"><div class="related-post-cat">cloud</div><div class="related-post-title">Multi-Region AWS Infrastructure</div></a>
+    <a href="eks-zero-downtime.html" class="related-post"><div class="related-post-cat">kubernetes</div><div class="related-post-title">Zero-Downtime EKS Upgrades</div></a>
+    <a href="gitops-argocd.html" class="related-post"><div class="related-post-cat">devops</div><div class="related-post-title">GitOps with ArgoCD & Terraform</div></a>
+    <a href="pci-dss-aws.html" class="related-post"><div class="related-post-cat">security</div><div class="related-post-title">PCI-DSS on AWS</div></a>
+    <a href="cloud-finops.html" class="related-post"><div class="related-post-cat">cloud</div><div class="related-post-title">Cloud FinOps Framework</div></a>
+    <a href="fastlane-cicd.html" class="related-post"><div class="related-post-cat">devops</div><div class="related-post-title">Fastlane iOS & Android CI/CD</div></a>
+  </aside>
+
+</div>
+<script>
+// Read progress
+window.addEventListener('scroll', () => {
+  const art = document.querySelector('article');
+  const rect = art.getBoundingClientRect();
+  const total = art.offsetHeight - window.innerHeight;
+  const scrolled = Math.max(0, -rect.top);
+  document.getElementById('rp').style.width = Math.min(100, (scrolled/total)*100) + '%';
+});
+// Auto TOC
+const hs = document.querySelectorAll('.prose h2, .prose h3');
+const toc = document.getElementById('toc');
+hs.forEach((h, i) => {
+  h.id = h.id || 'section-' + i;
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+  a.href = '#' + h.id;
+  a.textContent = h.textContent;
+  if (h.tagName === 'H3') a.style.paddingLeft = '1.25rem';
+  li.appendChild(a);
+  toc.appendChild(li);
+});
+// Highlight active TOC item
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    const a = toc.querySelector('a[href="#'+e.target.id+'"]');
+    if (a) a.classList.toggle('active', e.isIntersecting);
+  });
+}, {rootMargin:'-20% 0px -70% 0px'});
+hs.forEach(h => obs.observe(h));
+</script>
+</body>
+</html>

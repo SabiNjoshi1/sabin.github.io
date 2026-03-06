@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Multi-Region AWS Infrastructure for Resilience: A Terraform Deep Dive — Your Name</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0a0a0a; --bg2:#111111; --bg3:#161616; --bg4:#1c1c1c;
+  --border:#222; --border2:#2a2a2a;
+  --accent:#00ff88; --accent2:#00ccff; --accent3:#ff6b35;
+  --muted:#555; --text:#d4d4d4; --text-dim:#888; --white:#f0f0f0;
+  --mono:'JetBrains Mono',monospace; --sans:'Space Grotesk',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);pointer-events:none;z-index:9999}
+
+/* Layout */
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sidebar-left{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-right{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--text-dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--text-dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted);transition:color .15s}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sidebar-footer{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sidebar-footer a{font-family:var(--mono);font-size:.7rem;color:var(--text-dim);transition:color .15s}
+.sidebar-footer a:hover{color:var(--accent)}
+.status-badge{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--text-dim);margin-top:1.2rem}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Article */
+article{padding:3rem 3.5rem;min-width:0;animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.back-link{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.back-link:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.post-header{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.post-meta-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.badge{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.badge-cat{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.badge-feat{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.badge-date,.badge-time{font-family:var(--mono);font-size:.68rem;color:var(--text-dim)}
+.dot-sep{color:var(--muted);font-size:.6rem}
+h1.post-title{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.post-subtitle{font-size:.95rem;color:var(--text-dim);max-width:640px;line-height:1.65}
+.author-row{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.author-name{font-size:.82rem;font-weight:600;color:var(--white)}
+.author-role{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.post-tags-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.ptag{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+
+/* Prose */
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose a{color:var(--accent);border-bottom:1px solid rgba(0,255,136,.3);transition:border-color .15s}
+.prose a:hover{border-color:var(--accent)}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+
+/* Callouts */
+.callout{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.callout-info{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--text-dim)}
+.callout-warn{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--text-dim)}
+.callout-tip{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--text-dim)}
+.callout-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+
+/* Diagram container */
+.diagram{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.diagram-title{font-family:var(--mono);font-size:.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.diagram-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+/* TOC */
+.toc-title{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.toc-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.toc-list li a{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.toc-list li a:hover{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.toc-list li a.active{color:var(--accent);border-color:var(--accent)}
+.related-title{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.related-post{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.related-post:hover{background:rgba(0,255,136,.04)}
+.related-post-cat{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.related-post-title{font-size:.78rem;color:var(--text);line-height:1.35}
+
+/* Progress bar */
+.read-progress{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sidebar-right{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sidebar-left{display:none}article{padding:2rem 1.25rem}}
+</style>
+</head>
+<body>
+<div class="read-progress" id="rp"></div>
+<div class="page">
+
+  <aside class="sidebar-left">
+    <div class="logo"><span>⚡</span> YourName.dev</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a>
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="status-badge"><span class="status-dot"></span>status: building</div>
+    <div class="sidebar-footer">
+      <a href="#">GitHub</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">Twitter / X</a>
+    </div>
+  </aside>
+
+  <article>
+    <a href="../index.html" class="back-link">← back to blog</a>
+    <div class="post-header">
+      <div class="post-meta-bar">
+        <span class="badge badge-cat">cloud</span>
+        <span class="badge badge-feat">Featured</span>
+        <span class="dot-sep">·</span>
+        <span class="badge-date">Jul 6, 2025</span>
+        <span class="dot-sep">·</span>
+        <span class="badge-time">9 min read</span>
+      </div>
+      <h1 class="post-title">Multi-Region AWS Infrastructure for Resilience: A Terraform Deep Dive</h1>
+      <p class="post-subtitle">How to architect highly available, multi-region AWS infrastructure using Terraform, Transit Gateway, and intelligent routing strategies for enterprise-grade applications.</p>
+      <div class="author-row">
+        <div class="avatar">YN</div>
+        <div><div class="author-name">Your Name</div><div class="author-role">Sr. DevOps Engineer</div></div>
+      </div>
+      <div class="post-tags-bar"><span class="ptag">#aws</span><span class="ptag">#terraform</span><span class="ptag">#multi-region</span><span class="ptag">#transit-gateway</span><span class="ptag">#high-availability</span></div>
+    </div>
+    <div class="prose">
+<h2 id="intro">Why Multi-Region Matters</h2>
+<p>Single-region architectures are a ticking time bomb for companies that can't afford downtime. AWS regions fail. Not often — but when they do, single-region architectures bring entire platforms to their knees. This article walks through a production-ready multi-region setup that has kept systems running at 99.99% uptime through two major AWS incidents.</p>
+
+<div class="callout callout-info"><span class="callout-icon">ℹ️</span><span>This setup was designed for a fintech platform serving 2M+ users. The architecture assumes active-active routing with automatic failover. Adapt cost considerations for your use case.</span></div>
+
+<h2 id="architecture">Architecture Overview</h2>
+<p>The core idea: two fully independent AWS regions (<strong>us-east-1</strong> and <strong>us-west-2</strong>) with identical infrastructure, connected via Transit Gateway peering and routed via Route 53 latency-based policies.</p>
+
+<div class="diagram">
+  <div class="diagram-title">Multi-Region Architecture Diagram</div>
+  <svg viewBox="0 0 720 420" width="100%" style="max-width:720px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#555"/></marker>
+      <marker id="arrow-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#00ff88"/></marker>
+    </defs>
+    <!-- Users -->
+    <circle cx="360" cy="36" r="22" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.5"/>
+    <text x="360" y="40" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ccff" text-anchor="middle">USERS</text>
+    <!-- Route53 -->
+    <rect x="290" y="80" width="140" height="36" rx="4" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="360" y="101" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ff88" text-anchor="middle">Route 53</text>
+    <text x="360" y="112" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">latency routing</text>
+    <!-- Arrow users to r53 -->
+    <line x1="360" y1="58" x2="360" y2="79" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <!-- Region US-EAST-1 -->
+    <rect x="20" y="145" width="300" height="240" rx="6" fill="none" stroke="#2a2a2a" stroke-width="1.5" stroke-dasharray="6,3"/>
+    <text x="36" y="163" font-family="JetBrains Mono,monospace" font-size="9" fill="#555">us-east-1</text>
+    <!-- NLB east -->
+    <rect x="50" y="172" width="110" height="30" rx="4" fill="#161616" stroke="#00ccff" stroke-width="1.2"/>
+    <text x="105" y="191" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">NLB</text>
+    <!-- ECS east -->
+    <rect x="50" y="220" width="110" height="30" rx="4" fill="#161616" stroke="#555" stroke-width="1.2"/>
+    <text x="105" y="239" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">ECS Fargate</text>
+    <!-- RDS east -->
+    <rect x="50" y="268" width="110" height="30" rx="4" fill="#161616" stroke="#ff6b35" stroke-width="1.2"/>
+    <text x="105" y="282" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">RDS Aurora</text>
+    <text x="105" y="293" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Primary</text>
+    <!-- TGW east -->
+    <rect x="180" y="220" width="120" height="30" rx="4" fill="#161616" stroke="#00ff88" stroke-width="1.2"/>
+    <text x="240" y="239" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">Transit GW</text>
+    <!-- Arrows east internal -->
+    <line x1="105" y1="202" x2="105" y2="219" stroke="#333" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="105" y1="250" x2="105" y2="267" stroke="#333" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="160" y1="235" x2="179" y2="235" stroke="#333" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- Region US-WEST-2 -->
+    <rect x="400" y="145" width="300" height="240" rx="6" fill="none" stroke="#2a2a2a" stroke-width="1.5" stroke-dasharray="6,3"/>
+    <text x="416" y="163" font-family="JetBrains Mono,monospace" font-size="9" fill="#555">us-west-2</text>
+    <!-- NLB west -->
+    <rect x="560" y="172" width="110" height="30" rx="4" fill="#161616" stroke="#00ccff" stroke-width="1.2"/>
+    <text x="615" y="191" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">NLB</text>
+    <!-- ECS west -->
+    <rect x="560" y="220" width="110" height="30" rx="4" fill="#161616" stroke="#555" stroke-width="1.2"/>
+    <text x="615" y="239" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">ECS Fargate</text>
+    <!-- RDS west -->
+    <rect x="560" y="268" width="110" height="30" rx="4" fill="#161616" stroke="#ff6b35" stroke-width="1.2"/>
+    <text x="615" y="282" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">RDS Aurora</text>
+    <text x="615" y="293" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Replica</text>
+    <!-- TGW west -->
+    <rect x="420" y="220" width="120" height="30" rx="4" fill="#161616" stroke="#00ff88" stroke-width="1.2"/>
+    <text x="480" y="239" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">Transit GW</text>
+    <!-- Arrows west internal -->
+    <line x1="615" y1="202" x2="615" y2="219" stroke="#333" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="615" y1="250" x2="615" y2="267" stroke="#333" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="560" y1="235" x2="541" y2="235" stroke="#333" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- TGW Peering -->
+    <line x1="300" y1="235" x2="420" y2="235" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-g)"/>
+    <text x="360" y="228" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ff88" text-anchor="middle">TGW Peering</text>
+    <!-- Route53 arrows -->
+    <line x1="328" y1="108" x2="150" y2="170" stroke="#00ccff" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arrow)"/>
+    <line x1="393" y1="108" x2="570" y2="170" stroke="#00ccff" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arrow)"/>
+    <!-- Global Acc -->
+    <rect x="275" y="345" width="170" height="30" rx="4" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.2"/>
+    <text x="360" y="364" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">Global Accelerator</text>
+    <line x1="105" y1="298" x2="300" y2="355" stroke="#444" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="615" y1="298" x2="420" y2="355" stroke="#444" stroke-width="1" stroke-dasharray="3,2"/>
+  </svg>
+</div>
+
+<h2 id="terraform">Terraform Module Structure</h2>
+<p>We manage this with a clean Terraform module structure. The key principle: <strong>identical modules per region, driven by a top-level configuration</strong>.</p>
+
+<pre><code><span class="cmt"># terraform/</span>
+<span class="cmt">#  modules/</span>
+<span class="cmt">#    vpc/         — VPC, subnets, route tables</span>
+<span class="cmt">#    compute/     — ECS cluster, Fargate tasks</span>
+<span class="cmt">#    database/    — Aurora global cluster</span>
+<span class="cmt">#    tgw/         — Transit Gateway + peering</span>
+<span class="cmt">#  regions/</span>
+<span class="cmt">#    us-east-1/main.tf</span>
+<span class="cmt">#    us-west-2/main.tf</span>
+<span class="cmt">#  global/</span>
+<span class="cmt">#    route53.tf</span>
+<span class="cmt">#    global-accelerator.tf</span>
+
+<span class="kw">module</span> <span class="str">"vpc_primary"</span> {
+  source = <span class="str">"../../modules/vpc"</span>
+  cidr_block = <span class="str">"10.0.0.0/16"</span>
+  azs        = [<span class="str">"us-east-1a"</span>, <span class="str">"us-east-1b"</span>, <span class="str">"us-east-1c"</span>]
+  region     = <span class="str">"us-east-1"</span>
+}
+
+<span class="kw">module</span> <span class="str">"transit_gateway"</span> {
+  source       = <span class="str">"../../modules/tgw"</span>
+  primary_vpc  = <span class="kw">module</span>.vpc_primary.vpc_id
+  peer_region  = <span class="str">"us-west-2"</span>
+  peer_tgw_id  = <span class="kw">var</span>.west_tgw_id
+}</code></pre>
+
+<h2 id="failover">Failover Strategy</h2>
+<p>Route 53 health checks monitor both NLBs every 10 seconds. If an endpoint fails 3 consecutive checks, traffic automatically shifts to the healthy region. The typical failover time is <strong>under 60 seconds</strong> end-to-end.</p>
+
+<div class="callout callout-tip"><span class="callout-icon">💡</span><span><strong>Pro tip:</strong> Set your Route 53 TTL to 30 seconds (not 60) for faster client cache invalidation during failover events. The cost in DNS query volume is negligible.</span></div>
+
+<h3 id="rds-global">Aurora Global Database</h3>
+<p>Aurora Global Database handles cross-region replication with typical lag under <strong>1 second</strong>. The replica in us-west-2 is read-only during normal operations. On failover, you promote the replica — a process that takes approximately 1 minute and is fully automated with a Lambda failover function.</p>
+
+<pre><code><span class="cmt"># Aurora Global Cluster</span>
+<span class="kw">resource</span> <span class="str">"aws_rds_global_cluster"</span> <span class="str">"main"</span> {
+  global_cluster_identifier = <span class="str">"prod-global"</span>
+  engine                    = <span class="str">"aurora-postgresql"</span>
+  engine_version            = <span class="str">"15.4"</span>
+  database_name             = <span class="str">"appdb"</span>
+  storage_encrypted         = <span class="prop">true</span>
+  deletion_protection       = <span class="prop">true</span>
+}
+
+<span class="cmt"># Lambda failover trigger</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"rds_failover"</span> {
+  alarm_name    = <span class="str">"aurora-primary-unhealthy"</span>
+  alarm_actions = [<span class="kw">aws_sns_topic</span>.failover.arn]
+  threshold     = <span class="num">1</span>
+  comparison_operator = <span class="str">"GreaterThanOrEqualToThreshold"</span>
+}</code></pre>
+
+<h2 id="costs">Cost Considerations</h2>
+<p>Multi-region is expensive. Here's what doubles: EC2/Fargate compute, RDS instances, NAT Gateways, and data transfer costs. Our fully loaded multi-region setup added approximately <strong>65% to our AWS bill</strong> versus single-region. For a platform where downtime costs $50K/hour, it's an obvious trade-off.</p>
+
+<div class="callout callout-warn"><span class="callout-icon">⚠️</span><span>Don't run identical instance sizes in both regions. The secondary region can use smaller instances if your RTO allows for a few minutes of scale-up during failover. We cut cross-region costs by 30% this way.</span></div>
+
+<h2 id="results">Results After 12 Months</h2>
+<p>After running this architecture in production for 12 months, we achieved: <strong>99.994% uptime</strong>, two successful transparent failovers (one planned DR test, one real AWS incident), and zero customer-reported outages during failover events. The investment paid for itself the first time us-east-1 had its bad day.</p>
+</div>
+  </article>
+
+  <aside class="sidebar-right">
+    <div class="toc-title">On this page</div>
+    <ul class="toc-list" id="toc"></ul>
+    <div class="related-title">Related Posts</div>
+    <a href="multi-region-aws.html" class="related-post"><div class="related-post-cat">cloud</div><div class="related-post-title">Multi-Region AWS Infrastructure</div></a>
+    <a href="eks-zero-downtime.html" class="related-post"><div class="related-post-cat">kubernetes</div><div class="related-post-title">Zero-Downtime EKS Upgrades</div></a>
+    <a href="gitops-argocd.html" class="related-post"><div class="related-post-cat">devops</div><div class="related-post-title">GitOps with ArgoCD & Terraform</div></a>
+    <a href="pci-dss-aws.html" class="related-post"><div class="related-post-cat">security</div><div class="related-post-title">PCI-DSS on AWS</div></a>
+    <a href="cloud-finops.html" class="related-post"><div class="related-post-cat">cloud</div><div class="related-post-title">Cloud FinOps Framework</div></a>
+    <a href="fastlane-cicd.html" class="related-post"><div class="related-post-cat">devops</div><div class="related-post-title">Fastlane iOS & Android CI/CD</div></a>
+  </aside>
+
+</div>
+<script>
+// Read progress
+window.addEventListener('scroll', () => {
+  const art = document.querySelector('article');
+  const rect = art.getBoundingClientRect();
+  const total = art.offsetHeight - window.innerHeight;
+  const scrolled = Math.max(0, -rect.top);
+  document.getElementById('rp').style.width = Math.min(100, (scrolled/total)*100) + '%';
+});
+// Auto TOC
+const hs = document.querySelectorAll('.prose h2, .prose h3');
+const toc = document.getElementById('toc');
+hs.forEach((h, i) => {
+  h.id = h.id || 'section-' + i;
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+  a.href = '#' + h.id;
+  a.textContent = h.textContent;
+  if (h.tagName === 'H3') a.style.paddingLeft = '1.25rem';
+  li.appendChild(a);
+  toc.appendChild(li);
+});
+// Highlight active TOC item
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    const a = toc.querySelector('a[href="#'+e.target.id+'"]');
+    if (a) a.classList.toggle('active', e.isIntersecting);
+  });
+}, {rootMargin:'-20% 0px -70% 0px'});
+hs.forEach(h => obs.observe(h));
+</script>
+</body>
+</html>

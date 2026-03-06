@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — Your Name</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0a0a0a; --bg2:#111111; --bg3:#161616; --border:#222222;
+      --accent:#00ff88; --accent2:#00ccff; --muted:#555555;
+      --text:#d4d4d4; --text-dim:#888888; --white:#f0f0f0;
+      --mono:'JetBrains Mono',monospace; --sans:'Space Grotesk',sans-serif; --radius:4px;
+    }
+    html { scroll-behavior:smooth; }
+    body { background:var(--bg); color:var(--text); font-family:var(--sans); font-size:15px; line-height:1.6; min-height:100vh; }
+    a { color:inherit; text-decoration:none; }
+    ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);pointer-events:none;z-index:9999}
+    .site-wrapper{display:grid;grid-template-columns:240px 1fr;grid-template-rows:auto 1fr auto;min-height:100vh;max-width:1280px;margin:0 auto}
+    .sidebar{grid-row:1/-1;border-right:1px solid var(--border);display:flex;flex-direction:column;padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+    .logo{font-family:var(--mono);font-size:1rem;color:var(--accent);font-weight:700;letter-spacing:-.02em;margin-bottom:2.5rem;display:flex;align-items:center;gap:.4rem}
+    .logo span{color:var(--text-dim)}
+    nav{display:flex;flex-direction:column;gap:.25rem;margin-bottom:auto}
+    nav a{font-family:var(--mono);font-size:.8rem;color:var(--text-dim);padding:.45rem .6rem;border-radius:var(--radius);display:flex;align-items:center;gap:.5rem;transition:color .15s,background .15s}
+    nav a::before{content:'>';color:var(--muted);transition:color .15s}
+    nav a:hover,nav a.active{color:var(--accent);background:rgba(0,255,136,.05)}
+    nav a:hover::before,nav a.active::before{color:var(--accent)}
+    .status-badge{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.7rem;color:var(--text-dim);margin-top:1.5rem}
+    .status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .sidebar-footer{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.5rem}
+    .sidebar-footer a{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);transition:color .15s}
+    .sidebar-footer a:hover{color:var(--accent)}
+    header{grid-column:2;border-bottom:1px solid var(--border);padding:1rem 2.5rem;display:flex;align-items:center;justify-content:flex-end;gap:1.5rem}
+    header a{font-family:var(--mono);font-size:.75rem;color:var(--text-dim);transition:color .15s}
+    header a:hover{color:var(--accent)}
+    main{padding:3rem 2.5rem;min-width:0}
+    .blog-header{margin-bottom:3rem;padding-bottom:2rem;border-bottom:1px solid var(--border);animation:fadeUp .5s ease both}
+    .blog-header .eyebrow{font-family:var(--mono);font-size:.7rem;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.75rem}
+    .blog-header h1{font-size:2.4rem;font-weight:700;color:var(--white);line-height:1.15;margin-bottom:.75rem;letter-spacing:-.03em}
+    .blog-header p{color:var(--text-dim);max-width:520px;font-size:.92rem}
+    .blog-layout{display:grid;grid-template-columns:1fr 260px;gap:3rem;align-items:start}
+    .filter-bar{display:flex;align-items:center;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .filter-btn{font-family:var(--mono);font-size:.72rem;padding:.35rem .75rem;border:1px solid var(--border);border-radius:2px;background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s}
+    .filter-btn:hover{color:var(--text);border-color:var(--muted)}
+    .filter-btn.active{background:rgba(0,255,136,.08);border-color:rgba(0,255,136,.3);color:var(--accent)}
+    .filter-count{font-size:.65rem;color:var(--muted);margin-left:.3rem}
+    .posts-list{display:flex;flex-direction:column;gap:0}
+    .post-card{display:block;padding:1.6rem 0;border-bottom:1px solid var(--border);transition:all .2s;cursor:pointer;animation:fadeUp .5s ease both}
+    .post-card:first-child{border-top:1px solid var(--border)}
+    .post-card:hover .post-title{color:var(--accent)}
+    .post-card:hover .read-more{color:var(--accent);gap:.5rem}
+    .post-card:nth-child(1){animation-delay:.05s}.post-card:nth-child(2){animation-delay:.1s}.post-card:nth-child(3){animation-delay:.15s}.post-card:nth-child(4){animation-delay:.2s}.post-card:nth-child(5){animation-delay:.25s}.post-card:nth-child(6){animation-delay:.3s}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .post-meta{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;flex-wrap:wrap}
+    .post-category{font-family:var(--mono);font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2);padding:.2rem .5rem;border-radius:2px}
+    .post-featured{font-family:var(--mono);font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);padding:.2rem .5rem;border-radius:2px}
+    .post-date,.post-read-time{font-family:var(--mono);font-size:.7rem;color:var(--text-dim)}
+    .post-read-time{color:var(--muted)}
+    .dot-sep{color:var(--muted);font-size:.6rem}
+    .post-title{font-size:1.1rem;font-weight:600;color:var(--white);line-height:1.35;margin-bottom:.5rem;transition:color .15s}
+    .post-excerpt{font-size:.85rem;color:var(--text-dim);line-height:1.65;margin-bottom:1rem;max-width:680px}
+    .post-footer{display:flex;align-items:center;justify-content:space-between}
+    .post-tags{display:flex;gap:.4rem;flex-wrap:wrap}
+    .tag{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .45rem;border-radius:2px;transition:color .15s,border-color .15s}
+    .tag:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+    .read-more{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);display:flex;align-items:center;gap:.3rem;transition:all .2s;white-space:nowrap}
+    .author-chip{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+    .author-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.65rem;font-weight:700;color:var(--bg);flex-shrink:0}
+    .author-name{font-size:.78rem;color:var(--text);font-weight:500}
+    .author-role{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+    .blog-sidebar{display:flex;flex-direction:column;gap:1.5rem}
+    .widget{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem}
+    .widget-title{font-family:var(--mono);font-size:.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1rem}
+    .category-list{display:flex;flex-direction:column;gap:.25rem}
+    .category-item{display:flex;align-items:center;justify-content:space-between;padding:.4rem .5rem;border-radius:var(--radius);cursor:pointer;transition:background .15s;font-size:.82rem}
+    .category-item:hover,.category-item.active{background:rgba(0,255,136,.05)}
+    .category-item.active .cat-name{color:var(--accent)}
+    .cat-name{color:var(--text);transition:color .15s}
+    .cat-count{font-family:var(--mono);font-size:.7rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.1rem .4rem;border-radius:2px;min-width:28px;text-align:center}
+    .tags-cloud{display:flex;flex-wrap:wrap;gap:.4rem}
+    .tag-cloud-item{font-family:var(--mono);font-size:.68rem;color:var(--text-dim);background:var(--bg3);border:1px solid var(--border);padding:.25rem .5rem;border-radius:2px;cursor:pointer;transition:all .15s}
+    .tag-cloud-item:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+    .newsletter-form{display:flex;flex-direction:column;gap:.6rem;margin-top:.5rem}
+    .newsletter-form input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:.55rem .75rem;font-family:var(--mono);font-size:.75rem;color:var(--text);outline:none;transition:border-color .15s}
+    .newsletter-form input::placeholder{color:var(--muted)}
+    .newsletter-form input:focus{border-color:var(--accent)}
+    .newsletter-form button{background:var(--accent);color:var(--bg);border:none;border-radius:var(--radius);padding:.55rem 1rem;font-family:var(--mono);font-size:.75rem;font-weight:700;cursor:pointer;transition:opacity .15s;letter-spacing:.05em}
+    .newsletter-form button:hover{opacity:.85}
+    .rss-link{display:flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.7rem;color:var(--text-dim);margin-top:.75rem;transition:color .15s}
+    .rss-link:hover{color:var(--accent)}
+    footer{grid-column:2;border-top:1px solid var(--border);padding:1.2rem 2.5rem;display:flex;align-items:center;justify-content:space-between}
+    footer p{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+    footer span{color:var(--accent)}
+    .post-card.hidden{display:none}
+    @media(max-width:1024px){.blog-layout{grid-template-columns:1fr}.blog-sidebar{display:none}}
+    @media(max-width:768px){.site-wrapper{grid-template-columns:1fr}.sidebar{display:none}header{grid-column:1}main{padding:2rem 1.25rem}footer{grid-column:1}}
+  </style>
+</head>
+<body>
+<div class="site-wrapper">
+  <aside class="sidebar">
+    <div class="logo"><span>⚡</span> YourName.dev</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a>
+      <a href="#" class="active">Blog</a>
+    </nav>
+    <div class="status-badge"><span class="status-dot"></span>status: building</div>
+    <div class="sidebar-footer">
+      <a href="#">GitHub</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">Twitter / X</a>
+    </div>
+  </aside>
+
+  <header>
+    <a href="#">GitHub</a>
+    <a href="#">LinkedIn</a>
+  </header>
+
+  <main>
+    <div class="blog-header">
+      <div class="eyebrow">FROM THE TRENCHES</div>
+      <h1>Engineering Playbook</h1>
+      <p>Battle-tested patterns, technical discoveries, and hard-won lessons from building things that scale.</p>
+    </div>
+
+    <div class="filter-bar" id="filter-bar">
+      <button class="filter-btn active" data-filter="all" onclick="filterPosts('all',this)">All Posts <span class="filter-count">6</span></button>
+      <button class="filter-btn" data-filter="cloud" onclick="filterPosts('cloud',this)">Cloud <span class="filter-count">2</span></button>
+      <button class="filter-btn" data-filter="kubernetes" onclick="filterPosts('kubernetes',this)">Kubernetes <span class="filter-count">1</span></button>
+      <button class="filter-btn" data-filter="security" onclick="filterPosts('security',this)">Security <span class="filter-count">1</span></button>
+      <button class="filter-btn" data-filter="devops" onclick="filterPosts('devops',this)">DevOps <span class="filter-count">2</span></button>
+    </div>
+
+    <div class="blog-layout">
+      <div class="posts-list" id="posts-list">
+
+        <!-- Post 1 -->
+        <a class="post-card" data-category="cloud" href="posts/multi-region-aws.html" target="_blank">
+          <div class="post-meta">
+            <span class="post-category">cloud</span><span class="post-featured">Featured</span>
+            <span class="dot-sep">·</span><span class="post-date">Jul 6, 2025</span>
+            <span class="dot-sep">·</span><span class="post-read-time">9 min read</span>
+          </div>
+          <div class="author-chip">
+            <div class="author-avatar">YN</div>
+            <div><div class="author-name">Your Name</div><div class="author-role">Sr. DevOps Engineer</div></div>
+          </div>
+          <h2 class="post-title">Multi-Region AWS Infrastructure for Resilience: A Terraform Deep Dive</h2>
+          <p class="post-excerpt">Learn how to architect highly available, multi-region AWS infrastructure using Terraform, Transit Gateway, Network Load Balancers, and intelligent routing strategies for enterprise-grade applications.</p>
+          <div class="post-footer">
+            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#terraform</span><span class="tag">#multi-region</span><span class="tag">+2</span></div>
+            <span class="read-more">read more →</span>
+          </div>
+        </a>
+
+        <!-- Post 2 -->
+        <a class="post-card" data-category="kubernetes" href="posts/eks-zero-downtime.html" target="_blank">
+          <div class="post-meta">
+            <span class="post-category">kubernetes</span><span class="post-featured">Featured</span>
+            <span class="dot-sep">·</span><span class="post-date">Jun 12, 2025</span>
+            <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
+          </div>
+          <div class="author-chip">
+            <div class="author-avatar">YN</div>
+            <div><div class="author-name">Your Name</div><div class="author-role">Sr. DevOps Engineer</div></div>
+          </div>
+          <h2 class="post-title">Zero-Downtime EKS Upgrades in Production</h2>
+          <p class="post-excerpt">Implementing a blue-green node group strategy for EKS cluster upgrades with automated rollback, PodDisruptionBudgets, and Terraform orchestration — achieving zero customer impact.</p>
+          <div class="post-footer">
+            <div class="post-tags"><span class="tag">#eks</span><span class="tag">#kubernetes</span><span class="tag">#blue-green</span></div>
+            <span class="read-more">read more →</span>
+          </div>
+        </a>
+
+        <!-- Post 3 -->
+        <a class="post-card" data-category="security" href="posts/pci-dss-aws.html" target="_blank">
+          <div class="post-meta">
+            <span class="post-category">security</span>
+            <span class="dot-sep">·</span><span class="post-date">Jul 13, 2025</span>
+            <span class="dot-sep">·</span><span class="post-read-time">14 min read</span>
+          </div>
+          <div class="author-chip">
+            <div class="author-avatar">YN</div>
+            <div><div class="author-name">Your Name</div><div class="author-role">Sr. DevOps Engineer</div></div>
+          </div>
+          <h2 class="post-title">Designing a PCI-DSS Compliant Platform on AWS</h2>
+          <p class="post-excerpt">Architecting a PCI-DSS Level 1 compliant platform on AWS — featuring network segmentation, encryption everywhere, comprehensive audit logging, and continuous compliance monitoring.</p>
+          <div class="post-footer">
+            <div class="post-tags"><span class="tag">#pci-dss</span><span class="tag">#compliance</span><span class="tag">#encryption</span></div>
+            <span class="read-more">read more →</span>
+          </div>
+        </a>
+
+        <!-- Post 4 -->
+        <a class="post-card" data-category="devops" href="posts/gitops-argocd.html" target="_blank">
+          <div class="post-meta">
+            <span class="post-category">devops</span>
+            <span class="dot-sep">·</span><span class="post-date">Jun 19, 2025</span>
+            <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
+          </div>
+          <div class="author-chip">
+            <div class="author-avatar">YN</div>
+            <div><div class="author-name">Your Name</div><div class="author-role">Sr. DevOps Engineer</div></div>
+          </div>
+          <h2 class="post-title">Unifying GitOps for AWS: ArgoCD, Terraform, and Crossplane</h2>
+          <p class="post-excerpt">Crafting a GitOps-driven infrastructure platform combining ArgoCD for application delivery, Terraform for foundational infrastructure, and Crossplane for Kubernetes-native AWS resource management.</p>
+          <div class="post-footer">
+            <div class="post-tags"><span class="tag">#gitops</span><span class="tag">#argocd</span><span class="tag">#terraform</span></div>
+            <span class="read-more">read more →</span>
+          </div>
+        </a>
+
+        <!-- Post 5 -->
+        <a class="post-card" data-category="cloud" href="posts/cloud-finops.html" target="_blank">
+          <div class="post-meta">
+            <span class="post-category">cloud</span><span class="post-featured">Featured</span>
+            <span class="dot-sep">·</span><span class="post-date">Jun 22, 2025</span>
+            <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
+          </div>
+          <div class="author-chip">
+            <div class="author-avatar">YN</div>
+            <div><div class="author-name">Your Name</div><div class="author-role">Sr. DevOps Engineer</div></div>
+          </div>
+          <h2 class="post-title">Cloud FinOps Framework: AWS Cost Intelligence Dashboard and Cost Anomaly Detection</h2>
+          <p class="post-excerpt">Architecting a FinOps framework that reduced cloud costs by 30% — featuring Cost Intelligence Dashboard, automated anomaly detection, chargeback mechanisms, and executive-level cost visibility.</p>
+          <div class="post-footer">
+            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#finops</span><span class="tag">#cost-optimization</span></div>
+            <span class="read-more">read more →</span>
+          </div>
+        </a>
+
+        <!-- Post 6 -->
+        <a class="post-card" data-category="devops" href="posts/fastlane-cicd.html" target="_blank">
+          <div class="post-meta">
+            <span class="post-category">devops</span>
+            <span class="dot-sep">·</span><span class="post-date">Jul 3, 2025</span>
+            <span class="dot-sep">·</span><span class="post-read-time">6 min read</span>
+          </div>
+          <div class="author-chip">
+            <div class="author-avatar">YN</div>
+            <div><div class="author-name">Your Name</div><div class="author-role">Sr. DevOps Engineer</div></div>
+          </div>
+          <h2 class="post-title">Automating Mobile App Releases with Fastlane: iOS &amp; Android CI/CD</h2>
+          <p class="post-excerpt">A comprehensive guide to setting up Fastlane for automated iOS TestFlight and Android Play Store deployments with GitHub Actions, including code signing, version management, and release automation.</p>
+          <div class="post-footer">
+            <div class="post-tags"><span class="tag">#fastlane</span><span class="tag">#mobile</span><span class="tag">#cicd</span></div>
+            <span class="read-more">read more →</span>
+          </div>
+        </a>
+
+      </div>
+
+      <aside class="blog-sidebar">
+        <div class="widget">
+          <div class="widget-title">### Categories</div>
+          <div class="category-list">
+            <div class="category-item active" onclick="filterPosts('all')"><span class="cat-name">All Posts</span><span class="cat-count">6</span></div>
+            <div class="category-item" onclick="filterPosts('cloud')"><span class="cat-name">Cloud</span><span class="cat-count">2</span></div>
+            <div class="category-item" onclick="filterPosts('kubernetes')"><span class="cat-name">Kubernetes</span><span class="cat-count">1</span></div>
+            <div class="category-item" onclick="filterPosts('security')"><span class="cat-name">Security</span><span class="cat-count">1</span></div>
+            <div class="category-item" onclick="filterPosts('devops')"><span class="cat-name">DevOps</span><span class="cat-count">2</span></div>
+          </div>
+        </div>
+        <div class="widget">
+          <div class="widget-title">### Popular Tags</div>
+          <div class="tags-cloud">
+            <span class="tag-cloud-item">#aws</span><span class="tag-cloud-item">#terraform</span>
+            <span class="tag-cloud-item">#kubernetes</span><span class="tag-cloud-item">#eks</span>
+            <span class="tag-cloud-item">#finops</span><span class="tag-cloud-item">#gitops</span>
+            <span class="tag-cloud-item">#security</span><span class="tag-cloud-item">#cicd</span>
+            <span class="tag-cloud-item">#devops</span><span class="tag-cloud-item">#argocd</span>
+          </div>
+        </div>
+        <div class="widget">
+          <div class="widget-title">### Newsletter</div>
+          <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:.75rem">Get notified about new articles and technical deep-dives.</p>
+          <div class="newsletter-form">
+            <input type="email" placeholder="your@email.com" />
+            <button>Subscribe</button>
+          </div>
+          <a href="#" class="rss-link">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
+            Subscribe via RSS
+          </a>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <p>Forged with <span>♥</span> &amp; code</p>
+    <p>© 2025 Your Name — All systems reserved</p>
+  </footer>
+</div>
+
+<script>
+function filterPosts(cat, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.post-card').forEach(p => {
+    p.classList.toggle('hidden', cat !== 'all' && p.dataset.category !== cat);
+  });
+}
+</script>
+</body>
+</html>
