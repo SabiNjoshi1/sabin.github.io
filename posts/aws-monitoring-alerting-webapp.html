@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Monitoring & Alerting a Web App on AWS — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0a0a0a;--bg2:#111;--bg3:#161616;--bg4:#1c1c1c;
+      --border:#222;--border2:#2a2a2a;
+      --accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;
+      --muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;
+      --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+    a{color:inherit;text-decoration:none}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+
+    /* ── Layout ── */
+    .page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+    .sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+    .sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+
+    /* ── Sidebar ── */
+    .logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+    .logo span{color:var(--dim)}
+    nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+    nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+    nav a::before{content:'> ';color:var(--muted);transition:color .15s}
+    nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+    nav a:hover::before{color:var(--accent)}
+    .sfooter{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+    .sfooter a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+    .sfooter a:hover{color:var(--accent)}
+    .status{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    /* ── Article ── */
+    article{padding:3rem 3.5rem;min-width:0;animation:fadeUp .5s ease both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .back-link{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+    .back-link:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+    .post-header{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+    .meta-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+    .badge{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+    .badge-cat{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+    .badge-feat{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+    .badge-date,.badge-rt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+    .sep{color:var(--muted);font-size:.6rem}
+    h1.post-title{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+    .post-sub{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+    .author-row{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+    .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+    .author-name{font-size:.82rem;font-weight:600;color:var(--white)}
+    .author-role{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+    .tags-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+    .ptag{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+
+    /* ── Prose ── */
+    .prose{max-width:760px}
+    .prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+    .prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+    .prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+    .prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+    .prose li{margin-bottom:.4rem}
+    .prose strong{color:var(--white);font-weight:600}
+    .prose a{color:var(--accent);border-bottom:1px solid rgba(0,255,136,.3)}
+    .prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+    .prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+    .prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+    .kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}
+    .cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+
+    /* ── Callouts ── */
+    .callout{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+    .callout-info{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+    .callout-warn{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+    .callout-tip{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+    .callout-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+
+    /* ── Diagrams ── */
+    .diagram{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+    .diagram-title{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+    .diagram-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+    /* ── Alarm Table Cards ── */
+    .alarm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin:1.5rem 0}
+    .alarm-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1.1rem}
+    .alarm-card:hover{border-color:rgba(0,255,136,.25);transition:border-color .2s}
+    .alarm-name{font-family:var(--mono);font-size:.78rem;font-weight:600;color:var(--accent);margin-bottom:.5rem}
+    .alarm-desc{font-size:.8rem;color:var(--dim);margin-bottom:.75rem;line-height:1.5}
+    .alarm-meta{display:flex;flex-direction:column;gap:.3rem}
+    .alarm-row{display:flex;justify-content:space-between;align-items:center;font-size:.75rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+    .alarm-row:last-child{border-bottom:none;padding-bottom:0}
+    .alarm-key{color:var(--muted);font-family:var(--mono);font-size:.68rem}
+    .alarm-val{color:var(--text);font-family:var(--mono);font-size:.7rem}
+    .threshold{color:var(--accent3);font-weight:600}
+
+    /* ── Stats ── */
+    .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+    .stat-num{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+    .stat-label{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+
+    /* ── TOC ── */
+    .toc-title{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+    .toc-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+    .toc-list li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+    .toc-list li a:hover,.toc-list li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+    .related-title{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+    .related-post{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+    .related-post:hover{background:rgba(0,255,136,.04)}
+    .related-cat{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+    .related-ttl{font-size:.78rem;color:var(--text);line-height:1.35}
+
+    /* ── Progress bar ── */
+    .read-progress{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+
+    @media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}}
+    @media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}
+  </style>
+</head>
+<body>
+<div class="read-progress" id="rp"></div>
+<div class="page">
+
+  <!-- Left Sidebar -->
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <!-- <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a> -->
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="status"><span class="dot"></span>status: building</div>
+    <div class="sfooter">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+      <!-- <a href="#">Twitter / X</a> -->
+    </div>
+  </aside>
+
+  <!-- Article -->
+  <article>
+    <a href="../index.html" class="back-link">← back to blog</a>
+
+    <div class="post-header">
+      <div class="meta-bar">
+        <span class="badge badge-cat">devops</span>
+        <span class="badge badge-feat">Featured</span>
+        <span class="sep">·</span>
+        <span class="badge-date">Aug 7, 2025</span>
+        <span class="sep">·</span>
+        <span class="badge-rt">10 min read</span>
+      </div>
+      <h1 class="post-title">Monitoring & Alerting a Web App on AWS: The Minimal Setup That Actually Works</h1>
+      <p class="post-sub">Stop drowning in CloudWatch noise. Here's the lean, opinionated monitoring stack — ALB, RDS, SQS, and budget alerts — that keeps your team sane and your customers happy.</p>
+      <div class="author-row">
+        <div class="avatar">SJ</div>
+        <div>
+          <div class="author-name">Sabin Joshi</div>
+          <div class="author-role">DevOps Engineer</div>
+        </div>
+      </div>
+      <div class="tags-bar">
+        <span class="ptag">#aws</span>
+        <span class="ptag">#cloudwatch</span>
+        <span class="ptag">#monitoring</span>
+        <span class="ptag">#alerting</span>
+        <span class="ptag">#alb</span>
+        <span class="ptag">#rds</span>
+        <span class="ptag">#sqs</span>
+        <span class="ptag">#devops</span>
+      </div>
+    </div>
+
+    <div class="prose">
+
+      <h2 id="the-problem">The Problem with Most Monitoring Setups</h2>
+      <p>Most teams set up CloudWatch alarms for everything — CPU utilization, memory, network in/out, disk I/O, and every metric AWS exposes. The result? A noisy alert system that wakes engineers up at 3am for things that aren't customer-impacting, breeding alert fatigue until the alerts everyone actually needs gets ignored.</p>
+      <p>The right mental model: <strong>only alert when customers are affected or when the application hits a failure it can't self-heal.</strong> Everything else can be a dashboard metric you check during working hours.</p>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>You don't need to monitor EC2 instances directly for most web apps. App server failures surface as 5XX errors at the load balancer. Worker failures surface as stale SQS messages. Let the symptoms tell you something is wrong — not the cause.</span>
+      </div>
+
+      <h2 id="architecture">Your Typical Web App Stack</h2>
+      <p>This setup targets the most common AWS web application architecture: clients hitting an <strong>Application Load Balancer</strong>, which routes to EC2 app servers, backed by an <strong>RDS</strong> database and an <strong>SQS queue</strong> processed by background worker instances.</p>
+
+      <div class="diagram">
+        <div class="diagram-title">Typical Web Application Architecture on AWS</div>
+        <svg viewBox="0 0 720 380" width="100%" style="max-width:720px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#555"/></marker>
+            <marker id="arrg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#00ff88"/></marker>
+            <marker id="arro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#ff6b35"/></marker>
+          </defs>
+
+          <!-- Internet -->
+          <ellipse cx="80" cy="130" rx="60" ry="22" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+          <text x="80" y="128" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">Internet</text>
+          <text x="80" y="141" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Users</text>
+
+          <!-- ALB -->
+          <rect x="180" y="108" width="120" height="45" rx="5" fill="#1c1c1c" stroke="#00ccff" stroke-width="2"/>
+          <text x="240" y="128" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ccff" text-anchor="middle">ALB</text>
+          <text x="240" y="143" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Application Load Balancer</text>
+          <line x1="140" y1="130" x2="179" y2="130" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+          <!-- Monitor badge ALB -->
+          <rect x="192" y="88" width="96" height="16" rx="2" fill="rgba(0,255,136,.1)" stroke="rgba(0,255,136,.4)" stroke-width="1"/>
+          <text x="240" y="100" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ff88" text-anchor="middle">📊 5XX · Latency · Rejected</text>
+
+          <!-- EC2 App servers -->
+          <rect x="360" y="60" width="120" height="45" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+          <text x="420" y="80" font-family="JetBrains Mono,monospace" font-size="9" fill="#888" text-anchor="middle">EC2 App</text>
+          <text x="420" y="95" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">web servers</text>
+          <rect x="360" y="155" width="120" height="45" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+          <text x="420" y="175" font-family="JetBrains Mono,monospace" font-size="9" fill="#888" text-anchor="middle">EC2 App</text>
+          <text x="420" y="190" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">web servers</text>
+
+          <!-- No-monitor badge EC2 -->
+          <rect x="370" y="42" width="100" height="14" rx="2" fill="rgba(85,85,85,.2)" stroke="#444" stroke-width="1"/>
+          <text x="420" y="53" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">🚫 no direct monitoring needed</text>
+
+          <!-- Arrows ALB to EC2 -->
+          <line x1="300" y1="118" x2="359" y2="83" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+          <line x1="300" y1="140" x2="359" y2="177" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+
+          <!-- RDS -->
+          <rect x="555" y="108" width="130" height="45" rx="5" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.5"/>
+          <text x="620" y="128" font-family="JetBrains Mono,monospace" font-size="9" fill="#ff6b35" text-anchor="middle">RDS</text>
+          <text x="620" y="143" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">PostgreSQL / MySQL</text>
+          <!-- Monitor badge RDS -->
+          <rect x="565" y="88" width="110" height="16" rx="2" fill="rgba(255,107,53,.1)" stroke="rgba(255,107,53,.4)" stroke-width="1"/>
+          <text x="620" y="100" font-family="JetBrains Mono,monospace" font-size="7" fill="#ff6b35" text-anchor="middle">📊 FreeStorageSpace</text>
+
+          <line x1="480" y1="82" x2="554" y2="120" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+          <line x1="480" y1="177" x2="554" y2="140" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+
+          <!-- SQS -->
+          <rect x="360" y="280" width="120" height="45" rx="5" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.5"/>
+          <text x="420" y="300" font-family="JetBrains Mono,monospace" font-size="9" fill="#c678dd" text-anchor="middle">SQS Queue</text>
+          <text x="420" y="315" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">job queue</text>
+          <!-- Monitor badge SQS -->
+          <rect x="356" y="262" width="128" height="14" rx="2" fill="rgba(198,120,221,.1)" stroke="rgba(198,120,221,.4)" stroke-width="1"/>
+          <text x="420" y="273" font-family="JetBrains Mono,monospace" font-size="7" fill="#c678dd" text-anchor="middle">📊 OldestMsg Age · DLQ Length</text>
+
+          <!-- App → SQS enqueue -->
+          <line x1="420" y1="200" x2="420" y2="279" stroke="#555" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+
+          <!-- EC2 Workers -->
+          <rect x="555" y="280" width="130" height="45" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+          <text x="620" y="300" font-family="JetBrains Mono,monospace" font-size="9" fill="#888" text-anchor="middle">EC2 Workers</text>
+          <text x="620" y="315" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">process jobs</text>
+          <!-- No-monitor badge Workers -->
+          <rect x="560" y="262" width="120" height="14" rx="2" fill="rgba(85,85,85,.2)" stroke="#444" stroke-width="1"/>
+          <text x="620" y="273" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">🚫 SQS alarms cover this</text>
+
+          <line x1="480" y1="302" x2="554" y2="302" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+
+          <!-- DLQ -->
+          <rect x="180" y="280" width="120" height="45" rx="5" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <text x="240" y="300" font-family="JetBrains Mono,monospace" font-size="9" fill="#ff6b35" text-anchor="middle">Dead-Letter Q</text>
+          <text x="240" y="315" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">failed messages</text>
+          <line x1="360" y1="302" x2="301" y2="302" stroke="#ff6b35" stroke-width="1.2" stroke-dasharray="3,2" marker-end="url(#arro)"/>
+
+          <!-- CloudWatch label -->
+          <rect x="20" y="340" width="680" height="28" rx="4" fill="rgba(0,255,136,.04)" stroke="rgba(0,255,136,.15)" stroke-width="1"/>
+          <text x="360" y="358" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">AWS CloudWatch — Unified Alarm Layer for All Monitored Components</text>
+        </svg>
+      </div>
+
+      <h2 id="alb">Monitoring the Application Load Balancer</h2>
+      <p>The ALB is the front door to your entire infrastructure and the most important component to watch. It sits between your users and your backend, which makes it the <strong>single source of truth for customer-visible errors</strong>. Four alarms give you complete coverage.</p>
+
+      <div class="alarm-grid">
+        <div class="alarm-card">
+          <div class="alarm-name">5XX Errors — Load Balancer</div>
+          <div class="alarm-desc">Fires when the ALB itself fails to process a request and returns a server error. These are infrastructure-level failures, not app failures.</div>
+          <div class="alarm-meta">
+            <div class="alarm-row"><span class="alarm-key">Metric</span><span class="alarm-val">HTTPCode_ELB_5XX_Count</span></div>
+            <div class="alarm-row"><span class="alarm-key">Namespace</span><span class="alarm-val">AWS/ApplicationELB</span></div>
+            <div class="alarm-row"><span class="alarm-key">Period</span><span class="alarm-val">1 minute · 5 of 5 periods</span></div>
+            <div class="alarm-row"><span class="alarm-key">Statistic</span><span class="alarm-val">Sum</span></div>
+            <div class="alarm-row"><span class="alarm-key">Threshold</span><span class="alarm-val threshold">&gt; 1</span></div>
+          </div>
+        </div>
+        <div class="alarm-card">
+          <div class="alarm-name">5XX Errors — Target</div>
+          <div class="alarm-desc">Fires when your EC2 instances return errors. This catches app-level failures — unhandled exceptions, crashes, or unhealthy deployments.</div>
+          <div class="alarm-meta">
+            <div class="alarm-row"><span class="alarm-key">Metric</span><span class="alarm-val">HTTPCode_Target_5XX_Count</span></div>
+            <div class="alarm-row"><span class="alarm-key">Namespace</span><span class="alarm-val">AWS/ApplicationELB</span></div>
+            <div class="alarm-row"><span class="alarm-key">Period</span><span class="alarm-val">1 minute · 5 of 5 periods</span></div>
+            <div class="alarm-row"><span class="alarm-key">Statistic</span><span class="alarm-val">Sum</span></div>
+            <div class="alarm-row"><span class="alarm-key">Threshold</span><span class="alarm-val threshold">&gt; 1</span></div>
+          </div>
+        </div>
+        <div class="alarm-card">
+          <div class="alarm-name">Target Response Latency</div>
+          <div class="alarm-desc">High latency is a silent killer — your app is technically "up" but users are hitting spinners. Alert before they notice.</div>
+          <div class="alarm-meta">
+            <div class="alarm-row"><span class="alarm-key">Metric</span><span class="alarm-val">TargetResponseTime</span></div>
+            <div class="alarm-row"><span class="alarm-key">Namespace</span><span class="alarm-val">AWS/ApplicationELB</span></div>
+            <div class="alarm-row"><span class="alarm-key">Period</span><span class="alarm-val">1 minute · 5 of 5 periods</span></div>
+            <div class="alarm-row"><span class="alarm-key">Statistic</span><span class="alarm-val">Average</span></div>
+            <div class="alarm-row"><span class="alarm-key">Threshold</span><span class="alarm-val threshold">&gt; 0.2 seconds</span></div>
+          </div>
+        </div>
+        <div class="alarm-card">
+          <div class="alarm-name">Rejected Connections</div>
+          <div class="alarm-desc">The ALB hit its connection limit and started dropping requests. This usually means your backend can't scale fast enough — users are getting immediate errors.</div>
+          <div class="alarm-meta">
+            <div class="alarm-row"><span class="alarm-key">Metric</span><span class="alarm-val">RejectedConnectionCount</span></div>
+            <div class="alarm-row"><span class="alarm-key">Namespace</span><span class="alarm-val">AWS/ApplicationELB</span></div>
+            <div class="alarm-row"><span class="alarm-key">Period</span><span class="alarm-val">1 minute · 5 of 5 periods</span></div>
+            <div class="alarm-row"><span class="alarm-key">Statistic</span><span class="alarm-val">Sum</span></div>
+            <div class="alarm-row"><span class="alarm-key">Threshold</span><span class="alarm-val threshold">&gt; 1</span></div>
+          </div>
+        </div>
+      </div>
+
+      <p>All four alarms share the same dimension: <strong>LoadBalancer ID</strong>. Here's how to wire them up using the AWS CLI or Terraform:</p>
+
+      <pre><code><span class="cmt"># Terraform — ALB 5XX alarm (same pattern for all 4)</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"alb_5xx_elb"</span> {
+  alarm_name          = <span class="str">"alb-5xx-load-balancer"</span>
+  comparison_operator = <span class="str">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="num">5</span>
+  metric_name         = <span class="str">"HTTPCode_ELB_5XX_Count"</span>
+  namespace           = <span class="str">"AWS/ApplicationELB"</span>
+  period              = <span class="num">60</span>   <span class="cmt"># 1 minute</span>
+  statistic           = <span class="str">"Sum"</span>
+  threshold           = <span class="num">1</span>
+  treat_missing_data  = <span class="str">"notBreaching"</span>  <span class="cmt"># no traffic = no error</span>
+
+  dimensions = {
+    LoadBalancer = aws_lb.main.arn_suffix
+  }
+
+  alarm_actions = [aws_sns_topic.alerts.arn]
+  ok_actions    = [aws_sns_topic.alerts.arn]
+}
+
+<span class="cmt"># Latency alarm — use p99 for high traffic (>1000 req/min)</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"alb_latency"</span> {
+  alarm_name          = <span class="str">"alb-high-latency"</span>
+  comparison_operator = <span class="str">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="num">5</span>
+  metric_name         = <span class="str">"TargetResponseTime"</span>
+  namespace           = <span class="str">"AWS/ApplicationELB"</span>
+  period              = <span class="num">60</span>
+  statistic           = <span class="str">"Average"</span>   <span class="cmt"># use p99 for high-volume apps</span>
+  threshold           = <span class="num">0.2</span>         <span class="cmt"># 200ms — tune to your baseline</span>
+
+  dimensions = {
+    LoadBalancer = aws_lb.main.arn_suffix
+  }
+
+  alarm_actions = [aws_sns_topic.alerts.arn]
+}</code></pre>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠️</span>
+        <span>Set <code>treat_missing_data = "notBreaching"</code> on all Sum-based alarms (5XX, rejected connections). If your app has zero traffic (e.g. overnight), a missing data point shouldn't trigger a 3am page.</span>
+      </div>
+
+      <h2 id="rds">Monitoring RDS — The One Alarm That Matters</h2>
+      <p>RDS exposes dozens of metrics but for most applications, <strong>free storage space is the one that will actually take you down</strong>. Running out of disk corrupts your database, loses writes silently, and causes cascading failures. CPU and connection count spikes are usually survivable — disk filling up is not.</p>
+
+      <div class="diagram">
+        <div class="diagram-title">RDS Free Storage Space Alarm — Threshold Anatomy</div>
+        <svg viewBox="0 0 680 200" width="100%" style="max-width:680px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+          <!-- Storage bar background -->
+          <rect x="40" y="70" width="600" height="50" rx="6" fill="#1c1c1c" stroke="#2a2a2a" stroke-width="1.5"/>
+          <!-- Used storage (85%) -->
+          <rect x="40" y="70" width="510" height="50" rx="6" fill="rgba(255,107,53,.15)" stroke="none"/>
+          <!-- Free storage (15%) -->
+          <rect x="550" y="70" width="90" height="50" rx="6 " fill="rgba(0,255,136,.15)" stroke="none"/>
+          <!-- Divider -->
+          <line x1="550" y1="65" x2="550" y2="130" stroke="#ff6b35" stroke-width="2" stroke-dasharray="4,3"/>
+          <!-- Labels -->
+          <text x="290" y="100" font-family="JetBrains Mono,monospace" font-size="10" fill="#ff6b35" text-anchor="middle">Used Storage (85%)</text>
+          <text x="595" y="100" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ff88" text-anchor="middle">Free</text>
+          <!-- Threshold marker -->
+          <rect x="494" y="65" width="2" height="70" fill="#e5c07b"/>
+          <text x="497" y="58" font-family="JetBrains Mono,monospace" font-size="8" fill="#e5c07b">⚠ alarm threshold</text>
+          <text x="497" y="150" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#e5c07b">1 GB (~1,000,000,000 bytes)</text>
+          <!-- Scale labels -->
+          <text x="40" y="160" font-family="JetBrains Mono,monospace" font-size="7" fill="#555">0 bytes</text>
+          <text x="640" y="160" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="end">Total Allocated</text>
+          <!-- Info -->
+          <text x="340" y="185" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#555" text-anchor="middle">Metric: FreeStorageSpace · Statistic: Minimum · Threshold: &lt; 1,000,000,000 bytes</text>
+        </svg>
+      </div>
+
+      <pre><code><span class="kw">resource</span> <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"rds_storage"</span> {
+  alarm_name          = <span class="str">"rds-low-free-storage"</span>
+  alarm_description   = <span class="str">"RDS free storage below 1GB — risk of data loss"</span>
+  comparison_operator = <span class="str">"LessThanThreshold"</span>
+  evaluation_periods  = <span class="num">5</span>
+  metric_name         = <span class="str">"FreeStorageSpace"</span>
+  namespace           = <span class="str">"AWS/RDS"</span>
+  period              = <span class="num">60</span>
+  statistic           = <span class="str">"Minimum"</span>  <span class="cmt"># worst case in the period</span>
+  threshold           = <span class="num">1000000000</span>  <span class="cmt"># 1 GB in bytes</span>
+
+  dimensions = {
+    DBInstanceIdentifier = aws_db_instance.main.identifier
+  }
+
+  alarm_actions = [aws_sns_topic.alerts.arn]
+}</code></pre>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>Enable RDS <strong>Storage Auto Scaling</strong> as a safety net alongside this alarm. Set the alarm to trigger at 1GB free — it gives you time to react before Auto Scaling kicks in or you need to manually resize. Never rely on Auto Scaling alone without an alarm.</span>
+      </div>
+
+      <h2 id="sqs">Monitoring SQS — Two Alarms, Full Coverage</h2>
+      <p>SQS queues power your background job processing. Two metrics tell you everything you need to know about queue health without needing to monitor the worker EC2 instances at all.</p>
+
+      <div class="diagram">
+        <div class="diagram-title">SQS Queue Health — Two Alarm Scenarios</div>
+        <svg viewBox="0 0 700 300" width="100%" style="max-width:700px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#555"/></marker>
+            <marker id="a2r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#ff6b35"/></marker>
+          </defs>
+
+          <!-- SCENARIO 1: Oldest message -->
+          <text x="170" y="25" font-family="JetBrains Mono,monospace" font-size="8" fill="#555" text-anchor="middle">SCENARIO 1 — Workers slow / down</text>
+          <!-- Queue messages (stacked) -->
+          <rect x="30" y="40" width="280" height="45" rx="4" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.5"/>
+          <text x="170" y="67" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">SQS Queue — messages piling up</text>
+          <!-- Oldest message indicator -->
+          <rect x="35" y="52" width="70" height="25" rx="3" fill="rgba(255,107,53,.2)" stroke="#ff6b35" stroke-width="1.2"/>
+          <text x="70" y="68" font-family="JetBrains Mono,monospace" font-size="7" fill="#ff6b35" text-anchor="middle">oldest msg</text>
+          <text x="120" y="68" font-family="JetBrains Mono,monospace" font-size="7" fill="#888" text-anchor="middle">msg</text>
+          <text x="155" y="68" font-family="JetBrains Mono,monospace" font-size="7" fill="#888" text-anchor="middle">msg</text>
+          <text x="185" y="68" font-family="JetBrains Mono,monospace" font-size="7" fill="#888" text-anchor="middle">...</text>
+          <!-- Worker broken -->
+          <rect x="30" y="115" width="120" height="35" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1" stroke-dasharray="4,2"/>
+          <text x="90" y="136" font-family="JetBrains Mono,monospace" font-size="8" fill="#555" text-anchor="middle">Worker (slow/down)</text>
+          <line x1="70" y1="115" x2="70" y2="86" stroke="#555" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a2)"/>
+          <!-- Alarm fires -->
+          <rect x="180" y="115" width="130" height="35" rx="4" fill="rgba(255,107,53,.1)" stroke="#ff6b35" stroke-width="1.5"/>
+          <text x="245" y="133" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">🔔 ALARM FIRES</text>
+          <text x="245" y="145" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">OldestMsg &gt; 500s</text>
+          <line x1="170" y1="67" x2="235" y2="114" stroke="#ff6b35" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#a2r)"/>
+
+          <!-- SCENARIO 2: DLQ -->
+          <text x="530" y="25" font-family="JetBrains Mono,monospace" font-size="8" fill="#555" text-anchor="middle">SCENARIO 2 — Message processing failures</text>
+          <!-- Main queue -->
+          <rect x="390" y="40" width="120" height="40" rx="4" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.5"/>
+          <text x="450" y="64" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">SQS Queue</text>
+          <!-- Worker -->
+          <rect x="390" y="115" width="120" height="35" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+          <text x="450" y="136" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">Worker</text>
+          <line x1="450" y1="115" x2="450" y2="81" stroke="#555" stroke-width="1.2" marker-end="url(#a2)"/>
+          <!-- DLQ -->
+          <rect x="540" y="115" width="130" height="35" rx="4" fill="rgba(255,107,53,.12)" stroke="#ff6b35" stroke-width="1.5"/>
+          <text x="605" y="130" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">Dead-Letter Queue</text>
+          <text x="605" y="143" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">failed after 3 retries</text>
+          <line x1="510" y1="132" x2="539" y2="132" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#a2r)"/>
+          <!-- Alarm DLQ -->
+          <rect x="540" y="185" width="130" height="35" rx="4" fill="rgba(255,107,53,.1)" stroke="#ff6b35" stroke-width="1.5"/>
+          <text x="605" y="200" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">🔔 ALARM FIRES</text>
+          <text x="605" y="212" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">DLQ length &gt; 0</text>
+          <line x1="605" y1="150" x2="605" y2="184" stroke="#ff6b35" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#a2r)"/>
+
+          <!-- SNS label -->
+          <rect x="200" y="220" width="300" height="30" rx="4" fill="rgba(0,255,136,.04)" stroke="rgba(0,255,136,.2)" stroke-width="1"/>
+          <text x="350" y="239" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">Both alarms → SNS Topic → Email / Slack / PagerDuty</text>
+        </svg>
+      </div>
+
+      <div class="alarm-grid">
+        <div class="alarm-card">
+          <div class="alarm-name">Oldest Message Age</div>
+          <div class="alarm-desc">When jobs sit in the queue too long, workers aren't keeping up — possibly slow, crashed, or under-scaled. This catches the problem before the backlog becomes unrecoverable.</div>
+          <div class="alarm-meta">
+            <div class="alarm-row"><span class="alarm-key">Metric</span><span class="alarm-val">ApproximateAgeOfOldestMessage</span></div>
+            <div class="alarm-row"><span class="alarm-key">Namespace</span><span class="alarm-val">AWS/SQS</span></div>
+            <div class="alarm-row"><span class="alarm-key">Period</span><span class="alarm-val">5 minutes · 5 of 5 periods</span></div>
+            <div class="alarm-row"><span class="alarm-key">Statistic</span><span class="alarm-val">Maximum</span></div>
+            <div class="alarm-row"><span class="alarm-key">Threshold</span><span class="alarm-val threshold">&gt; 500 seconds</span></div>
+          </div>
+        </div>
+        <div class="alarm-card">
+          <div class="alarm-name">Dead-Letter Queue Length</div>
+          <div class="alarm-desc">Any message in the DLQ is a job that failed permanently — after all retries. Even one DLQ message means something in your processing pipeline is broken and needs investigation.</div>
+          <div class="alarm-meta">
+            <div class="alarm-row"><span class="alarm-key">Metric</span><span class="alarm-val">ApproximateNumberOfMessagesVisible</span></div>
+            <div class="alarm-row"><span class="alarm-key">Namespace</span><span class="alarm-val">AWS/SQS</span></div>
+            <div class="alarm-row"><span class="alarm-key">Period</span><span class="alarm-val">5 minutes · 5 of 5 periods</span></div>
+            <div class="alarm-row"><span class="alarm-key">Dimension</span><span class="alarm-val">QueueName = my-dlq</span></div>
+            <div class="alarm-row"><span class="alarm-key">Threshold</span><span class="alarm-val threshold">&gt; 0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <pre><code><span class="cmt"># SQS Oldest Message Age alarm</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"sqs_oldest_msg"</span> {
+  alarm_name          = <span class="str">"sqs-oldest-message-age"</span>
+  alarm_description   = <span class="str">"Jobs sitting in queue > 500s — workers may be down"</span>
+  comparison_operator = <span class="str">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="num">5</span>
+  metric_name         = <span class="str">"ApproximateAgeOfOldestMessage"</span>
+  namespace           = <span class="str">"AWS/SQS"</span>
+  period              = <span class="num">300</span>  <span class="cmt"># 5 minutes</span>
+  statistic           = <span class="str">"Maximum"</span>
+  threshold           = <span class="num">500</span>
+  dimensions = { QueueName = aws_sqs_queue.jobs.name }
+  alarm_actions = [aws_sns_topic.alerts.arn]
+}
+
+<span class="cmt"># DLQ length — alert on ANY message (threshold = 0)</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"dlq_length"</span> {
+  alarm_name          = <span class="str">"dlq-has-messages"</span>
+  alarm_description   = <span class="str">"Dead-letter queue not empty — job processing failures"</span>
+  comparison_operator = <span class="str">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="num">1</span>   <span class="cmt"># alert immediately — no waiting</span>
+  metric_name         = <span class="str">"ApproximateNumberOfMessagesVisible"</span>
+  namespace           = <span class="str">"AWS/SQS"</span>
+  period              = <span class="num">300</span>
+  statistic           = <span class="str">"Maximum"</span>
+  threshold           = <span class="num">0</span>
+  treat_missing_data  = <span class="str">"notBreaching"</span>
+  dimensions = { QueueName = aws_sqs_queue.jobs_dlq.name }
+  alarm_actions = [aws_sns_topic.alerts.arn]
+}</code></pre>
+
+      <h2 id="ec2-skip">Why You Can Skip EC2 Monitoring</h2>
+      <p>This is the counterintuitive part that trips most people up. You're running EC2 instances — shouldn't you monitor them?</p>
+      <p>For <strong>app servers</strong> behind the ALB: any failure — OOM crash, CPU spike causing slowdowns, failed deployment — will show up as a 5XX error or high latency at the load balancer. That's your signal. Monitoring EC2 CPU at 90% doesn't tell you if customers are impacted; the ALB latency alarm does.</p>
+      <p>For <strong>worker instances</strong> processing SQS jobs: if a worker crashes or runs out of memory, messages stop being consumed. The <em>Oldest Message Age</em> alarm catches this within 25 minutes (5 periods × 5 minutes). If workers throw errors and keep crashing, messages pile up in the DLQ. Both scenarios are covered without a single EC2 alarm.</p>
+
+      <div class="callout callout-info">
+        <span class="callout-icon">ℹ️</span>
+        <span>This doesn't mean you ignore EC2 metrics forever. Once an alarm fires and you're investigating, pull up EC2 CPU, memory (via CloudWatch Agent), and disk metrics in the console. But these are <strong>diagnostic tools during incidents</strong>, not proactive alarms.</span>
+      </div>
+
+      <h2 id="budget">Budget Monitoring — Don't Skip This</h2>
+      <p>Your infrastructure costs money every hour it runs. A misconfigured auto-scaling group, an accidental large instance type, or a data transfer spike can triple your bill before the end of the month. <strong>AWS Budgets</strong> lets you alert on both actual and forecasted spend so you catch runaway costs early.</p>
+
+      <div class="diagram">
+        <div class="diagram-title">AWS Budgets — Actual vs Forecasted Spend Alert Model</div>
+        <svg viewBox="0 0 680 220" width="100%" style="max-width:680px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+          <!-- Chart area -->
+          <rect x="50" y="20" width="580" height="130" rx="4" fill="#1c1c1c" stroke="#2a2a2a" stroke-width="1"/>
+
+          <!-- Grid lines -->
+          <line x1="50" y1="76" x2="630" y2="76" stroke="#1e1e1e" stroke-width="1"/>
+          <line x1="50" y1="118" x2="630" y2="118" stroke="#1e1e1e" stroke-width="1"/>
+
+          <!-- Budget line -->
+          <line x1="50" y1="55" x2="630" y2="55" stroke="#e5c07b" stroke-width="1.5" stroke-dasharray="6,3"/>
+          <text x="635" y="59" font-family="JetBrains Mono,monospace" font-size="7" fill="#e5c07b">budget</text>
+
+          <!-- Actual spend (solid line, left half) -->
+          <polyline points="50,148 120,142 190,135 260,128 330,110" fill="none" stroke="#00ff88" stroke-width="2"/>
+          <!-- Circle at today -->
+          <circle cx="330" cy="110" r="4" fill="#00ff88"/>
+          <text x="330" y="102" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ff88" text-anchor="middle">today</text>
+
+          <!-- Forecast line (dashed, right half) -->
+          <polyline points="330,110 400,92 470,72 540,52 630,38" fill="none" stroke="#00ccff" stroke-width="2" stroke-dasharray="5,3"/>
+          <!-- Alert zone -->
+          <rect x="530" y="28" width="100" height="27" rx="3" fill="rgba(255,107,53,.15)" stroke="#ff6b35" stroke-width="1"/>
+          <text x="580" y="42" font-family="JetBrains Mono,monospace" font-size="7" fill="#ff6b35" text-anchor="middle">🔔 forecast alert</text>
+          <text x="580" y="52" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">projected over budget</text>
+
+          <!-- Legend -->
+          <line x1="60" y1="168" x2="90" y2="168" stroke="#00ff88" stroke-width="2"/>
+          <text x="95" y="172" font-family="JetBrains Mono,monospace" font-size="7" fill="#555">Actual spend (month-to-date)</text>
+          <line x1="280" y1="168" x2="310" y2="168" stroke="#00ccff" stroke-width="2" stroke-dasharray="5,3"/>
+          <text x="315" y="172" font-family="JetBrains Mono,monospace" font-size="7" fill="#555">Forecasted end-of-month spend</text>
+          <line x1="490" y1="168" x2="520" y2="168" stroke="#e5c07b" stroke-width="1.5" stroke-dasharray="6,3"/>
+          <text x="525" y="172" font-family="JetBrains Mono,monospace" font-size="7" fill="#555">Monthly budget</text>
+
+          <!-- X axis labels -->
+          <text x="50" y="195" font-family="JetBrains Mono,monospace" font-size="7" fill="#555">Day 1</text>
+          <text x="330" y="195" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Day 15</text>
+          <text x="630" y="195" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="end">Day 30</text>
+        </svg>
+      </div>
+
+      <pre><code><span class="kw">resource</span> <span class="str">"aws_budgets_budget"</span> <span class="str">"monthly"</span> {
+  name         = <span class="str">"monthly-infrastructure-budget"</span>
+  budget_type  = <span class="str">"COST"</span>
+  limit_amount = <span class="str">"1000"</span>  <span class="cmt"># set your expected monthly spend</span>
+  limit_unit   = <span class="str">"USD"</span>
+  time_unit    = <span class="str">"MONTHLY"</span>
+
+  <span class="cmt"># Alert 1: actual spend hits 80% of budget</span>
+  notification {
+    comparison_operator        = <span class="str">"GREATER_THAN"</span>
+    threshold                  = <span class="num">80</span>
+    threshold_type             = <span class="str">"PERCENTAGE"</span>
+    notification_type          = <span class="str">"ACTUAL"</span>
+    subscriber_email_addresses = [<span class="str">"team@yourcompany.com"</span>]
+  }
+
+  <span class="cmt"># Alert 2: forecasted spend will exceed 100%</span>
+  notification {
+    comparison_operator        = <span class="str">"GREATER_THAN"</span>
+    threshold                  = <span class="num">100</span>
+    threshold_type             = <span class="str">"PERCENTAGE"</span>
+    notification_type          = <span class="str">"FORECASTED"</span>  <span class="cmt"># future projection</span>
+    subscriber_email_addresses = [<span class="str">"team@yourcompany.com"</span>]
+  }
+}</code></pre>
+
+      <h2 id="sns">Wiring It All Together with SNS</h2>
+      <p>All alarms should route to a single <strong>SNS topic</strong> that fans out to your notification channels — email, Slack, PagerDuty, or all three. This makes it trivial to add or change notification destinations without touching any alarm definitions.</p>
+
+      <pre><code><span class="cmt"># Central SNS topic for all alarms</span>
+<span class="kw">resource</span> <span class="str">"aws_sns_topic"</span> <span class="str">"alerts"</span> {
+  name = <span class="str">"production-alerts"</span>
+}
+
+<span class="cmt"># Email subscription</span>
+<span class="kw">resource</span> <span class="str">"aws_sns_topic_subscription"</span> <span class="str">"email"</span> {
+  topic_arn = aws_sns_topic.alerts.arn
+  protocol  = <span class="str">"email"</span>
+  endpoint  = <span class="str">"oncall@yourcompany.com"</span>
+}
+
+<span class="cmt"># Slack via Lambda (or use AWS Chatbot)</span>
+<span class="kw">resource</span> <span class="str">"aws_sns_topic_subscription"</span> <span class="str">"slack"</span> {
+  topic_arn = aws_sns_topic.alerts.arn
+  protocol  = <span class="str">"lambda"</span>
+  endpoint  = aws_lambda_function.slack_notifier.arn
+}</code></pre>
+
+      <h2 id="full-picture">The Full Alarm Set — Summary</h2>
+      <p>Eight alarms. That's all you need for a production web application on AWS. Not eighty. Not eight hundred.</p>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">ALB alarms</div></div>
+        <div class="stat-card"><div class="stat-num">1</div><div class="stat-label">RDS alarm</div></div>
+        <div class="stat-card"><div class="stat-num">2</div><div class="stat-label">SQS alarms</div></div>
+        <div class="stat-card"><div class="stat-num">1</div><div class="stat-label">Budget alarm</div></div>
+      </div>
+
+      <p>Each alarm maps directly to a customer-impacting scenario: users getting errors, users experiencing slowness, users' jobs failing, the app going down from disk corruption, or costs blowing out before someone notices. Everything else is noise.</p>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>Start with these eight alarms, tune the thresholds to your application's baseline over the first two weeks, then resist the temptation to add more. Every additional alarm is a pager notification that trains your team to be a little less responsive to the ones that matter.</span>
+      </div>
+
+    </div><!-- /prose -->
+  </article>
+
+  <!-- Right Sidebar TOC -->
+  <aside class="sr">
+    <div class="toc-title">On this page</div>
+    <ul class="toc-list" id="toc"></ul>
+    <div class="related-title">Related Posts</div>
+    <a href="cloud-finops.html" class="related-post"><div class="related-cat">cloud</div><div class="related-ttl">Cloud FinOps Framework: AWS Cost Intelligence</div></a>
+    <a href="aws-aurora-postgresql.html" class="related-post"><div class="related-cat">cloud</div><div class="related-ttl">Aurora PostgreSQL at Scale</div></a>
+    <a href="aws-lambda-serverless-scale.html" class="related-post"><div class="related-cat">cloud</div><div class="related-ttl">Serverless at Scale: Lambda & Event-Driven</div></a>
+    <a href="aws-vpc-advanced-networking.html" class="related-post"><div class="related-cat">cloud</div><div class="related-ttl">AWS VPC Deep Dive</div></a>
+    <a href="gitops-argocd.html" class="related-post"><div class="related-cat">devops</div><div class="related-ttl">Unifying GitOps: ArgoCD & Terraform</div></a>
+    <a href="observability-stack-aws.html" class="related-post"><div class="related-cat">devops</div><div class="related-ttl">Production Observability Stack on AWS</div></a>
+    <a href="pci-dss-aws.html" class="related-post"><div class="related-cat">security</div><div class="related-ttl">PCI-DSS Compliant Platform on AWS</div></a>
+  </aside>
+
+</div><!-- /page -->
+
+<script>
+// Reading progress
+window.addEventListener('scroll', () => {
+  const art = document.querySelector('article');
+  const rect = art.getBoundingClientRect();
+  const total = art.offsetHeight - window.innerHeight;
+  const scrolled = Math.max(0, -rect.top);
+  document.getElementById('rp').style.width = Math.min(100, (scrolled / total) * 100) + '%';
+});
+
+// Auto-build TOC from headings
+const headings = document.querySelectorAll('.prose h2, .prose h3');
+const toc = document.getElementById('toc');
+headings.forEach((h, i) => {
+  h.id = h.id || 'sec-' + i;
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+  a.href = '#' + h.id;
+  a.textContent = h.textContent;
+  if (h.tagName === 'H3') a.style.paddingLeft = '1.25rem';
+  li.appendChild(a);
+  toc.appendChild(li);
+});
+
+// Highlight active TOC item on scroll
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    const link = toc.querySelector('a[href="#' + entry.target.id + '"]');
+    if (link) link.classList.toggle('active', entry.isIntersecting);
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+headings.forEach(h => observer.observe(h));
+</script>
+</body>
+</html>
