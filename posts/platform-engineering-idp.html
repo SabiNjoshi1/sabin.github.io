@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Platform Engineering: Building an Internal Developer Platform on AWS — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--bg2:#111;--bg3:#161616;--border:#222;--border2:#2a2a2a;--accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;--muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted)}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sf{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sf a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+.sf a:hover{color:var(--accent)}
+.sb{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+article{padding:3rem 3.5rem;min-width:0;animation:fu .5s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.bl{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.bl:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.ph{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.mb{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.b{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.bc{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.bf{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.bd,.bt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.ds{color:var(--muted);font-size:.6rem}
+h1.pt{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.ps{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+.ar{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.an{font-size:.82rem;font-weight:600;color:var(--white)}
+.ao{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.tb{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.tg{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+.cl{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.ci{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+.cw{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+.ct{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+.ico{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.dg{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.dt{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.dt::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+.sn{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+.sl2{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+.tt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.tl{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.tl li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.tl li a:hover,.tl li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.rt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.rp{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.rp:hover{background:rgba(0,255,136,.04)}
+.rc{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.rx{font-size:.78rem;color:var(--text);line-height:1.35}
+.rpr{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}</style>
+</head>
+<body>
+<div class="rpr" id="rp"></div>
+<div class="page">
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <!-- <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a> -->
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="sb"><span class="sd"></span>status: building</div>
+    <div class="sf">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+      <!-- <a href="#">Twitter / X</a> -->
+    </div>
+  </aside>
+  <article>
+    <a href="../index.html" class="bl">← back to blog</a>
+    <div class="ph">
+      <div class="mb"><span class="b bc">devops</span><span class="b bf">Featured</span><span class="ds">·</span><span class="bd">Aug 12, 2025</span><span class="ds">·</span><span class="bt">12 min read</span></div>
+      <h1 class="pt">Platform Engineering: Building an Internal Developer Platform on AWS</h1>
+      <p class="ps">Building an IDP that cut deployment lead time by 70% — self-service infrastructure with Backstage, golden paths using Terraform modules, automated environment provisioning, and developer experience metrics.</p>
+      <div class="ar"><div class="av">SJ</div><div><div class="an">Sabin Joshi</div><div class="ao">DevOps Engineer</div></div></div>
+      <div class="tb"><span class="tg">#platform-engineering</span><span class="tg">#devops</span><span class="tg">#backstage</span><span class="tg">#idp</span><span class="tg">#terraform</span><span class="tg">#developer-experience</span><span class="tg">#dx</span></div>
+    </div>
+    <div class="prose">
+<h2 id="why">Why Platform Engineering?</h2>
+<p>Platform engineering solves the DevOps bottleneck at scale. When you have 10 developers, a shared DevOps team works. When you have 200 developers, every team waiting on infrastructure becomes a critical path. The answer: build a platform that lets developers self-service infrastructure without needing to know Terraform, AWS, or Kubernetes.</p>
+<div class="sg">
+  <div class="sc"><div class="sn">70%</div><div class="sl2">deployment lead time reduction</div></div>
+  <div class="sc"><div class="sn">50%</div><div class="sl2">fewer DevOps support tickets</div></div>
+  <div class="sc"><div class="sn">4.7/5</div><div class="sl2">developer satisfaction</div></div>
+  <div class="sc"><div class="sn">15min</div><div class="sl2">new env provisioning (was 3 days)</div></div>
+</div>
+
+<h2 id="arch">IDP Architecture</h2>
+<div class="dg">
+  <div class="dt">Internal Developer Platform Architecture</div>
+  <svg viewBox="0 0 720 380" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>{arr('a','#555')}{arr('ag','#00ff88')}</defs>
+    <!-- Backstage portal -->
+    <rect x="20" y="140" width="140" height="100" rx="5" fill="#1c1c1c" stroke="#00ff88" stroke-width="2"/>
+    <text x="90" y="165" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ff88" text-anchor="middle">Backstage</text>
+    <text x="90" y="180" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">service catalog</text>
+    <text x="90" y="194" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">templates</text>
+    <text x="90" y="208" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">tech docs</text>
+    <text x="90" y="222" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">ownership graph</text>
+    <!-- Developer -->
+    <rect x="20" y="30" width="140" height="55" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+    <text x="90" y="55" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">Developer</text>
+    <text x="90" y="70" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">picks template, fills form</text>
+    <line x1="90" y1="85" x2="90" y2="139" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- GitHub -->
+    <rect x="215" y="80" width="120" height="55" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+    <text x="275" y="105" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">GitHub</text>
+    <text x="275" y="120" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">scaffolded repo</text>
+    <text x="275" y="133" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">PR opened</text>
+    <line x1="160" y1="175" x2="214" y2="120" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- TF Modules -->
+    <rect x="215" y="185" width="120" height="65" rx="4" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.5"/>
+    <text x="275" y="208" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">Golden Paths</text>
+    <text x="275" y="223" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">TF modules library</text>
+    <text x="275" y="237" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">opinionated defaults</text>
+    <line x1="160" y1="195" x2="214" y2="215" stroke="#c678dd" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- GitHub Actions -->
+    <rect x="390" y="80" width="130" height="80" rx="4" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.5"/>
+    <text x="455" y="103" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">GitHub Actions</text>
+    <text x="455" y="118" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">build + test</text>
+    <text x="455" y="131" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">security scan</text>
+    <text x="455" y="144" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">tf plan + apply</text>
+    <line x1="335" y1="120" x2="389" y2="120" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- ArgoCD -->
+    <rect x="390" y="215" width="130" height="65" rx="4" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="455" y="238" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">ArgoCD</text>
+    <text x="455" y="253" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">app deployment</text>
+    <text x="455" y="266" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">drift detection</text>
+    <line x1="335" y1="220" x2="389" y2="245" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- AWS -->
+    <rect x="575" y="80" width="120" height="60" rx="4" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.2"/>
+    <text x="635" y="105" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">AWS Infra</text>
+    <text x="635" y="120" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">VPC, RDS, EKS...</text>
+    <line x1="520" y1="120" x2="574" y2="110" stroke="#ff6b35" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- EKS -->
+    <rect x="575" y="215" width="120" height="60" rx="4" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.2"/>
+    <text x="635" y="240" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">EKS Cluster</text>
+    <text x="635" y="255" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">app workloads</text>
+    <line x1="520" y1="247" x2="574" y2="245" stroke="#00ff88" stroke-width="1.2" marker-end="url(#ag)"/>
+    <!-- Metrics -->
+    <rect x="215" y="305" width="360" height="45" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1"/>
+    <text x="395" y="325" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">DORA Metrics Dashboard — deploy freq · lead time · MTTR · change failure rate</text>
+    <line x1="455" y1="280" x2="430" y2="304" stroke="#444" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a)"/>
+    <line x1="635" y1="275" x2="550" y2="304" stroke="#444" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a)"/>
+  </svg>
+</div>
+
+<h2 id="backstage">Backstage as the Developer Portal</h2>
+<p>Backstage is the single pane of glass for developers. Every service, database, and infrastructure component is registered in the software catalog. Developers can create new services by selecting a template — the platform scaffolds the repo, CI/CD pipeline, and baseline infrastructure automatically.</p>
+<pre><code><span class="cmt"># Backstage template — scaffolds a new microservice</span>
+<span class="kw">apiVersion</span>: scaffolder.backstage.io/v1beta3
+<span class="kw">kind</span>: Template
+<span class="kw">metadata</span>:
+  <span class="prop">name</span>: node-microservice
+  <span class="prop">title</span>: Node.js Microservice
+<span class="kw">spec</span>:
+  <span class="prop">parameters</span>:
+    - <span class="prop">title</span>: Service Details
+      <span class="prop">properties</span>:
+        <span class="prop">serviceName</span>: { type: string, title: Service Name }
+        <span class="prop">teamOwner</span>: { type: string, enum: [payments, auth, platform] }
+        <span class="prop">dbRequired</span>: { type: boolean, title: Needs Database? }
+  <span class="prop">steps</span>:
+    - id: fetch-template
+      <span class="prop">action</span>: fetch:template
+      <span class="prop">input</span>: { url: ./skeleton }
+    - id: create-repo
+      <span class="prop">action</span>: publish:github
+    - id: register-catalog
+      <span class="prop">action</span>: catalog:register</code></pre>
+
+<h2 id="golden-paths">Golden Paths, Not Gates</h2>
+<p>The key insight in platform engineering: <strong>make the right way the easy way</strong>. Our Terraform module library abstracts away VPC configuration, IAM roles, security groups, and tagging requirements. A developer can provision a production-ready RDS instance with 5 lines of Terraform because the hard parts are in the module.</p>
+<pre><code><span class="cmt"># Developer-facing module — all hardening is inside</span>
+<span class="kw">module</span> <span class="str">"my_database"</span> {
+  source      = <span class="str">"git::https://github.com/org/tf-modules//rds-aurora"</span>
+  name        = <span class="str">"my-service"</span>
+  environment = <span class="str">"production"</span>
+  team        = <span class="str">"payments"</span>
+  instance_class = <span class="str">"db.t3.medium"</span>
+  <span class="cmt"># Encryption, Multi-AZ, backups, tags — all enforced by module</span>
+}</code></pre>
+
+<h2 id="dora">Measuring with DORA Metrics</h2>
+<p>We track the four DORA metrics to measure platform effectiveness: <strong>Deployment Frequency</strong> (how often we deploy), <strong>Lead Time for Changes</strong> (commit to production), <strong>Mean Time to Recover</strong> (MTTR on incidents), and <strong>Change Failure Rate</strong> (% deploys causing incidents). Before the IDP: lead time averaged 3 days. After: 47 minutes.</p>
+<div class="cl ct"><span class="ico">💡</span><span>Start with a service catalog and documentation portal — these deliver immediate value without requiring infrastructure changes. Add self-service provisioning in phase 2 once teams trust the platform.</span></div>
+</div>
+  </article>
+  <aside class="sr">
+    <div class="tt">On this page</div>
+    <ul class="tl" id="toc"></ul>
+    <div class="rt">Related Posts</div>
+    
+    <a href="multi-region-aws.html" class="rp"><div class="rc">cloud</div><div class="rx">Multi-Region AWS Infrastructure</div></a>
+    <a href="eks-zero-downtime.html" class="rp"><div class="rc">kubernetes</div><div class="rx">Zero-Downtime EKS Upgrades</div></a>
+    <a href="pci-dss-aws.html" class="rp"><div class="rc">security</div><div class="rx">PCI-DSS on AWS</div></a>
+    <a href="gitops-argocd.html" class="rp"><div class="rc">devops</div><div class="rx">GitOps with ArgoCD & Terraform</div></a>
+    <a href="cloud-finops.html" class="rp"><div class="rc">cloud</div><div class="rx">Cloud FinOps Framework</div></a>
+    <a href="aws-lambda-serverless-scale.html" class="rp"><div class="rc">cloud</div><div class="rx">Serverless at Scale: Lambda</div></a>
+    <a href="zero-trust-aws.html" class="rp"><div class="rc">security</div><div class="rx">Zero Trust Architecture on AWS</div></a>
+    <a href="container-security-hardening.html" class="rp"><div class="rc">security</div><div class="rx">Container Security Hardening</div></a>
+    <a href="platform-engineering-idp.html" class="rp"><div class="rc">devops</div><div class="rx">Platform Engineering & IDP</div></a>
+    <a href="docker-compose-to-k8s.html" class="rp"><div class="rc">devops</div><div class="rx">Docker Compose to Kubernetes</div></a>
+  </aside>
+</div>
+<script>
+window.addEventListener('scroll',()=>{const a=document.querySelector('article'),r=a.getBoundingClientRect(),t=a.offsetHeight-window.innerHeight,s=Math.max(0,-r.top);document.getElementById('rp').style.width=Math.min(100,(s/t)*100)+'%'});
+const hs=document.querySelectorAll('.prose h2,.prose h3'),toc=document.getElementById('toc');
+hs.forEach((h,i)=>{h.id=h.id||'s'+i;const li=document.createElement('li'),a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent;if(h.tagName==='H3')a.style.paddingLeft='1.25rem';li.appendChild(a);toc.appendChild(li)});
+const obs=new IntersectionObserver(e=>{e.forEach(e=>{const a=toc.querySelector('a[href="#'+e.target.id+'"]');if(a)a.classList.toggle('active',e.isIntersecting)})},{rootMargin:'-20% 0px -70% 0px'});hs.forEach(h=>obs.observe(h));</script>
+</body>
+</html>

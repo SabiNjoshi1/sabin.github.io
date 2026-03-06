@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>CloudFront & S3: Building a Global CDN for High-Traffic Web Apps — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--bg2:#111;--bg3:#161616;--border:#222;--border2:#2a2a2a;--accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;--muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted)}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sf{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sf a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+.sf a:hover{color:var(--accent)}
+.sb{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+article{padding:3rem 3.5rem;min-width:0;animation:fu .5s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.bl{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.bl:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.ph{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.mb{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.b{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.bc{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.bf{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.bd,.bt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.ds{color:var(--muted);font-size:.6rem}
+h1.pt{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.ps{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+.ar{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.an{font-size:.82rem;font-weight:600;color:var(--white)}
+.ao{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.tb{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.tg{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+.cl{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.ci{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+.cw{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+.ct{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+.ico{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.dg{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.dt{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.dt::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+.sn{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+.sl2{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+.tt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.tl{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.tl li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.tl li a:hover,.tl li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.rt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.rp{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.rp:hover{background:rgba(0,255,136,.04)}
+.rc{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.rx{font-size:.78rem;color:var(--text);line-height:1.35}
+.rpr{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}</style>
+</head>
+<body>
+<div class="rpr" id="rp"></div>
+<div class="page">
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <!-- <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a> -->
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="sb"><span class="sd"></span>status: building</div>
+    <div class="sf">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+      <!-- <a href="#">Twitter / X</a> -->
+    </div>
+  </aside>
+  <article>
+    <a href="../index.html" class="bl">← back to blog</a>
+    <div class="ph">
+      <div class="mb"><span class="b bc">cloud</span><span class="ds">·</span><span class="bd">Aug 18, 2025</span><span class="ds">·</span><span class="bt">8 min read</span></div>
+      <h1 class="pt">CloudFront & S3: Building a Global CDN for High-Traffic Web Apps</h1>
+      <p class="ps">Designing a production CloudFront distribution — S3 origins, Lambda@Edge for auth & security headers, cache policies, WAF integration, and OAC. From 42% to 96% cache hit rate.</p>
+      <div class="ar"><div class="av">SJ</div><div><div class="an">Sabin Joshi</div><div class="ao">DevOps Engineer</div></div></div>
+      <div class="tb"><span class="tg">#aws</span><span class="tg">#cloudfront</span><span class="tg">#s3</span><span class="tg">#cdn</span><span class="tg">#lambda-edge</span><span class="tg">#waf</span><span class="tg">#performance</span></div>
+    </div>
+    <div class="prose">
+<h2 id="why">Why CDN Architecture Matters</h2>
+<p>A poorly configured CDN is worse than no CDN. If your cache hit rate is under 80%, you're paying for CloudFront and still hammering your origin. After rearchitecting our CDN, we went from <strong>42% to 96% cache hit rate</strong>, cut origin load by 18×, and reduced P95 global latency from 340ms to 28ms.</p>
+<div class="sg">
+  <div class="sc"><div class="sn">96%</div><div class="sl2">cache hit rate</div></div>
+  <div class="sc"><div class="sn">28ms</div><div class="sl2">P95 global latency</div></div>
+  <div class="sc"><div class="sn">18×</div><div class="sl2">origin load reduction</div></div>
+  <div class="sc"><div class="sn">10M+</div><div class="sl2">daily requests</div></div>
+</div>
+
+<h2 id="arch">Multi-Origin Architecture</h2>
+<div class="dg">
+  <div class="dt">CloudFront Multi-Origin Architecture</div>
+  <svg viewBox="0 0 700 320" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>{arr('a','#555')}{arr('ag','#00ff88')}</defs>
+    <!-- Users -->
+    <ellipse cx="70" cy="50" rx="55" ry="20" fill="#1c1c1c" stroke="#555" stroke-width="1"/>
+    <text x="70" y="54" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">Users (Global)</text>
+    <!-- WAF -->
+    <rect x="165" y="30" width="90" height="40" rx="4" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.5"/>
+    <text x="210" y="48" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">AWS WAF</text>
+    <text x="210" y="62" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">rate limit + rules</text>
+    <line x1="125" y1="50" x2="164" y2="50" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- CloudFront -->
+    <rect x="295" y="15" width="140" height="70" rx="5" fill="#1c1c1c" stroke="#00ff88" stroke-width="2"/>
+    <text x="365" y="40" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ff88" text-anchor="middle">CloudFront</text>
+    <text x="365" y="55" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">400+ edge locations</text>
+    <text x="365" y="68" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Lambda@Edge hooks</text>
+    <line x1="255" y1="50" x2="294" y2="50" stroke="#00ff88" stroke-width="1.5" marker-end="url(#ag)"/>
+    <!-- Cache hit -->
+    <rect x="295" y="115" width="140" height="35" rx="4" fill="rgba(0,255,136,.05)" stroke="rgba(0,255,136,.3)" stroke-width="1"/>
+    <text x="365" y="130" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">Cache HIT (96%)</text>
+    <text x="365" y="143" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">response from edge</text>
+    <line x1="365" y1="85" x2="365" y2="114" stroke="#00ff88" stroke-width="1.2" stroke-dasharray="3,2" marker-end="url(#ag)"/>
+    <!-- Origins -->
+    <rect x="495" y="20" width="120" height="38" rx="4" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.2"/>
+    <text x="555" y="38" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">S3 Static Assets</text>
+    <text x="555" y="51" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">/assets/* · 365d TTL</text>
+    <rect x="495" y="72" width="120" height="38" rx="4" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.2"/>
+    <text x="555" y="88" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">ALB Origin</text>
+    <text x="555" y="103" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">/api/* · no cache</text>
+    <rect x="495" y="124" width="120" height="38" rx="4" fill="#1c1c1c" stroke="#e5c07b" stroke-width="1.2"/>
+    <text x="555" y="140" font-family="JetBrains Mono,monospace" font-size="8" fill="#e5c07b" text-anchor="middle">S3 + OAC</text>
+    <text x="555" y="155" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">private media</text>
+    <line x1="435" y1="45" x2="494" y2="38" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+    <line x1="435" y1="55" x2="494" y2="91" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+    <line x1="435" y1="55" x2="494" y2="143" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- Lambda@Edge -->
+    <rect x="295" y="220" width="140" height="60" rx="5" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.2"/>
+    <text x="365" y="243" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">Lambda@Edge</text>
+    <text x="365" y="258" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">viewer-req: JWT auth</text>
+    <text x="365" y="272" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">origin-res: sec headers</text>
+    <line x1="365" y1="85" x2="365" y2="219" stroke="#00ccff" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a)"/>
+  </svg>
+</div>
+
+<h2 id="cache-policies">Cache Policy Design</h2>
+<p>The #1 CDN mistake: using default cache behavior for everything. Different content types need radically different TTLs and cache key components.</p>
+<pre><code><span class="kw">resource</span> <span class="str">"aws_cloudfront_distribution"</span> <span class="str">"main"</span> {
+  <span class="cmt"># Static assets — long TTL, hash in filename</span>
+  <span class="prop">ordered_cache_behavior</span> {
+    path_pattern    = <span class="str">"/assets/*"</span>
+    allowed_methods = [<span class="str">"GET"</span>, <span class="str">"HEAD"</span>]
+    <span class="cmt"># TTL: 365 days (content-hash filenames)</span>
+    cache_policy_id = <span class="kw">aws_cloudfront_cache_policy</span>.static.id
+  }
+  <span class="cmt"># API routes — no caching, pass all headers</span>
+  <span class="prop">ordered_cache_behavior</span> {
+    path_pattern             = <span class="str">"/api/*"</span>
+    allowed_methods          = [<span class="str">"DELETE"</span>,<span class="str">"GET"</span>,<span class="str">"HEAD"</span>,<span class="str">"OPTIONS"</span>,<span class="str">"PATCH"</span>,<span class="str">"POST"</span>,<span class="str">"PUT"</span>]
+    cache_policy_id          = <span class="str">"4135ea2d-6df8-44a3-9df3-4b5a84be39ad"</span>  <span class="cmt"># CachingDisabled</span>
+    origin_request_policy_id = <span class="str">"b689b0a8-53d0-40ab-baf2-68738e2966ac"</span>  <span class="cmt"># AllViewer</span>
+    target_origin_id         = <span class="str">"alb-origin"</span>
+  }
+}</code></pre>
+
+<h2 id="lambda-edge">Lambda@Edge Security Headers</h2>
+<pre><code><span class="cmt">// origin-response: inject security headers at the edge</span>
+<span class="kw">export const</span> <span class="fn">handler</span> = <span class="kw">async</span> (event) => {
+  <span class="kw">const</span> { response } = event.Records[<span class="num">0</span>].cf;
+  <span class="kw">const</span> set = (k, v) => response.headers[k] = [{ key: k, value: v }];
+  set(<span class="str">'strict-transport-security'</span>, <span class="str">'max-age=63072000; includeSubDomains; preload'</span>);
+  set(<span class="str">'x-frame-options'</span>, <span class="str">'DENY'</span>);
+  set(<span class="str">'x-content-type-options'</span>, <span class="str">'nosniff'</span>);
+  set(<span class="str">'referrer-policy'</span>, <span class="str">'strict-origin-when-cross-origin'</span>);
+  set(<span class="str">'permissions-policy'</span>, <span class="str">'camera=(), microphone=(), geolocation=()'</span>);
+  <span class="kw">return</span> response;
+};</code></pre>
+
+<h2 id="oac">S3 Origin Access Control</h2>
+<p>Never make your S3 bucket public. Use <strong>Origin Access Control (OAC)</strong> — the modern replacement for OAI — to ensure S3 objects are only accessible through CloudFront. OAC supports KMS-encrypted buckets, which OAI did not.</p>
+<div class="cl ct"><span class="ico">💡</span><span>Enable CloudFront real-time logs → Kinesis → S3 → Athena. Query your top uncached URL paths weekly. These are your highest-leverage cache policy improvements.</span></div>
+
+<h2 id="results">Results</h2>
+<p>After this architecture: P95 global TTFB dropped from 340ms to 28ms. S3 GET request costs dropped 94%. CDN data transfer costs stayed flat despite 3× traffic growth. The platform handled a 20× Black Friday spike with zero auto-scaling events on the origin.</p>
+</div>
+  </article>
+  <aside class="sr">
+    <div class="tt">On this page</div>
+    <ul class="tl" id="toc"></ul>
+    <div class="rt">Related Posts</div>
+    
+    <a href="multi-region-aws.html" class="rp"><div class="rc">cloud</div><div class="rx">Multi-Region AWS Infrastructure</div></a>
+    <a href="eks-zero-downtime.html" class="rp"><div class="rc">kubernetes</div><div class="rx">Zero-Downtime EKS Upgrades</div></a>
+    <a href="pci-dss-aws.html" class="rp"><div class="rc">security</div><div class="rx">PCI-DSS on AWS</div></a>
+    <a href="gitops-argocd.html" class="rp"><div class="rc">devops</div><div class="rx">GitOps with ArgoCD & Terraform</div></a>
+    <a href="cloud-finops.html" class="rp"><div class="rc">cloud</div><div class="rx">Cloud FinOps Framework</div></a>
+    <a href="aws-lambda-serverless-scale.html" class="rp"><div class="rc">cloud</div><div class="rx">Serverless at Scale: Lambda</div></a>
+    <a href="zero-trust-aws.html" class="rp"><div class="rc">security</div><div class="rx">Zero Trust Architecture on AWS</div></a>
+    <a href="container-security-hardening.html" class="rp"><div class="rc">security</div><div class="rx">Container Security Hardening</div></a>
+    <a href="platform-engineering-idp.html" class="rp"><div class="rc">devops</div><div class="rx">Platform Engineering & IDP</div></a>
+    <a href="docker-compose-to-k8s.html" class="rp"><div class="rc">devops</div><div class="rx">Docker Compose to Kubernetes</div></a>
+  </aside>
+</div>
+<script>
+window.addEventListener('scroll',()=>{const a=document.querySelector('article'),r=a.getBoundingClientRect(),t=a.offsetHeight-window.innerHeight,s=Math.max(0,-r.top);document.getElementById('rp').style.width=Math.min(100,(s/t)*100)+'%'});
+const hs=document.querySelectorAll('.prose h2,.prose h3'),toc=document.getElementById('toc');
+hs.forEach((h,i)=>{h.id=h.id||'s'+i;const li=document.createElement('li'),a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent;if(h.tagName==='H3')a.style.paddingLeft='1.25rem';li.appendChild(a);toc.appendChild(li)});
+const obs=new IntersectionObserver(e=>{e.forEach(e=>{const a=toc.querySelector('a[href="#'+e.target.id+'"]');if(a)a.classList.toggle('active',e.isIntersecting)})},{rootMargin:'-20% 0px -70% 0px'});hs.forEach(h=>obs.observe(h));</script>
+</body>
+</html>

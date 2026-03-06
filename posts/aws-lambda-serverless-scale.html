@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Serverless at Scale: AWS Lambda, API Gateway & Event-Driven Patterns — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--bg2:#111;--bg3:#161616;--border:#222;--border2:#2a2a2a;--accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;--muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted)}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sf{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sf a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+.sf a:hover{color:var(--accent)}
+.sb{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+article{padding:3rem 3.5rem;min-width:0;animation:fu .5s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.bl{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.bl:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.ph{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.mb{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.b{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.bc{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.bf{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.bd,.bt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.ds{color:var(--muted);font-size:.6rem}
+h1.pt{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.ps{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+.ar{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.an{font-size:.82rem;font-weight:600;color:var(--white)}
+.ao{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.tb{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.tg{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+.cl{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.ci{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+.cw{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+.ct{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+.ico{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.dg{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.dt{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.dt::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+.sn{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+.sl2{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+.tt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.tl{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.tl li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.tl li a:hover,.tl li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.rt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.rp{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.rp:hover{background:rgba(0,255,136,.04)}
+.rc{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.rx{font-size:.78rem;color:var(--text);line-height:1.35}
+.rpr{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}</style>
+</head>
+<body>
+<div class="rpr" id="rp"></div>
+<div class="page">
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <!-- <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a> -->
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="sb"><span class="sd"></span>status: building</div>
+    <div class="sf">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+      <!-- <a href="#">Twitter / X</a> -->
+    </div>
+  </aside>
+  <article>
+    <a href="../index.html" class="bl">← back to blog</a>
+    <div class="ph">
+      <div class="mb"><span class="b bc">cloud</span><span class="b bf">Featured</span><span class="ds">·</span><span class="bd">Aug 4, 2025</span><span class="ds">·</span><span class="bt">10 min read</span></div>
+      <h1 class="pt">Serverless at Scale: AWS Lambda, API Gateway & Event-Driven Patterns</h1>
+      <p class="ps">Building production serverless platforms handling 150M+ invocations/month — cold start optimization, concurrency management, SQS/SNS event patterns, and real-world performance tuning.</p>
+      <div class="ar"><div class="av">SJ</div><div><div class="an">Sabin Joshi</div><div class="ao">DevOps Engineer</div></div></div>
+      <div class="tb"><span class="tg">#aws</span><span class="tg">#lambda</span><span class="tg">#serverless</span><span class="tg">#api-gateway</span><span class="tg">#sqs</span><span class="tg">#sns</span><span class="tg">#event-driven</span></div>
+    </div>
+    <div class="prose">
+<h2 id="why">Why Serverless in 2025?</h2>
+<p>Serverless eliminates entire categories of operational burden — no servers to patch, no capacity planning, pay only for what you use. But <em>"just use Lambda"</em> isn't a strategy. Serverless at scale requires deliberate architecture or you'll hit walls fast.</p>
+<p>This guide covers lessons from running <strong>150M+ Lambda invocations per month</strong> in a production fintech platform.</p>
+<div class="sg">
+  <div class="sc"><div class="sn">150M</div><div class="sl2">monthly invocations</div></div>
+  <div class="sc"><div class="sn">12ms</div><div class="sl2">avg cold start (optimised)</div></div>
+  <div class="sc"><div class="sn">99.97%</div><div class="sl2">uptime SLA</div></div>
+  <div class="sc"><div class="sn">72%</div><div class="sl2">cost vs EC2 equivalent</div></div>
+</div>
+
+<h2 id="arch">Event-Driven Architecture</h2>
+<p>The core rule: every Lambda is triggered by an <em>event source</em>, never called directly from another Lambda. Direct Lambda-to-Lambda calls create tight coupling, cascading failures, and idle-wait costs.</p>
+<div class="dg">
+  <div class="dt">Serverless Event-Driven Architecture</div>
+  <svg viewBox="0 0 700 350" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>{arr('a','#555')}{arr('ag','#00ff88')}{arr('ao','#ff6b35')}</defs>
+    <!-- Client -->
+    <rect x="10" y="145" width="80" height="40" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+    <text x="50" y="169" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">Client</text>
+    <!-- API GW -->
+    <rect x="110" y="135" width="110" height="60" rx="4" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.5"/>
+    <text x="165" y="158" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">API Gateway</text>
+    <text x="165" y="172" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">auth + throttle</text>
+    <text x="165" y="186" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">REST / WebSocket</text>
+    <line x1="90" y1="165" x2="109" y2="165" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- Lambda handler -->
+    <rect x="240" y="135" width="100" height="60" rx="4" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="290" y="158" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">λ Handler</text>
+    <text x="290" y="172" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">validate + enqueue</text>
+    <line x1="220" y1="165" x2="239" y2="165" stroke="#00ff88" stroke-width="1.2" marker-end="url(#ag)"/>
+    <!-- SQS -->
+    <rect x="240" y="50" width="100" height="50" rx="4" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.5"/>
+    <text x="290" y="70" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">SQS Queue</text>
+    <text x="290" y="84" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">FIFO / DLQ</text>
+    <line x1="290" y1="135" x2="290" y2="101" stroke="#ff6b35" stroke-width="1.2" marker-end="url(#ao)"/>
+    <!-- SNS -->
+    <rect x="240" y="270" width="100" height="50" rx="4" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.5"/>
+    <text x="290" y="290" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">SNS Topic</text>
+    <text x="290" y="304" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">fan-out</text>
+    <line x1="290" y1="195" x2="290" y2="269" stroke="#555" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a)"/>
+    <!-- Process Lambda -->
+    <rect x="390" y="50" width="110" height="50" rx="4" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.2"/>
+    <text x="445" y="70" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">λ Processor</text>
+    <text x="445" y="85" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">batch size: 10</text>
+    <line x1="340" y1="75" x2="389" y2="75" stroke="#ff6b35" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- Notify Lambda -->
+    <rect x="390" y="270" width="110" height="50" rx="4" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.2"/>
+    <text x="445" y="290" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">λ Notify</text>
+    <text x="445" y="305" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">email / push / SMS</text>
+    <line x1="340" y1="295" x2="389" y2="295" stroke="#c678dd" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- Analytics Lambda -->
+    <rect x="390" y="160" width="110" height="50" rx="4" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.2"/>
+    <text x="445" y="180" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">λ Analytics</text>
+    <text x="445" y="196" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">metrics + Kinesis</text>
+    <line x1="340" y1="295" x2="445" y2="211" stroke="#c678dd" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a)"/>
+    <!-- DynamoDB -->
+    <rect x="555" y="50" width="90" height="40" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1"/>
+    <text x="600" y="74" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">DynamoDB</text>
+    <line x1="500" y1="75" x2="554" y2="75" stroke="#444" stroke-width="1" marker-end="url(#a)"/>
+    <!-- DLQ -->
+    <rect x="555" y="270" width="90" height="40" rx="4" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1" stroke-dasharray="4,2"/>
+    <text x="600" y="288" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">DLQ</text>
+    <text x="600" y="302" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">failed events</text>
+    <line x1="500" y1="295" x2="554" y2="290" stroke="#ff6b35" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a)"/>
+    <!-- EventBridge -->
+    <rect x="110" y="270" width="110" height="50" rx="4" fill="#1c1c1c" stroke="#e5c07b" stroke-width="1.2"/>
+    <text x="165" y="290" font-family="JetBrains Mono,monospace" font-size="8" fill="#e5c07b" text-anchor="middle">EventBridge</text>
+    <text x="165" y="305" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">scheduled rules</text>
+    <line x1="165" y1="269" x2="165" y2="196" stroke="#e5c07b" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a)"/>
+    <line x1="220" y1="295" x2="239" y2="295" stroke="#e5c07b" stroke-width="1.2" stroke-dasharray="3,2" marker-end="url(#a)"/>
+  </svg>
+</div>
+
+<h2 id="cold-starts">Conquering Cold Starts</h2>
+<p>Cold starts happen when Lambda creates a new execution environment — typically 100ms–2s depending on runtime and package size. Techniques we used to go from ~800ms to ~12ms:</p>
+<ul>
+  <li><strong>Provisioned Concurrency</strong> for latency-sensitive paths (checkout, auth)</li>
+  <li><strong>Slim packages</strong> — from 45MB to 3.2MB by removing dev deps and using Lambda Layers</li>
+  <li><strong>Right runtime</strong> — Node.js and Python start 5–10× faster than JVM runtimes</li>
+  <li><strong>Move init outside the handler</strong> — DB connections, SDK clients created once per container</li>
+</ul>
+<pre><code><span class="cmt">// ❌ Bad — new DB connection every invocation</span>
+<span class="kw">export const</span> <span class="fn">handler</span> = <span class="kw">async</span> (event) => {
+  <span class="kw">const</span> db = <span class="kw">await</span> <span class="fn">createConnection</span>(); <span class="cmt">// cold start tax every time</span>
+  <span class="kw">return</span> db.<span class="fn">query</span>(<span class="str">'SELECT ...'</span>);
+};
+
+<span class="cmt">// ✅ Good — connection reused across warm invocations</span>
+<span class="kw">let</span> db;
+<span class="kw">const</span> <span class="fn">getDb</span> = <span class="kw">async</span> () => db ?? (db = <span class="kw">await</span> <span class="fn">createConnection</span>());
+
+<span class="kw">export const</span> <span class="fn">handler</span> = <span class="kw">async</span> (event) => {
+  <span class="kw">const</span> conn = <span class="kw">await</span> <span class="fn">getDb</span>(); <span class="cmt">// instant on warm invocation</span>
+  <span class="kw">return</span> conn.<span class="fn">query</span>(<span class="str">'SELECT ...'</span>);
+};</code></pre>
+
+<h2 id="concurrency">Concurrency & Throttling</h2>
+<p>Lambda has an account-level concurrency limit (default 1000 per region). Without reserved concurrency, one noisy function can exhaust the entire limit — including your payment and auth flows. Reserve concurrency per critical function and use Provisioned Concurrency for predictable latency.</p>
+<pre><code><span class="kw">resource</span> <span class="str">"aws_lambda_function"</span> <span class="str">"payment"</span> {
+  reserved_concurrent_executions = <span class="num">200</span>  <span class="cmt"># hard cap</span>
+}
+<span class="kw">resource</span> <span class="str">"aws_lambda_provisioned_concurrency_config"</span> <span class="str">"warm"</span> {
+  function_name                  = aws_lambda_function.payment.function_name
+  qualifier                      = aws_lambda_alias.live.name
+  provisioned_concurrent_executions = <span class="num">20</span>  <span class="cmt"># always warm</span>
+}</code></pre>
+
+<h2 id="dlq">SQS + Dead Letter Queues</h2>
+<p>Every SQS-triggered Lambda <strong>must</strong> have a DLQ. Without it, failed messages silently vanish after the visibility timeout. Our setup: 3 retries → DLQ → PagerDuty alert + S3 for replay audit.</p>
+<div class="cl cw"><span class="ico">⚠️</span><span>Never set SQS batch size above what your Lambda can process in under 30 seconds. Large batches + slow processing = visibility timeout = entire batch retried = duplicate processing.</span></div>
+
+<h2 id="observability">Observability with Lambda Powertools</h2>
+<p>CloudWatch's default Lambda metrics miss critical signals. We use Lambda Powertools for structured JSON logs, distributed tracing, custom metrics, and idempotency handling.</p>
+<pre><code><span class="kw">from</span> aws_lambda_powertools <span class="kw">import</span> Logger, Tracer, Metrics
+<span class="kw">from</span> aws_lambda_powertools.utilities.idempotency <span class="kw">import</span> idempotent
+
+logger  = <span class="fn">Logger</span>()
+tracer  = <span class="fn">Tracer</span>()
+metrics = <span class="fn">Metrics</span>()
+
+<span class="prop">@logger.inject_lambda_context</span>
+<span class="prop">@tracer.capture_lambda_handler</span>
+<span class="prop">@idempotent</span>(persistence_store=dynamodb_persistence)
+<span class="kw">def</span> <span class="fn">handler</span>(event, context):
+    logger.<span class="fn">info</span>(<span class="str">"Processing order"</span>, order_id=event[<span class="str">"orderId"</span>])
+    metrics.<span class="fn">add_metric</span>(name=<span class="str">"OrderProcessed"</span>, unit=<span class="str">"Count"</span>, value=<span class="num">1</span>)
+    <span class="kw">return</span> <span class="fn">process_order</span>(event)</code></pre>
+<div class="cl ct"><span class="ico">💡</span><span>Use <code>@idempotent</code> on any Lambda handling financial transactions. It uses DynamoDB to guarantee exactly-once processing even when SQS delivers the same message twice.</span></div>
+</div>
+  </article>
+  <aside class="sr">
+    <div class="tt">On this page</div>
+    <ul class="tl" id="toc"></ul>
+    <div class="rt">Related Posts</div>
+    
+    <a href="multi-region-aws.html" class="rp"><div class="rc">cloud</div><div class="rx">Multi-Region AWS Infrastructure</div></a>
+    <a href="eks-zero-downtime.html" class="rp"><div class="rc">kubernetes</div><div class="rx">Zero-Downtime EKS Upgrades</div></a>
+    <a href="pci-dss-aws.html" class="rp"><div class="rc">security</div><div class="rx">PCI-DSS on AWS</div></a>
+    <a href="gitops-argocd.html" class="rp"><div class="rc">devops</div><div class="rx">GitOps with ArgoCD & Terraform</div></a>
+    <a href="cloud-finops.html" class="rp"><div class="rc">cloud</div><div class="rx">Cloud FinOps Framework</div></a>
+    <a href="aws-lambda-serverless-scale.html" class="rp"><div class="rc">cloud</div><div class="rx">Serverless at Scale: Lambda</div></a>
+    <a href="zero-trust-aws.html" class="rp"><div class="rc">security</div><div class="rx">Zero Trust Architecture on AWS</div></a>
+    <a href="container-security-hardening.html" class="rp"><div class="rc">security</div><div class="rx">Container Security Hardening</div></a>
+    <a href="platform-engineering-idp.html" class="rp"><div class="rc">devops</div><div class="rx">Platform Engineering & IDP</div></a>
+    <a href="docker-compose-to-k8s.html" class="rp"><div class="rc">devops</div><div class="rx">Docker Compose to Kubernetes</div></a>
+  </aside>
+</div>
+<script>
+window.addEventListener('scroll',()=>{const a=document.querySelector('article'),r=a.getBoundingClientRect(),t=a.offsetHeight-window.innerHeight,s=Math.max(0,-r.top);document.getElementById('rp').style.width=Math.min(100,(s/t)*100)+'%'});
+const hs=document.querySelectorAll('.prose h2,.prose h3'),toc=document.getElementById('toc');
+hs.forEach((h,i)=>{h.id=h.id||'s'+i;const li=document.createElement('li'),a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent;if(h.tagName==='H3')a.style.paddingLeft='1.25rem';li.appendChild(a);toc.appendChild(li)});
+const obs=new IntersectionObserver(e=>{e.forEach(e=>{const a=toc.querySelector('a[href="#'+e.target.id+'"]');if(a)a.classList.toggle('active',e.isIntersecting)})},{rootMargin:'-20% 0px -70% 0px'});hs.forEach(h=>obs.observe(h));</script>
+</body>
+</html>

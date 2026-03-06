@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AWS VPC Deep Dive: Advanced Networking Patterns for Production — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--bg2:#111;--bg3:#161616;--border:#222;--border2:#2a2a2a;--accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;--muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted)}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sf{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sf a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+.sf a:hover{color:var(--accent)}
+.sb{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+article{padding:3rem 3.5rem;min-width:0;animation:fu .5s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.bl{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.bl:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.ph{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.mb{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.b{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.bc{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.bf{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.bd,.bt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.ds{color:var(--muted);font-size:.6rem}
+h1.pt{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.ps{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+.ar{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.an{font-size:.82rem;font-weight:600;color:var(--white)}
+.ao{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.tb{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.tg{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+.cl{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.ci{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+.cw{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+.ct{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+.ico{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.dg{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.dt{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.dt::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+.sn{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+.sl2{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+.tt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.tl{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.tl li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.tl li a:hover,.tl li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.rt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.rp{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.rp:hover{background:rgba(0,255,136,.04)}
+.rc{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.rx{font-size:.78rem;color:var(--text);line-height:1.35}
+.rpr{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}</style>
+</head>
+<body>
+<div class="rpr" id="rp"></div>
+<div class="page">
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <!-- <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a> -->
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="sb"><span class="sd"></span>status: building</div>
+    <div class="sf">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+      <!-- <a href="#">Twitter / X</a></div> -->
+  </aside>
+  <article>
+    <a href="../index.html" class="bl">← back to blog</a>
+    <div class="ph">
+      <div class="mb"><span class="b bc">cloud</span><span class="ds">·</span><span class="bd">Sep 14, 2025</span><span class="ds">·</span><span class="bt">11 min read</span></div>
+      <h1 class="pt">AWS VPC Deep Dive: Advanced Networking Patterns for Production</h1>
+      <p class="ps">Mastering AWS VPC design — CIDR planning that scales, NAT Gateway HA per AZ, VPC PrivateLink for service isolation, Transit Gateway for multi-account mesh, and VPC Flow Logs for security forensics.</p>
+      <div class="ar"><div class="av">SJ</div><div><div class="an">Sabin Joshi</div><div class="ao">DevOps Engineer</div></div></div>
+      <div class="tb"><span class="tg">#aws</span><span class="tg">#vpc</span><span class="tg">#networking</span><span class="tg">#nat-gateway</span><span class="tg">#privatelink</span><span class="tg">#transit-gateway</span><span class="tg">#vpc-flow-logs</span></div>
+    </div>
+    <div class="prose">
+<h2 id="cidr">CIDR Planning Is Forever</h2>
+<p>The worst AWS architecture mistake is poor CIDR planning. Overlapping IP ranges between VPCs, on-premises networks, and future acquisitions will force expensive re-architecting. You cannot change VPC CIDR blocks without destroying the VPC. Get this right upfront.</p>
+<p>Our hierarchical scheme: <code>/8</code> per org → <code>/16</code> per AWS account → <code>/20</code> per VPC → <code>/24</code> per subnet. This allows 50+ accounts with no collisions.</p>
+<div class="cl ci"><span class="ico">ℹ️</span><span>Reserve <code>100.64.0.0/10</code> (IANA Shared Address Space) for internal-only VPCs. Routable within AWS, won't conflict with RFC-1918 on-prem space.</span></div>
+
+<h2 id="three-tier">Three-Tier Subnet Model</h2>
+<div class="dg">
+  <div class="dt">Three-Tier VPC Subnet Architecture (3 AZs)</div>
+  <svg viewBox="0 0 700 370" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>{arr('a','#555')}</defs>
+    <!-- IGW -->
+    <rect x="270" y="8" width="160" height="30" rx="4" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.5"/>
+    <text x="350" y="27" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">Internet Gateway</text>
+    <!-- VPC -->
+    <rect x="15" y="48" width="670" height="310" rx="8" fill="none" stroke="#2a2a2a" stroke-width="2" stroke-dasharray="6,3"/>
+    <text x="30" y="65" font-family="JetBrains Mono,monospace" font-size="8" fill="#555">VPC: 10.0.0.0/16</text>
+    <!-- AZ labels -->
+    <text x="122" y="83" font-family="JetBrains Mono,monospace" font-size="8" fill="#555" text-anchor="middle">us-east-1a</text>
+    <text x="350" y="83" font-family="JetBrains Mono,monospace" font-size="8" fill="#555" text-anchor="middle">us-east-1b</text>
+    <text x="578" y="83" font-family="JetBrains Mono,monospace" font-size="8" fill="#555" text-anchor="middle">us-east-1c</text>
+    <!-- Public rows -->
+    <rect x="30" y="90" width="184" height="62" rx="4" fill="rgba(0,204,255,.04)" stroke="rgba(0,204,255,.3)" stroke-width="1"/>
+    <text x="122" y="106" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ccff" text-anchor="middle">Public /24 · 10.0.1.0/24</text>
+    <rect x="55" y="114" width="55" height="18" rx="2" fill="#161616" stroke="#00ccff" stroke-width="1"/>
+    <text x="82" y="127" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ccff" text-anchor="middle">ALB</text>
+    <rect x="120" y="114" width="60" height="18" rx="2" fill="#161616" stroke="#00ccff" stroke-width="1"/>
+    <text x="150" y="127" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ccff" text-anchor="middle">NAT GW</text>
+    <rect x="258" y="90" width="184" height="62" rx="4" fill="rgba(0,204,255,.04)" stroke="rgba(0,204,255,.3)" stroke-width="1"/>
+    <text x="350" y="106" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ccff" text-anchor="middle">Public /24 · 10.0.2.0/24</text>
+    <rect x="283" y="114" width="55" height="18" rx="2" fill="#161616" stroke="#00ccff" stroke-width="1"/>
+    <text x="310" y="127" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ccff" text-anchor="middle">ALB</text>
+    <rect x="348" y="114" width="60" height="18" rx="2" fill="#161616" stroke="#00ccff" stroke-width="1"/>
+    <text x="378" y="127" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ccff" text-anchor="middle">NAT GW</text>
+    <rect x="486" y="90" width="184" height="62" rx="4" fill="rgba(0,204,255,.04)" stroke="rgba(0,204,255,.3)" stroke-width="1"/>
+    <text x="578" y="106" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ccff" text-anchor="middle">Public /24 · 10.0.3.0/24</text>
+    <rect x="531" y="114" width="60" height="18" rx="2" fill="#161616" stroke="#00ccff" stroke-width="1"/>
+    <text x="561" y="127" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ccff" text-anchor="middle">NAT GW</text>
+    <!-- Private app rows -->
+    <rect x="30" y="168" width="184" height="65" rx="4" fill="rgba(0,255,136,.03)" stroke="rgba(0,255,136,.25)" stroke-width="1"/>
+    <text x="122" y="183" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ff88" text-anchor="middle">Private App /23 · 10.0.10.0/23</text>
+    <rect x="45" y="191" width="50" height="18" rx="2" fill="#161616" stroke="#00ff88" stroke-width="1"/>
+    <text x="70" y="204" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ff88" text-anchor="middle">EKS</text>
+    <rect x="105" y="191" width="70" height="18" rx="2" fill="#161616" stroke="#00ff88" stroke-width="1"/>
+    <text x="140" y="204" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ff88" text-anchor="middle">ECS Tasks</text>
+    <rect x="258" y="168" width="184" height="65" rx="4" fill="rgba(0,255,136,.03)" stroke="rgba(0,255,136,.25)" stroke-width="1"/>
+    <text x="350" y="183" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ff88" text-anchor="middle">Private App /23 · 10.0.12.0/23</text>
+    <rect x="486" y="168" width="184" height="65" rx="4" fill="rgba(0,255,136,.03)" stroke="rgba(0,255,136,.25)" stroke-width="1"/>
+    <text x="578" y="183" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ff88" text-anchor="middle">Private App /23 · 10.0.14.0/23</text>
+    <!-- Private data rows -->
+    <rect x="30" y="248" width="184" height="55" rx="4" fill="rgba(255,107,53,.04)" stroke="rgba(255,107,53,.3)" stroke-width="1"/>
+    <text x="122" y="263" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#ff6b35" text-anchor="middle">Private Data /24 · 10.0.20.0/24</text>
+    <rect x="45" y="271" width="55" height="16" rx="2" fill="#161616" stroke="#ff6b35" stroke-width="1"/>
+    <text x="72" y="283" font-family="JetBrains Mono,monospace" font-size="7" fill="#ff6b35" text-anchor="middle">Aurora</text>
+    <rect x="110" y="271" width="75" height="16" rx="2" fill="#161616" stroke="#ff6b35" stroke-width="1"/>
+    <text x="147" y="283" font-family="JetBrains Mono,monospace" font-size="7" fill="#ff6b35" text-anchor="middle">ElastiCache</text>
+    <rect x="258" y="248" width="184" height="55" rx="4" fill="rgba(255,107,53,.04)" stroke="rgba(255,107,53,.3)" stroke-width="1"/>
+    <text x="350" y="263" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#ff6b35" text-anchor="middle">Private Data /24 · 10.0.21.0/24</text>
+    <rect x="486" y="248" width="184" height="55" rx="4" fill="rgba(255,107,53,.04)" stroke="rgba(255,107,53,.3)" stroke-width="1"/>
+    <text x="578" y="263" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#ff6b35" text-anchor="middle">Private Data /24 · 10.0.22.0/24</text>
+    <!-- IGW line -->
+    <line x1="350" y1="38" x2="350" y2="89" stroke="#444" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#a)"/>
+  </svg>
+</div>
+
+<h2 id="nat-ha">NAT Gateway High Availability</h2>
+<p>Common mistake: one NAT Gateway in one AZ, shared by all private subnets. When that AZ has issues, all outbound traffic from private subnets fails. Deploy one NAT GW per AZ and route each AZ's private subnets through their local NAT GW.</p>
+<pre><code><span class="kw">resource</span> <span class="str">"aws_nat_gateway"</span> <span class="str">"az_a"</span> {
+  allocation_id = aws_eip.nat_a.id
+  subnet_id     = aws_subnet.public_a.id
+}
+<span class="kw">resource</span> <span class="str">"aws_route"</span> <span class="str">"private_a_nat"</span> {
+  route_table_id         = aws_route_table.private_a.id
+  destination_cidr_block = <span class="str">"0.0.0.0/0"</span>
+  nat_gateway_id         = aws_nat_gateway.az_a.id  <span class="cmt"># local AZ NAT GW</span>
+}</code></pre>
+
+<h2 id="privatelink">VPC PrivateLink for Service Isolation</h2>
+<p>PrivateLink exposes services across VPCs without peering — traffic never leaves AWS, the service provider never touches the consumer VPC. We use it to expose internal microservices between teams without granting full VPC access.</p>
+<pre><code><span class="kw">resource</span> <span class="str">"aws_vpc_endpoint_service"</span> <span class="str">"payment_api"</span> {
+  acceptance_required        = <span class="prop">true</span>
+  network_load_balancer_arns = [aws_lb.payment_nlb.arn]
+  allowed_principals         = [<span class="str">"arn:aws:iam::CONSUMER_ACCT:root"</span>]
+}
+<span class="kw">resource</span> <span class="str">"aws_vpc_endpoint"</span> <span class="str">"consume_payment"</span> {
+  vpc_id              = var.consumer_vpc_id
+  service_name        = data.aws_vpc_endpoint_service.payment.service_name
+  vpc_endpoint_type   = <span class="str">"Interface"</span>
+  private_dns_enabled = <span class="prop">true</span>
+}</code></pre>
+
+<h2 id="flow-logs">VPC Flow Logs</h2>
+<p>Enable Flow Logs on all production VPCs. Essential for debugging connectivity and security forensics. Use the custom flow log format including <code>pkt-src-aws-service</code> and <code>pkt-dst-aws-service</code> fields — this reveals exactly which AWS services your instances communicate with, invaluable for building least-privilege security groups.</p>
+<div class="cl ct"><span class="ico">💡</span><span>Ship Flow Logs to S3 with Athena for long-term queries. Keep CloudWatch Logs for real-time investigation. Run a weekly Athena query to find unexpected egress patterns — these often reveal misconfigured apps or active exfiltration attempts.</span></div>
+</div>
+  </article>
+  <aside class="sr">
+    <div class="tt">On this page</div>
+    <ul class="tl" id="toc"></ul>
+    <div class="rt">Related Posts</div>
+    
+    <a href="multi-region-aws.html" class="rp"><div class="rc">cloud</div><div class="rx">Multi-Region AWS Infrastructure</div></a>
+    <a href="eks-zero-downtime.html" class="rp"><div class="rc">kubernetes</div><div class="rx">Zero-Downtime EKS Upgrades</div></a>
+    <a href="pci-dss-aws.html" class="rp"><div class="rc">security</div><div class="rx">PCI-DSS on AWS</div></a>
+    <a href="gitops-argocd.html" class="rp"><div class="rc">devops</div><div class="rx">GitOps with ArgoCD & Terraform</div></a>
+    <a href="cloud-finops.html" class="rp"><div class="rc">cloud</div><div class="rx">Cloud FinOps Framework</div></a>
+    <a href="aws-lambda-serverless-scale.html" class="rp"><div class="rc">cloud</div><div class="rx">Serverless at Scale: Lambda</div></a>
+    <a href="zero-trust-aws.html" class="rp"><div class="rc">security</div><div class="rx">Zero Trust Architecture on AWS</div></a>
+    <a href="container-security-hardening.html" class="rp"><div class="rc">security</div><div class="rx">Container Security Hardening</div></a>
+    <a href="platform-engineering-idp.html" class="rp"><div class="rc">devops</div><div class="rx">Platform Engineering & IDP</div></a>
+    <a href="docker-compose-to-k8s.html" class="rp"><div class="rc">devops</div><div class="rx">Docker Compose to Kubernetes</div></a>
+  </aside>
+</div>
+<script>
+window.addEventListener('scroll',()=>{const a=document.querySelector('article'),r=a.getBoundingClientRect(),t=a.offsetHeight-window.innerHeight,s=Math.max(0,-r.top);document.getElementById('rp').style.width=Math.min(100,(s/t)*100)+'%'});
+const hs=document.querySelectorAll('.prose h2,.prose h3'),toc=document.getElementById('toc');
+hs.forEach((h,i)=>{h.id=h.id||'s'+i;const li=document.createElement('li'),a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent;if(h.tagName==='H3')a.style.paddingLeft='1.25rem';li.appendChild(a);toc.appendChild(li)});
+const obs=new IntersectionObserver(e=>{e.forEach(e=>{const a=toc.querySelector('a[href="#'+e.target.id+'"]');if(a)a.classList.toggle('active',e.isIntersecting)})},{rootMargin:'-20% 0px -70% 0px'});hs.forEach(h=>obs.observe(h));</script>
+</body>
+</html>

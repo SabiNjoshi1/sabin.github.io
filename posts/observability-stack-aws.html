@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Production Observability Stack: Logs, Metrics, Traces on AWS — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--bg2:#111;--bg3:#161616;--border:#222;--border2:#2a2a2a;--accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;--muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted)}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sf{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sf a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+.sf a:hover{color:var(--accent)}
+.sb{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+article{padding:3rem 3.5rem;min-width:0;animation:fu .5s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.bl{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.bl:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.ph{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.mb{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.b{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.bc{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.bf{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.bd,.bt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.ds{color:var(--muted);font-size:.6rem}
+h1.pt{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.ps{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+.ar{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.an{font-size:.82rem;font-weight:600;color:var(--white)}
+.ao{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.tb{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.tg{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+.cl{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.ci{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+.cw{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+.ct{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+.ico{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.dg{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.dt{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.dt::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+.sn{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+.sl2{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+.tt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.tl{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.tl li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.tl li a:hover,.tl li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.rt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.rp{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.rp:hover{background:rgba(0,255,136,.04)}
+.rc{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.rx{font-size:.78rem;color:var(--text);line-height:1.35}
+.rpr{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}</style>
+</head>
+<body>
+<div class="rpr" id="rp"></div>
+<div class="page">
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <!-- <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a> -->
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="sb"><span class="sd"></span>status: building</div>
+    <div class="sf">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+      <!-- <a href="#">Twitter / X</a> -->
+    </div>
+  </aside>
+  <article>
+    <a href="../index.html" class="bl">← back to blog</a>
+    <div class="ph">
+      <div class="mb"><span class="b bc">devops</span><span class="b bf">Featured</span><span class="ds">·</span><span class="bd">Sep 10, 2025</span><span class="ds">·</span><span class="bt">11 min read</span></div>
+      <h1 class="pt">Production Observability Stack: Logs, Metrics, Traces on AWS</h1>
+      <p class="ps">Building a unified observability platform on AWS — structured logging with CloudWatch, distributed tracing with X-Ray and Jaeger, metrics with Prometheus + Grafana, and effective alerting that reduces alert fatigue.</p>
+      <div class="ar"><div class="av">SJ</div><div><div class="an">Sabin Joshi</div><div class="ao">DevOps Engineer</div></div></div>
+      <div class="tb"><span class="tg">#observability</span><span class="tg">#aws</span><span class="tg">#cloudwatch</span><span class="tg">#x-ray</span><span class="tg">#prometheus</span><span class="tg">#grafana</span><span class="tg">#opentelemetry</span><span class="tg">#alerting</span></div>
+    </div>
+    <div class="prose">
+<h2 id="three-pillars">The Three Pillars</h2>
+<p>Observability is more than monitoring. Monitoring tells you <em>when</em> something is broken. Observability tells you <em>why</em>. The three pillars — logs, metrics, and traces — are most powerful when correlated: a spike in your error rate metric (metrics) leads you to a trace showing which service call is failing (tracing), which links to the actual error message (logs).</p>
+
+<h2 id="arch">Observability Architecture</h2>
+<div class="dg">
+  <div class="dt">Unified Observability Platform on AWS</div>
+  <svg viewBox="0 0 720 360" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>{arr('a','#555')}{arr('ag','#00ff88')}{arr('ab','#00ccff')}</defs>
+    <!-- Services -->
+    <rect x="15" y="150" width="90" height="55" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+    <text x="60" y="172" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">EKS Services</text>
+    <text x="60" y="187" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">OTel SDK</text>
+    <text x="60" y="200" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">auto-instrument</text>
+    <!-- OTel Collector -->
+    <rect x="145" y="130" width="120" height="95" rx="4" fill="#1c1c1c" stroke="#e5c07b" stroke-width="1.5"/>
+    <text x="205" y="155" font-family="JetBrains Mono,monospace" font-size="8" fill="#e5c07b" text-anchor="middle">OTel Collector</text>
+    <text x="205" y="170" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">receive all signals</text>
+    <text x="205" y="184" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">filter + enrich</text>
+    <text x="205" y="198" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">fan-out to backends</text>
+    <text x="205" y="212" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">buffer + retry</text>
+    <line x1="105" y1="177" x2="144" y2="177" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- LOGS backend -->
+    <rect x="315" y="40" width="120" height="60" rx="4" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.5"/>
+    <text x="375" y="63" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">CloudWatch Logs</text>
+    <text x="375" y="77" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">structured JSON</text>
+    <text x="375" y="91" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">log groups + insights</text>
+    <line x1="265" y1="155" x2="314" y2="70" stroke="#00ccff" stroke-width="1.2" marker-end="url(#ab)"/>
+    <!-- METRICS backend -->
+    <rect x="315" y="155" width="120" height="60" rx="4" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="375" y="178" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">Prometheus</text>
+    <text x="375" y="193" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">AMP (managed)</text>
+    <text x="375" y="207" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">remote_write</text>
+    <line x1="265" y1="177" x2="314" y2="184" stroke="#00ff88" stroke-width="1.2" marker-end="url(#ag)"/>
+    <!-- TRACES backend -->
+    <rect x="315" y="270" width="120" height="60" rx="4" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.5"/>
+    <text x="375" y="293" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">AWS X-Ray</text>
+    <text x="375" y="307" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">distributed traces</text>
+    <text x="375" y="321" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">service map</text>
+    <line x1="265" y1="198" x2="314" y2="295" stroke="#c678dd" stroke-width="1.2" marker-end="url(#a)"/>
+    <!-- Grafana -->
+    <rect x="490" y="100" width="120" height="80" rx="5" fill="#1c1c1c" stroke="#ff6b35" stroke-width="2"/>
+    <text x="550" y="128" font-family="JetBrains Mono,monospace" font-size="9" fill="#ff6b35" text-anchor="middle">Grafana</text>
+    <text x="550" y="143" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">AMG (managed)</text>
+    <text x="550" y="157" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">unified dashboards</text>
+    <text x="550" y="170" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">cross-signal correlation</text>
+    <line x1="435" y1="70" x2="489" y2="130" stroke="#00ccff" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a)"/>
+    <line x1="435" y1="184" x2="489" y2="148" stroke="#00ff88" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a)"/>
+    <line x1="435" y1="295" x2="489" y2="165" stroke="#c678dd" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#a)"/>
+    <!-- Alerting -->
+    <rect x="490" y="240" width="120" height="70" rx="4" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.2"/>
+    <text x="550" y="263" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">Alerting</text>
+    <text x="550" y="278" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">PagerDuty / OpsGenie</text>
+    <text x="550" y="292" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Slack channels</text>
+    <text x="550" y="306" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">on-call routing</text>
+    <line x1="550" y1="180" x2="550" y2="239" stroke="#ff6b35" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a)"/>
+  </svg>
+</div>
+
+<h2 id="otel">OpenTelemetry — Instrument Once, Export Anywhere</h2>
+<p>We use OpenTelemetry (OTel) as the single instrumentation layer. Application code emits traces, metrics, and logs via OTel SDKs. The OTel Collector receives all signals and fans them out to CloudWatch, Prometheus, and X-Ray. If we swap backends, application code doesn't change.</p>
+<pre><code><span class="cmt"># OTel Collector config — fan-out to all backends</span>
+<span class="prop">receivers</span>:
+  <span class="prop">otlp</span>:
+    <span class="prop">protocols</span>: { <span class="prop">grpc</span>: { endpoint: <span class="str">"0.0.0.0:4317"</span> } }
+
+<span class="prop">exporters</span>:
+  <span class="prop">awsxray</span>: {}
+  <span class="prop">prometheusremotewrite</span>:
+    <span class="prop">endpoint</span>: <span class="str">"https://aps.us-east-1.amazonaws.com/workspaces/ws-xxx/api/v1/remote_write"</span>
+  <span class="prop">awscloudwatchlogs</span>:
+    <span class="prop">log_group_name</span>: /app/services
+
+<span class="prop">service</span>:
+  <span class="prop">pipelines</span>:
+    <span class="prop">traces</span>:   { <span class="prop">receivers</span>: [otlp], <span class="prop">exporters</span>: [awsxray] }
+    <span class="prop">metrics</span>:  { <span class="prop">receivers</span>: [otlp], <span class="prop">exporters</span>: [prometheusremotewrite] }
+    <span class="prop">logs</span>:     { <span class="prop">receivers</span>: [otlp], <span class="prop">exporters</span>: [awscloudwatchlogs] }</code></pre>
+
+<h2 id="structured-logs">Structured Logging</h2>
+<p>Unstructured logs are grep-only. Structured JSON logs are queryable, filterable, and parseable by machines. Every log line should include: timestamp, severity, service name, trace ID, and the specific fields relevant to the event.</p>
+<pre><code><span class="cmt">// Structured log with correlation IDs</span>
+logger.<span class="fn">info</span>({
+  <span class="prop">event</span>: <span class="str">"order.created"</span>,
+  <span class="prop">orderId</span>: order.id,
+  <span class="prop">userId</span>: user.id,
+  <span class="prop">amount</span>: order.total,
+  <span class="prop">traceId</span>: context.traceId,    <span class="cmt">// link to distributed trace</span>
+  <span class="prop">durationMs</span>: elapsed,
+});</code></pre>
+
+<h2 id="alerting">Alert Design: Reduce Fatigue</h2>
+<p>Alert fatigue kills on-call culture. Every alert that fires at 3am and turns out to be nothing trains engineers to ignore alerts. Our rules: <strong>only alert on symptoms, not causes</strong> (alert on high error rate, not high CPU), use <strong>multi-window burn rate</strong> for SLO-based alerts, and require a runbook link on every alert.</p>
+<pre><code><span class="cmt"># SLO-based alert using burn rate (Prometheus)</span>
+<span class="prop">- alert</span>: HighErrorBurnRate
+  <span class="prop">expr</span>: >
+    (
+      sum(rate(http_requests_total{status=~"5.."}[1h]))
+      / sum(rate(http_requests_total[1h]))
+    ) > <span class="num">14.4</span> * <span class="num">0.001</span>   <span class="cmt"># 14.4× burn rate on 99.9% SLO</span>
+  <span class="prop">for</span>: <span class="num">2m</span>
+  <span class="prop">labels</span>: { <span class="prop">severity</span>: critical }
+  <span class="prop">annotations</span>:
+    <span class="prop">runbook</span>: https://wiki.internal/runbooks/high-error-rate
+    <span class="prop">summary</span>: <span class="str">"Error budget burning fast — check traces in Grafana"</span></code></pre>
+
+<div class="cl ct"><span class="ico">💡</span><span>Start with fewer, higher-quality alerts. 5 alerts that always mean something is wrong are infinitely more valuable than 50 alerts that are 80% noise. Review your alert-to-incident ratio monthly.</span></div>
+</div>
+  </article>
+  <aside class="sr">
+    <div class="tt">On this page</div>
+    <ul class="tl" id="toc"></ul>
+    <div class="rt">Related Posts</div>
+    
+    <a href="multi-region-aws.html" class="rp"><div class="rc">cloud</div><div class="rx">Multi-Region AWS Infrastructure</div></a>
+    <a href="eks-zero-downtime.html" class="rp"><div class="rc">kubernetes</div><div class="rx">Zero-Downtime EKS Upgrades</div></a>
+    <a href="pci-dss-aws.html" class="rp"><div class="rc">security</div><div class="rx">PCI-DSS on AWS</div></a>
+    <a href="gitops-argocd.html" class="rp"><div class="rc">devops</div><div class="rx">GitOps with ArgoCD & Terraform</div></a>
+    <a href="cloud-finops.html" class="rp"><div class="rc">cloud</div><div class="rx">Cloud FinOps Framework</div></a>
+    <a href="aws-lambda-serverless-scale.html" class="rp"><div class="rc">cloud</div><div class="rx">Serverless at Scale: Lambda</div></a>
+    <a href="zero-trust-aws.html" class="rp"><div class="rc">security</div><div class="rx">Zero Trust Architecture on AWS</div></a>
+    <a href="container-security-hardening.html" class="rp"><div class="rc">security</div><div class="rx">Container Security Hardening</div></a>
+    <a href="platform-engineering-idp.html" class="rp"><div class="rc">devops</div><div class="rx">Platform Engineering & IDP</div></a>
+    <a href="docker-compose-to-k8s.html" class="rp"><div class="rc">devops</div><div class="rx">Docker Compose to Kubernetes</div></a>
+  </aside>
+</div>
+<script>
+window.addEventListener('scroll',()=>{const a=document.querySelector('article'),r=a.getBoundingClientRect(),t=a.offsetHeight-window.innerHeight,s=Math.max(0,-r.top);document.getElementById('rp').style.width=Math.min(100,(s/t)*100)+'%'});
+const hs=document.querySelectorAll('.prose h2,.prose h3'),toc=document.getElementById('toc');
+hs.forEach((h,i)=>{h.id=h.id||'s'+i;const li=document.createElement('li'),a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent;if(h.tagName==='H3')a.style.paddingLeft='1.25rem';li.appendChild(a);toc.appendChild(li)});
+const obs=new IntersectionObserver(e=>{e.forEach(e=>{const a=toc.querySelector('a[href="#'+e.target.id+'"]');if(a)a.classList.toggle('active',e.isIntersecting)})},{rootMargin:'-20% 0px -70% 0px'});hs.forEach(h=>obs.observe(h));</script>
+</body>
+</html>
