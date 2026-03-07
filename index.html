@@ -48,11 +48,10 @@
     .filter-btn.active{background:rgba(0,255,136,.08);border-color:rgba(0,255,136,.3);color:var(--accent)}
     .filter-count{font-size:.65rem;color:var(--muted);margin-left:.3rem}
     .posts-list{display:flex;flex-direction:column;gap:0}
-    .post-card{display:block;padding:1.6rem 0;border-bottom:1px solid var(--border);transition:all .2s;cursor:pointer;animation:fadeUp .5s ease both}
+    .post-card{display:block;padding:1.6rem 0;border-bottom:1px solid var(--border);transition:all .2s;cursor:pointer;animation:fadeUp .4s ease both}
     .post-card:first-child{border-top:1px solid var(--border)}
     .post-card:hover .post-title{color:var(--accent)}
     .post-card:hover .read-more{color:var(--accent);gap:.5rem}
-    .post-card:nth-child(1){animation-delay:.05s}.post-card:nth-child(2){animation-delay:.1s}.post-card:nth-child(3){animation-delay:.15s}.post-card:nth-child(4){animation-delay:.2s}.post-card:nth-child(5){animation-delay:.25s}.post-card:nth-child(6){animation-delay:.3s}
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
     .post-meta{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;flex-wrap:wrap}
     .post-category{font-family:var(--mono);font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2);padding:.2rem .5rem;border-radius:2px}
@@ -83,18 +82,18 @@
     .tags-cloud{display:flex;flex-wrap:wrap;gap:.4rem}
     .tag-cloud-item{font-family:var(--mono);font-size:.68rem;color:var(--text-dim);background:var(--bg3);border:1px solid var(--border);padding:.25rem .5rem;border-radius:2px;cursor:pointer;transition:all .15s}
     .tag-cloud-item:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
-    .newsletter-form{display:flex;flex-direction:column;gap:.6rem;margin-top:.5rem}
-    .newsletter-form input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:.55rem .75rem;font-family:var(--mono);font-size:.75rem;color:var(--text);outline:none;transition:border-color .15s}
-    .newsletter-form input::placeholder{color:var(--muted)}
-    .newsletter-form input:focus{border-color:var(--accent)}
-    .newsletter-form button{background:var(--accent);color:var(--bg);border:none;border-radius:var(--radius);padding:.55rem 1rem;font-family:var(--mono);font-size:.75rem;font-weight:700;cursor:pointer;transition:opacity .15s;letter-spacing:.05em}
-    .newsletter-form button:hover{opacity:.85}
-    .rss-link{display:flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.7rem;color:var(--text-dim);margin-top:.75rem;transition:color .15s}
-    .rss-link:hover{color:var(--accent)}
+
+    /* ── Pagination ── */
+    .pagination{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+    .page-btn{font-family:var(--mono);font-size:.75rem;padding:.4rem .8rem;border:1px solid var(--border);border-radius:2px;background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s;min-width:36px;text-align:center}
+    .page-btn:hover:not(:disabled){color:var(--text);border-color:var(--muted)}
+    .page-btn.active{background:rgba(0,255,136,.08);border-color:rgba(0,255,136,.3);color:var(--accent)}
+    .page-btn:disabled{opacity:.3;cursor:not-allowed}
+    .page-info{font-family:var(--mono);font-size:.72rem;color:var(--muted);padding:0 .5rem}
+
     footer{grid-column:2;border-top:1px solid var(--border);padding:1.2rem 2.5rem;display:flex;align-items:center;justify-content:space-between}
     footer p{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
     footer span{color:var(--accent)}
-    .post-card.hidden{display:none}
     @media(max-width:1024px){.blog-layout{grid-template-columns:1fr}.blog-sidebar{display:none}}
     @media(max-width:768px){.site-wrapper{grid-template-columns:1fr}.sidebar{display:none}header{grid-column:1}main{padding:2rem 1.25rem}footer{grid-column:1}}
   </style>
@@ -104,16 +103,12 @@
   <aside class="sidebar">
     <div class="logo"><span>⚡</span> Sabin.dev</div>
     <nav>
-      <!-- <a href="#">Home</a>
-      <a href="#">Projects</a>
-      <a href="#">Experience</a> -->
       <a href="#" class="active">Blog</a>
     </nav>
     <div class="status-badge"><span class="status-dot"></span>status: building</div>
     <div class="sidebar-footer">
       <a href="https://github.com/SabiNjoshi1">GitHub</a>
       <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
-      <!-- <a href="#">Twitter / X</a> -->
     </div>
   </aside>
 
@@ -135,352 +130,363 @@
       <button class="filter-btn" data-filter="kubernetes" onclick="filterPosts('kubernetes',this)">Kubernetes <span class="filter-count">1</span></button>
       <button class="filter-btn" data-filter="security" onclick="filterPosts('security',this)">Security <span class="filter-count">3</span></button>
       <button class="filter-btn" data-filter="devops" onclick="filterPosts('devops',this)">DevOps <span class="filter-count">8</span></button>
+      <button class="filter-btn" data-filter="serverless" onclick="filterPosts('serverless',this)">Serverless <span class="filter-count">1</span></button>
     </div>
 
     <div class="blog-layout">
-      <div class="posts-list" id="posts-list">
+      <div>
+        <div class="posts-list" id="posts-list">
 
-        <!-- Post 1 -->
-        <a class="post-card" data-category="cloud" href="posts/multi-region-aws.html">
-          <div class="post-meta">
-            <span class="post-category">cloud</span><span class="post-featured">Featured</span>
-            <span class="dot-sep">·</span><span class="post-date">Jul 6, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">9 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Multi-Region AWS Infrastructure for Resilience: A Terraform Deep Dive</h2>
-          <p class="post-excerpt">Learn how to architect highly available, multi-region AWS infrastructure using Terraform, Transit Gateway, Network Load Balancers, and intelligent routing strategies for enterprise-grade applications.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#terraform</span><span class="tag">#multi-region</span><span class="tag">+2</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 1 · Sep 14, 2025 -->
+          <a class="post-card" data-category="cloud" href="posts/aws-vpc-advanced-networking.html">
+            <div class="post-meta">
+              <span class="post-category">cloud</span>
+              <span class="dot-sep">·</span><span class="post-date">Sep 14, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">AWS VPC Deep Dive: Advanced Networking Patterns for Production</h2>
+            <p class="post-excerpt">CIDR planning, NAT Gateway HA per AZ, VPC PrivateLink for service isolation, Transit Gateway, and Flow Logs for forensics.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#vpc</span><span class="tag">#networking</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post 2 -->
-        <a class="post-card" data-category="kubernetes" href="posts/eks-zero-downtime.html">
-          <div class="post-meta">
-            <span class="post-category">kubernetes</span><span class="post-featured">Featured</span>
-            <span class="dot-sep">·</span><span class="post-date">Jun 12, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Zero-Downtime EKS Upgrades in Production</h2>
-          <p class="post-excerpt">Implementing a blue-green node group strategy for EKS cluster upgrades with automated rollback, PodDisruptionBudgets, and Terraform orchestration — achieving zero customer impact.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#eks</span><span class="tag">#kubernetes</span><span class="tag">#blue-green</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 2 · Sep 10, 2025 -->
+          <a class="post-card" data-category="devops" href="posts/observability-stack-aws.html">
+            <div class="post-meta">
+              <span class="post-category">devops</span>
+              <span class="dot-sep">·</span><span class="post-date">Sep 10, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Production Observability Stack: Logs, Metrics, Traces on AWS</h2>
+            <p class="post-excerpt">Unified observability with OpenTelemetry, CloudWatch, Prometheus + Grafana, X-Ray tracing, and SLO-based alerting.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#observability</span><span class="tag">#opentelemetry</span><span class="tag">#prometheus</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post 3 -->
-        <a class="post-card" data-category="security" href="posts/pci-dss-aws.html">
-          <div class="post-meta">
-            <span class="post-category">security</span>
-            <span class="dot-sep">·</span><span class="post-date">Jul 13, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">14 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Designing a PCI-DSS Compliant Platform on AWS</h2>
-          <p class="post-excerpt">Architecting a PCI-DSS Level 1 compliant platform on AWS — featuring network segmentation, encryption everywhere, comprehensive audit logging, and continuous compliance monitoring.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#pci-dss</span><span class="tag">#compliance</span><span class="tag">#encryption</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 3 · Sep 8, 2025 -->
+          <a class="post-card" data-category="security" href="posts/aws-iam-least-privilege.html">
+            <div class="post-meta">
+              <span class="post-category">security</span>
+              <span class="dot-sep">·</span><span class="post-date">Sep 8, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">10 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">AWS IAM Mastery: Least Privilege at Scale with Permission Boundaries</h2>
+            <p class="post-excerpt">Permission boundaries for safe delegation, ABAC with tags, SCPs as guardrails, Access Analyzer, and eliminating static credentials.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#iam</span><span class="tag">#permission-boundaries</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post 4 -->
-        <a class="post-card" data-category="devops" href="posts/gitops-argocd.html">
-          <div class="post-meta">
-            <span class="post-category">devops</span>
-            <span class="dot-sep">·</span><span class="post-date">Jun 19, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Unifying GitOps for AWS: ArgoCD, Terraform, and Crossplane</h2>
-          <p class="post-excerpt">Crafting a GitOps-driven infrastructure platform combining ArgoCD for application delivery, Terraform for foundational infrastructure, and Crossplane for Kubernetes-native AWS resource management.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#gitops</span><span class="tag">#argocd</span><span class="tag">#terraform</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 4 · Sep 1, 2025 -->
+          <a class="post-card" data-category="cloud" href="posts/aws-aurora-postgresql.html">
+            <div class="post-meta">
+              <span class="post-category">cloud</span>
+              <span class="dot-sep">·</span><span class="post-date">Sep 1, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Aurora PostgreSQL at Scale: Replication, Failover & Performance Tuning</h2>
+            <p class="post-excerpt">Deep dive into Aurora architecture — RDS Proxy connection pooling, read replica auto-scaling, parameter tuning, and failover under 30s.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#rds</span><span class="tag">#aurora</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post 5 -->
-        <a class="post-card" data-category="cloud" href="posts/cloud-finops.html">
-          <div class="post-meta">
-            <span class="post-category">cloud</span><span class="post-featured">Featured</span>
-            <span class="dot-sep">·</span><span class="post-date">Jun 22, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Cloud FinOps Framework: AWS Cost Intelligence Dashboard and Cost Anomaly Detection</h2>
-          <p class="post-excerpt">Architecting a FinOps framework that reduced cloud costs by 30% — featuring Cost Intelligence Dashboard, automated anomaly detection, chargeback mechanisms, and executive-level cost visibility.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#finops</span><span class="tag">#cost-optimization</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 5 · Aug 28, 2025 -->
+          <a class="post-card" data-category="devops" href="posts/docker-compose-to-k8s.html">
+            <div class="post-meta">
+              <span class="post-category">devops</span>
+              <span class="dot-sep">·</span><span class="post-date">Aug 28, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">9 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">From Docker Compose to Kubernetes: A Production Migration Guide</h2>
+            <p class="post-excerpt">Mapping Compose concepts to K8s objects — Deployments, ConfigMaps, Ingress, health probes, resource limits, and HPA.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#docker</span><span class="tag">#kubernetes</span><span class="tag">#migration</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post 6 -->
-        <a class="post-card" data-category="devops" href="posts/fastlane-cicd.html">
-          <div class="post-meta">
-            <span class="post-category">devops</span>
-            <span class="dot-sep">·</span><span class="post-date">Jul 3, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">6 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Automating Mobile App Releases with Fastlane: iOS &amp; Android CI/CD</h2>
-          <p class="post-excerpt">A comprehensive guide to setting up Fastlane for automated iOS TestFlight and Android Play Store deployments with GitHub Actions, including code signing, version management, and release automation.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#fastlane</span><span class="tag">#mobile</span><span class="tag">#cicd</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 6 · Aug 25, 2025 -->
+          <a class="post-card" data-category="security" href="posts/container-security-hardening.html">
+            <div class="post-meta">
+              <span class="post-category">security</span>
+              <span class="dot-sep">·</span><span class="post-date">Aug 25, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Container Security Hardening: Docker, Kubernetes & Supply Chain</h2>
+            <p class="post-excerpt">Dockerfile hardening, Trivy scanning in CI, Pod Security Standards, Falco runtime detection, and cosign supply chain security.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#containers</span><span class="tag">#docker</span><span class="tag">#kubernetes</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post 7 -->
-        <a class="post-card" data-category="cloud" href="posts/aws-aurora-postgresql.html">
-          <div class="post-meta">
-            <span class="post-category">cloud</span>
-            <span class="dot-sep">·</span><span class="post-date">Sep 1, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Aurora PostgreSQL at Scale: Replication, Failover & Performance Tuning</h2>
-          <p class="post-excerpt">Deep dive into Aurora architecture — RDS Proxy connection pooling, read replica auto-scaling, parameter tuning, and failover under 30s.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#rds</span><span class="tag">#aurora</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 7 · Aug 18, 2025 -->
+          <a class="post-card" data-category="cloud" href="posts/aws-cloudfront-cdn.html">
+            <div class="post-meta">
+              <span class="post-category">cloud</span>
+              <span class="dot-sep">·</span><span class="post-date">Aug 18, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">8 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">CloudFront & S3: Building a Global CDN for High-Traffic Web Apps</h2>
+            <p class="post-excerpt">From 42% to 96% cache hit rate — multi-origin CloudFront, Lambda@Edge for auth and security headers, WAF, and OAC.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#cloudfront</span><span class="tag">#s3</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post 8 -->
-        <a class="post-card" data-category="cloud" href="posts/aws-cloudfront-cdn.html">
-          <div class="post-meta">
-            <span class="post-category">cloud</span>
-            <span class="dot-sep">·</span><span class="post-date">Aug 18, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">8 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">CloudFront & S3: Building a Global CDN for High-Traffic Web Apps</h2>
-          <p class="post-excerpt">From 42% to 96% cache hit rate — multi-origin CloudFront, Lambda@Edge for auth and security headers, WAF, and OAC.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#cloudfront</span><span class="tag">#s3</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 8 · Aug 12, 2025 -->
+          <a class="post-card" data-category="devops" href="posts/platform-engineering-idp.html">
+            <div class="post-meta">
+              <span class="post-category">devops</span>
+              <span class="dot-sep">·</span><span class="post-date">Aug 12, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Platform Engineering: Building an Internal Developer Platform on AWS</h2>
+            <p class="post-excerpt">IDP with Backstage, golden path Terraform modules, and DORA metrics — cut deployment lead time from 3 days to 47 minutes.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#platform-engineering</span><span class="tag">#backstage</span><span class="tag">#idp</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post9 -->
-        <a class="post-card" data-category="security" href="posts/aws-iam-least-privilege.html">
-          <div class="post-meta">
-            <span class="post-category">security</span>
-            <span class="dot-sep">·</span><span class="post-date">Sep 8, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">10 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">AWS IAM Mastery: Least Privilege at Scale with Permission Boundaries</h2>
-          <p class="post-excerpt">Permission boundaries for safe delegation, ABAC with tags, SCPs as guardrails, Access Analyzer, and eliminating static credentials.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#iam</span><span class="tag">#permission-boundaries</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 9 · Aug 7, 2025 -->
+          <a class="post-card" data-category="devops" href="posts/aws-monitoring-alerting-webapp.html">
+            <div class="post-meta">
+              <span class="post-category">devops</span>
+              <span class="dot-sep">·</span><span class="post-date">Aug 7, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">10 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Monitoring & Alerting a Web App on AWS: The Minimal Setup That Actually Works</h2>
+            <p class="post-excerpt">Stop drowning in CloudWatch noise. Here's the lean, opinionated monitoring stack — ALB, RDS, SQS, and budget alerts — that keeps your team sane and your customers happy.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#cloudwatch</span><span class="tag">#monitoring</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post10 -->
-        <a class="post-card" data-category="cloud" href="posts/aws-lambda-serverless-scale.html">
-          <div class="post-meta">
-            <span class="post-category">cloud</span>
-            <span class="dot-sep">·</span><span class="post-date">Aug 4, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">10 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Serverless at Scale: AWS Lambda, API Gateway & Event-Driven Patterns</h2>
-          <p class="post-excerpt">Production serverless at 150M+ invocations/month — cold start optimization, concurrency management, SQS/SNS patterns, and Powertools.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#lambda</span><span class="tag">#serverless</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 10 · Aug 4, 2025 -->
+          <a class="post-card" data-category="cloud" href="posts/aws-lambda-serverless-scale.html">
+            <div class="post-meta">
+              <span class="post-category">cloud</span>
+              <span class="dot-sep">·</span><span class="post-date">Aug 4, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">10 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Serverless at Scale: AWS Lambda, API Gateway & Event-Driven Patterns</h2>
+            <p class="post-excerpt">Production serverless at 150M+ invocations/month — cold start optimization, concurrency management, SQS/SNS patterns, and Powertools.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#lambda</span><span class="tag">#serverless</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post11 -->
-        <a class="post-card" data-category="cloud" href="posts/aws-vpc-advanced-networking.html">
-          <div class="post-meta">
-            <span class="post-category">cloud</span>
-            <span class="dot-sep">·</span><span class="post-date">Sep 14, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">AWS VPC Deep Dive: Advanced Networking Patterns for Production</h2>
-          <p class="post-excerpt">CIDR planning, NAT Gateway HA per AZ, VPC PrivateLink for service isolation, Transit Gateway, and Flow Logs for forensics.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#vpc</span><span class="tag">#networking</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 11 · Jul 13, 2025 -->
+          <a class="post-card" data-category="security" href="posts/pci-dss-aws.html">
+            <div class="post-meta">
+              <span class="post-category">security</span>
+              <span class="dot-sep">·</span><span class="post-date">Jul 13, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">14 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Designing a PCI-DSS Compliant Platform on AWS</h2>
+            <p class="post-excerpt">Architecting a PCI-DSS Level 1 compliant platform on AWS — featuring network segmentation, encryption everywhere, comprehensive audit logging, and continuous compliance monitoring.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#pci-dss</span><span class="tag">#compliance</span><span class="tag">#encryption</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post12 -->
-        <a class="post-card" data-category="security" href="posts/container-security-hardening.html">
-          <div class="post-meta">
-            <span class="post-category">security</span>
-            <span class="dot-sep">·</span><span class="post-date">Aug 25, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Container Security Hardening: Docker, Kubernetes & Supply Chain</h2>
-          <p class="post-excerpt">Dockerfile hardening, Trivy scanning in CI, Pod Security Standards, Falco runtime detection, and cosign supply chain security.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#containers</span><span class="tag">#docker</span><span class="tag">#kubernetes</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 12 · Jul 6, 2025 -->
+          <a class="post-card" data-category="cloud" href="posts/multi-region-aws.html">
+            <div class="post-meta">
+              <span class="post-category">cloud</span><span class="post-featured">Featured</span>
+              <span class="dot-sep">·</span><span class="post-date">Jul 6, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">9 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Multi-Region AWS Infrastructure for Resilience: A Terraform Deep Dive</h2>
+            <p class="post-excerpt">Learn how to architect highly available, multi-region AWS infrastructure using Terraform, Transit Gateway, Network Load Balancers, and intelligent routing strategies for enterprise-grade applications.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#terraform</span><span class="tag">#multi-region</span><span class="tag">+2</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post13 -->
-        <a class="post-card" data-category="devops" href="posts/docker-compose-to-k8s.html">
-          <div class="post-meta">
-            <span class="post-category">devops</span>
-            <span class="dot-sep">·</span><span class="post-date">Aug 28, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">9 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">From Docker Compose to Kubernetes: A Production Migration Guide</h2>
-          <p class="post-excerpt">Mapping Compose concepts to K8s objects — Deployments, ConfigMaps, Ingress, health probes, resource limits, and HPA.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#docker</span><span class="tag">#kubernetes</span><span class="tag">#migration</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 13 · Jul 3, 2025 -->
+          <a class="post-card" data-category="devops" href="posts/fastlane-cicd.html">
+            <div class="post-meta">
+              <span class="post-category">devops</span>
+              <span class="dot-sep">·</span><span class="post-date">Jul 3, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">6 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Automating Mobile App Releases with Fastlane: iOS & Android CI/CD</h2>
+            <p class="post-excerpt">A comprehensive guide to setting up Fastlane for automated iOS TestFlight and Android Play Store deployments with GitHub Actions, including code signing, version management, and release automation.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#fastlane</span><span class="tag">#mobile</span><span class="tag">#cicd</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post14 -->
-        <a class="post-card" data-category="devops" href="posts/observability-stack-aws.html">
-          <div class="post-meta">
-            <span class="post-category">devops</span>
-            <span class="dot-sep">·</span><span class="post-date">Sep 10, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Production Observability Stack: Logs, Metrics, Traces on AWS</h2>
-          <p class="post-excerpt">Unified observability with OpenTelemetry, CloudWatch, Prometheus + Grafana, X-Ray tracing, and SLO-based alerting.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#observability</span><span class="tag">#opentelemetry</span><span class="tag">#prometheus</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
-        
-        <!-- Post15 -->
-        <a class="post-card" data-category="devops" href="posts/platform-engineering-idp.html">
-          <div class="post-meta">
-            <span class="post-category">devops</span>
-            <span class="dot-sep">·</span><span class="post-date">Aug 12, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Platform Engineering: Building an Internal Developer Platform on AWS</h2>
-          <p class="post-excerpt">IDP with Backstage, golden path Terraform modules, and DORA metrics — cut deployment lead time from 3 days to 47 minutes.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#platform-engineering</span><span class="tag">#backstage</span><span class="tag">#idp</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 14 · Jun 22, 2025 -->
+          <a class="post-card" data-category="cloud" href="posts/cloud-finops.html">
+            <div class="post-meta">
+              <span class="post-category">cloud</span><span class="post-featured">Featured</span>
+              <span class="dot-sep">·</span><span class="post-date">Jun 22, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Cloud FinOps Framework: AWS Cost Intelligence Dashboard and Cost Anomaly Detection</h2>
+            <p class="post-excerpt">Architecting a FinOps framework that reduced cloud costs by 30% — featuring Cost Intelligence Dashboard, automated anomaly detection, chargeback mechanisms, and executive-level cost visibility.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#finops</span><span class="tag">#cost-optimization</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post16 -->
-        <a class="post-card" data-category="devops" href="posts/aws-monitoring-alerting-webapp.html">
-          <div class="post-meta">
-            <span class="post-category">devops</span>
-            <span class="dot-sep">·</span><span class="post-date">Aug 7, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">10 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Monitoring & Alerting a Web App on AWS: The Minimal Setup That Actually Works</h2>
-          <p class="post-excerpt">Stop drowning in CloudWatch noise. Here's the lean, opinionated monitoring stack — ALB, RDS, SQS, and budget alerts — that keeps your team sane and your customers happy.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#cloudwatch</span><span class="tag">#monitoring</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 15 · Jun 19, 2025 -->
+          <a class="post-card" data-category="devops" href="posts/gitops-argocd.html">
+            <div class="post-meta">
+              <span class="post-category">devops</span>
+              <span class="dot-sep">·</span><span class="post-date">Jun 19, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Unifying GitOps for AWS: ArgoCD, Terraform, and Crossplane</h2>
+            <p class="post-excerpt">Crafting a GitOps-driven infrastructure platform combining ArgoCD for application delivery, Terraform for foundational infrastructure, and Crossplane for Kubernetes-native AWS resource management.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#gitops</span><span class="tag">#argocd</span><span class="tag">#terraform</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post17 -->
-        <a class="post-card" data-category="devops" href="posts/ec2-underutilization-report-bash.html">
-          <div class="post-meta">
-            <span class="post-category">devops</span>
-            <span class="dot-sep">·</span><span class="post-date">Mar 6, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Stop Paying for Idle EC2: Automate Underutilization Reports with Bash & CloudWatch</h2>
-          <p class="post-excerpt">A Bash script that queries CloudWatch for 7-day CPU and memory averages across every running EC2 instance, flags the underutilized ones, emails an HTML report with a CSV attachment, and runs itself every morning via cron — so you never miss a wasteful instance again.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#cloudwatch</span><span class="tag">#bash</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 16 · Jun 14, 2025 -->
+          <a class="post-card" data-category="serverless" href="posts/lambda-eventbridge-cron.html">
+            <div class="post-meta">
+              <span class="post-category">serverless</span>
+              <span class="dot-sep">·</span><span class="post-date">Jun 14, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Kill Your EC2 Cron Jobs: Serverless Scheduling with Lambda, EventBridge & Terraform</h2>
+            <p class="post-excerpt">That EC2 instance running your cron jobs costs $45/year, needs OS patches, and is a single point of failure. Here's the complete Terraform-based migration to Lambda + EventBridge — with 99.8% cost savings and zero server management.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#lambda</span><span class="tag">#eventbridge</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
 
-        <!-- Post18 -->
-        <a class="post-card" data-category="serverless" href="posts/lambda-eventbridge-cron.html">
-          <div class="post-meta">
-            <span class="post-category">serverless</span>
-            <span class="dot-sep">·</span><span class="post-date">Jun 14, 2025</span>
-            <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
-          </div>
-          <div class="author-chip">
-            <div class="author-avatar">SJ</div>
-            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
-          </div>
-          <h2 class="post-title">Kill Your EC2 Cron Jobs: Serverless Scheduling with Lambda, EventBridge & Terraform</h2>
-          <p class="post-excerpt">That EC2 instance running your cron jobs costs $45/year, needs OS patches, and is a single point of failure. Here's the complete Terraform-based migration to Lambda + EventBridge — with 99.8% cost savings and zero server management.</p>
-          <div class="post-footer">
-            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#lambda</span><span class="tag">#eventbridge</span></div>
-            <span class="read-more">read more →</span>
-          </div>
-        </a>
+          <!-- Post 17 · Jun 12, 2025 -->
+          <a class="post-card" data-category="kubernetes" href="posts/eks-zero-downtime.html">
+            <div class="post-meta">
+              <span class="post-category">kubernetes</span><span class="post-featured">Featured</span>
+              <span class="dot-sep">·</span><span class="post-date">Jun 12, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">11 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Zero-Downtime EKS Upgrades in Production</h2>
+            <p class="post-excerpt">Implementing a blue-green node group strategy for EKS cluster upgrades with automated rollback, PodDisruptionBudgets, and Terraform orchestration — achieving zero customer impact.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#eks</span><span class="tag">#kubernetes</span><span class="tag">#blue-green</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
+
+          <!-- Post 18 · Mar 6, 2025 -->
+          <a class="post-card" data-category="devops" href="posts/ec2-underutilization-report-bash.html">
+            <div class="post-meta">
+              <span class="post-category">devops</span>
+              <span class="dot-sep">·</span><span class="post-date">Mar 6, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Stop Paying for Idle EC2: Automate Underutilization Reports with Bash & CloudWatch</h2>
+            <p class="post-excerpt">A Bash script that queries CloudWatch for 7-day CPU and memory averages across every running EC2 instance, flags the underutilized ones, emails an HTML report with a CSV attachment, and runs itself every morning via cron — so you never miss a wasteful instance again.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#cloudwatch</span><span class="tag">#bash</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
+
+        </div>
+
+        <!-- Pagination — shown only for "All Posts" -->
+        <div class="pagination" id="pagination">
+          <button class="page-btn" id="prev-btn" onclick="changePage(-1)" disabled>← Prev</button>
+          <span class="page-info" id="page-info">Page 1 of 2</span>
+          <button class="page-btn" id="next-btn" onclick="changePage(1)">Next →</button>
+        </div>
 
       </div>
 
@@ -493,6 +499,7 @@
             <div class="category-item" onclick="filterPosts('kubernetes')"><span class="cat-name">Kubernetes</span><span class="cat-count">1</span></div>
             <div class="category-item" onclick="filterPosts('security')"><span class="cat-name">Security</span><span class="cat-count">3</span></div>
             <div class="category-item" onclick="filterPosts('devops')"><span class="cat-name">DevOps</span><span class="cat-count">8</span></div>
+            <div class="category-item" onclick="filterPosts('serverless')"><span class="cat-name">Serverless</span><span class="cat-count">1</span></div>
           </div>
         </div>
         <div class="widget">
@@ -505,18 +512,6 @@
             <span class="tag-cloud-item">#devops</span><span class="tag-cloud-item">#argocd</span>
           </div>
         </div>
-        <!-- <div class="widget">
-          <div class="widget-title">### Newsletter</div>
-          <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:.75rem">Get notified about new articles and technical deep-dives.</p>
-          <div class="newsletter-form">
-            <input type="email" placeholder="your@email.com" />
-            <button>Subscribe</button>
-          </div>
-          <a href="#" class="rss-link">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
-            Subscribe via RSS
-          </a>
-        </div> -->
       </aside>
     </div>
   </main>
@@ -528,14 +523,71 @@
 </div>
 
 <script>
-function filterPosts(cat, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  document.querySelectorAll('.post-card').forEach(p => {
-    p.classList.toggle('hidden', cat !== 'all' && p.dataset.category !== cat);
-  });
-}
+  const POSTS_PER_PAGE = 10;
+  let currentPage = 1;
+  let currentFilter = 'all';
+
+  const allCards = Array.from(document.querySelectorAll('.post-card'));
+
+  function filterPosts(cat, btn) {
+    currentFilter = cat;
+    currentPage = 1;
+
+    // Sync filter bar buttons
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    else {
+      const match = document.querySelector(`.filter-btn[data-filter="${cat}"]`);
+      if (match) match.classList.add('active');
+    }
+
+    // Sync sidebar category items
+    document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.category-item').forEach(i => {
+      if (i.getAttribute('onclick') && i.getAttribute('onclick').includes(`'${cat}'`)) {
+        i.classList.add('active');
+      }
+    });
+
+    renderPosts();
+  }
+
+  function renderPosts() {
+    const pagination = document.getElementById('pagination');
+
+    if (currentFilter === 'all') {
+      // Show paginated view
+      pagination.style.display = 'flex';
+      const start = (currentPage - 1) * POSTS_PER_PAGE;
+      const end = start + POSTS_PER_PAGE;
+
+      allCards.forEach((card, i) => {
+        card.style.display = (i >= start && i < end) ? 'block' : 'none';
+      });
+
+      const totalPages = Math.ceil(allCards.length / POSTS_PER_PAGE);
+      document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+      document.getElementById('prev-btn').disabled = currentPage === 1;
+      document.getElementById('next-btn').disabled = currentPage === totalPages;
+
+    } else {
+      // Filter view — show all matching, hide pagination
+      pagination.style.display = 'none';
+      allCards.forEach(card => {
+        card.style.display = card.dataset.category === currentFilter ? 'block' : 'none';
+      });
+    }
+  }
+
+  function changePage(dir) {
+    const totalPages = Math.ceil(allCards.length / POSTS_PER_PAGE);
+    currentPage = Math.max(1, Math.min(totalPages, currentPage + dir));
+    renderPosts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Initial render
+  renderPosts();
 </script>
 </body>
 </html>
