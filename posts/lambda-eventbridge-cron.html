@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Kill Your EC2 Cron Jobs: Lambda + EventBridge with Terraform — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0a0a0a;--bg2:#111;--bg3:#161616;--bg4:#1c1c1c;
+      --border:#222;--border2:#2a2a2a;
+      --accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;
+      --muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;
+      --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+    a{color:inherit;text-decoration:none}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+
+    .page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+    .sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+    .sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+
+    .logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+    .logo span{color:var(--dim)}
+    nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+    nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+    nav a::before{content:'> ';color:var(--muted);transition:color .15s}
+    nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+    nav a:hover::before{color:var(--accent)}
+    .sfooter{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+    .sfooter a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+    .sfooter a:hover{color:var(--accent)}
+    .status{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    article{padding:3rem 3.5rem;min-width:0;animation:fadeUp .5s ease both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .back-link{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+    .back-link:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+
+    .post-header{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+    .meta-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+    .badge{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+    .badge-cat{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+    .badge-feat{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+    .badge-date,.badge-rt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+    .sep{color:var(--muted);font-size:.6rem}
+    h1.post-title{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+    .post-sub{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+    .author-row{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+    .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+    .author-name{font-size:.82rem;font-weight:600;color:var(--white)}
+    .author-role{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+    .tags-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+    .ptag{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+
+    .prose{max-width:760px}
+    .prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+    .prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+    .prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+    .prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+    .prose li{margin-bottom:.45rem}
+    .prose strong{color:var(--white);font-weight:600}
+    .prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+    .prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+    .prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+    .kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}
+    .cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}.op{color:#56b6c2}
+
+    .callout{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem;line-height:1.65}
+    .callout-info{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+    .callout-warn{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+    .callout-tip{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+    .callout-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+
+    .diagram{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+    .diagram-title{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+    .diagram-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+    .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+    .stat-num{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+    .stat-label{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+
+    /* file tree */
+    .file-tree{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;font-family:var(--mono);font-size:.8rem;line-height:1.9}
+    .ft-dir{color:var(--accent2)}
+    .ft-file{color:var(--text-dim)}
+    .ft-comment{color:var(--muted);font-style:italic}
+
+    /* step tracker */
+    .steps{display:flex;flex-direction:column;gap:0;margin:2rem 0}
+    .step{display:flex;gap:1.25rem;align-items:flex-start}
+    .step-num{width:28px;height:28px;border-radius:50%;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:.15rem}
+    .step-body{flex:1;padding-bottom:1.5rem;border-left:1px solid var(--border);margin-left:14px;padding-left:1.25rem}
+    .step:last-child .step-body{border-left-color:transparent}
+    .step-title{font-size:.9rem;font-weight:600;color:var(--white);margin-bottom:.4rem}
+    .step-desc{font-size:.85rem;color:var(--dim);line-height:1.65}
+
+    /* cost comparison */
+    .cost-compare{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}
+    .cost-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1.25rem}
+    .cost-card.bad{border-color:rgba(255,107,53,.3)}
+    .cost-card.good{border-color:rgba(0,255,136,.3)}
+    .cost-label{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.75rem}
+    .cost-card.bad .cost-label{color:var(--accent3)}
+    .cost-card.good .cost-label{color:var(--accent)}
+    .cost-amount{font-family:var(--mono);font-size:1.8rem;font-weight:700;line-height:1;margin-bottom:.25rem}
+    .cost-card.bad .cost-amount{color:var(--accent3)}
+    .cost-card.good .cost-amount{color:var(--accent)}
+    .cost-period{font-size:.78rem;color:var(--muted);margin-bottom:.75rem}
+    .cost-items{display:flex;flex-direction:column;gap:.3rem}
+    .cost-item{font-size:.78rem;color:var(--dim);display:flex;align-items:center;gap:.4rem}
+    .cost-item::before{content:'·';color:var(--muted)}
+
+    /* schedule ref table */
+    .sched-table{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.83rem}
+    .sched-table th{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--border2);background:var(--bg3)}
+    .sched-table td{padding:.55rem .75rem;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.78rem;vertical-align:top}
+    .sched-table tr:last-child td{border-bottom:none}
+    .sched-table tr:hover td{background:rgba(255,255,255,.015)}
+    .sched-ex{color:var(--accent2)}
+    .sched-desc{color:var(--dim);font-size:.75rem}
+
+    /* advantage cards */
+    .adv-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1.5rem 0}
+    .adv-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem}
+    .adv-icon{font-size:1.1rem;margin-bottom:.4rem}
+    .adv-title{font-size:.85rem;font-weight:600;color:var(--white);margin-bottom:.3rem}
+    .adv-desc{font-size:.78rem;color:var(--dim);line-height:1.55}
+
+    .toc-title{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+    .toc-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+    .toc-list li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+    .toc-list li a:hover,.toc-list li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+    .related-title{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+    .related-post{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+    .related-post:hover{background:rgba(0,255,136,.04)}
+    .related-cat{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+    .related-ttl{font-size:.78rem;color:var(--text);line-height:1.35}
+    .read-progress{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+
+    @media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}.cost-compare{grid-template-columns:1fr}.adv-grid{grid-template-columns:1fr}}
+    @media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}
+  </style>
+</head>
+<body>
+<div class="read-progress" id="rp"></div>
+<div class="page">
+
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <!-- <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a> -->
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="status"><span class="dot"></span>status: building</div>
+    <div class="sfooter">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+      <!-- <a href="#">Twitter / X</a> -->
+    </div>
+  </aside>
+
+  <article>
+    <a href="../index.html" class="back-link">← back to blog</a>
+
+    <div class="post-header">
+      <div class="meta-bar">
+        <span class="badge badge-cat">serverless</span>
+        <span class="badge badge-feat">Featured</span>
+        <span class="sep">·</span>
+        <span class="badge-date">Jun 14, 2025</span>
+        <span class="sep">·</span>
+        <span class="badge-rt">12 min read</span>
+      </div>
+      <h1 class="post-title">Kill Your EC2 Cron Jobs: Serverless Scheduling with Lambda, EventBridge & Terraform</h1>
+      <p class="post-sub">That EC2 instance running your cron jobs costs $45/year, needs OS patches, and is a single point of failure. Here's the complete Terraform-based migration to Lambda + EventBridge — with 99.8% cost savings and zero server management.</p>
+      <div class="author-row">
+        <div class="avatar">SJ</div>
+        <div>
+          <div class="author-name">Sabin Joshi</div>
+          <div class="author-role">DevOps Engineer</div>
+        </div>
+      </div>
+      <div class="tags-bar">
+        <span class="ptag">#aws</span>
+        <span class="ptag">#lambda</span>
+        <span class="ptag">#eventbridge</span>
+        <span class="ptag">#serverless</span>
+        <span class="ptag">#terraform</span>
+        <span class="ptag">#devops</span>
+        <span class="ptag">#cron</span>
+        <span class="ptag">#iac</span>
+      </div>
+    </div>
+
+    <div class="prose">
+
+      <h2 id="the-problem">The EC2 Cron Problem</h2>
+      <p>You've got a cron job. Maybe it cleans up old database records every night, generates a daily report at 6am, or syncs data between two systems every 15 minutes. So you spun up an EC2 instance, dropped a <code>crontab -e</code> entry, and moved on. It works — until it doesn't.</p>
+      <p>The instance needs an OS patch. You forget to restart the cron service after the reboot. The instance goes into an impaired state at 2am and nobody notices until the Monday morning report is missing. You need to add another scheduled job and wonder if you need to upgrade the instance type.</p>
+      <p>Every EC2 cron job is a small operational tax that compounds over time. The serverless alternative eliminates every one of these problems — and it costs almost nothing.</p>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">$0.01</div><div class="stat-label">monthly Lambda cost (hourly cron)</div></div>
+        <div class="stat-card"><div class="stat-num">$45</div><div class="stat-label">cheapest EC2 alternative/year</div></div>
+        <div class="stat-card"><div class="stat-num">99.8%</div><div class="stat-label">cost reduction</div></div>
+        <div class="stat-card"><div class="stat-num">0</div><div class="stat-label">servers to manage</div></div>
+      </div>
+
+      <h2 id="before-after">Before vs After: Architecture Comparison</h2>
+
+      <div class="diagram">
+        <div class="diagram-title">EC2 Cron vs Serverless Lambda — Architecture Comparison</div>
+        <svg viewBox="0 0 720 340" width="100%" style="max-width:720px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#555"/></marker>
+            <marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#00ff88"/></marker>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#ff6b35"/></marker>
+          </defs>
+
+          <!-- BEFORE label -->
+          <rect x="20" y="10" width="310" height="22" rx="3" fill="rgba(255,107,53,.1)" stroke="rgba(255,107,53,.3)" stroke-width="1"/>
+          <text x="175" y="25" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">❌  BEFORE — EC2 Cron Job Approach</text>
+
+          <!-- EC2 instance (always on) -->
+          <rect x="30" y="45" width="290" height="130" rx="6" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.5"/>
+          <text x="175" y="65" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">EC2 Instance  (running 24/7)</text>
+
+          <!-- crontab -->
+          <rect x="50" y="76" width="120" height="38" rx="4" fill="#161616" stroke="#555" stroke-width="1"/>
+          <text x="110" y="93" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888" text-anchor="middle">crontab -e</text>
+          <text x="110" y="107" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">* * * * * ./job.sh</text>
+
+          <!-- OS overhead -->
+          <rect x="185" y="76" width="120" height="38" rx="4" fill="#161616" stroke="#555" stroke-width="1"/>
+          <text x="245" y="93" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888" text-anchor="middle">OS / patches</text>
+          <text x="245" y="107" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">security + updates</text>
+
+          <!-- Pain points -->
+          <text x="50" y="135" font-family="JetBrains Mono,monospace" font-size="7" fill="#ff6b35">✗ single point of failure</text>
+          <text x="50" y="150" font-family="JetBrains Mono,monospace" font-size="7" fill="#ff6b35">✗ paying 24/7 for minutes of work</text>
+          <text x="50" y="165" font-family="JetBrains Mono,monospace" font-size="7" fill="#ff6b35">✗ manual scaling + monitoring</text>
+
+          <!-- Clock → EC2 (system time trigger) -->
+          <rect x="30" y="195" width="80" height="35" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1"/>
+          <text x="70" y="214" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">System</text>
+          <text x="70" y="226" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Clock</text>
+          <line x1="110" y1="212" x2="175" y2="175" stroke="#555" stroke-width="1.2" stroke-dasharray="3,2" marker-end="url(#ar)"/>
+
+          <!-- AFTER label -->
+          <rect x="390" y="10" width="310" height="22" rx="3" fill="rgba(0,255,136,.08)" stroke="rgba(0,255,136,.3)" stroke-width="1"/>
+          <text x="545" y="25" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">✅  AFTER — Lambda + EventBridge</text>
+
+          <!-- EventBridge -->
+          <rect x="400" y="45" width="130" height="70" rx="5" fill="#1c1c1c" stroke="#e5c07b" stroke-width="1.5"/>
+          <text x="465" y="70" font-family="JetBrains Mono,monospace" font-size="9" fill="#e5c07b" text-anchor="middle">EventBridge</text>
+          <text x="465" y="85" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">rate(1 hour)</text>
+          <text x="465" y="100" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">cron(0 2 * * ? *)</text>
+
+          <!-- Arrow EventBridge → Lambda -->
+          <line x1="530" y1="80" x2="570" y2="80" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arg)"/>
+
+          <!-- Lambda -->
+          <rect x="570" y="45" width="120" height="70" rx="5" fill="#1c1c1c" stroke="#00ff88" stroke-width="2"/>
+          <text x="630" y="70" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ff88" text-anchor="middle">λ Lambda</text>
+          <text x="630" y="85" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">executes task</text>
+          <text x="630" y="99" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">auto-scales</text>
+
+          <!-- Lambda → CloudWatch Logs -->
+          <rect x="570" y="140" width="120" height="40" rx="4" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.2"/>
+          <text x="630" y="158" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">CloudWatch</text>
+          <text x="630" y="172" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">logs + metrics</text>
+          <line x1="630" y1="115" x2="630" y2="139" stroke="#00ccff" stroke-width="1.2" stroke-dasharray="3,2" marker-end="url(#ar)"/>
+
+          <!-- IAM Role -->
+          <rect x="400" y="140" width="130" height="40" rx="4" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.2"/>
+          <text x="465" y="158" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">IAM Role</text>
+          <text x="465" y="172" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">least-privilege</text>
+          <line x1="630" y1="115" x2="510" y2="139" stroke="#c678dd" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#ar)"/>
+
+          <!-- Benefits -->
+          <text x="400" y="210" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ff88">✓ pay per millisecond of execution</text>
+          <text x="400" y="225" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ff88">✓ multi-AZ HA out of the box</text>
+          <text x="400" y="240" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ff88">✓ zero server management ever</text>
+
+          <!-- Terraform IaC label at bottom -->
+          <rect x="390" y="258" width="310" height="26" rx="4" fill="rgba(198,120,221,.07)" stroke="rgba(198,120,221,.25)" stroke-width="1"/>
+          <text x="545" y="275" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#c678dd" text-anchor="middle">🏗  Entire right side managed as Terraform IaC</text>
+        </svg>
+      </div>
+
+      <h2 id="architecture">How It Works</h2>
+      <p>Three AWS primitives wired together — that's the entire solution. <strong>EventBridge</strong> acts as the scheduler, firing on a schedule expression you define. When the rule triggers, it invokes your <strong>Lambda function</strong>, which runs your task in a fully managed execution environment. An <strong>IAM Role</strong> grants Lambda the minimum permissions it needs. CloudWatch Logs capture every invocation automatically, with zero extra configuration.</p>
+
+      <div class="callout callout-info">
+        <span class="callout-icon">ℹ️</span>
+        <span>EventBridge was previously known as <strong>CloudWatch Events</strong>. The Terraform resources (<code>aws_cloudwatch_event_rule</code>, <code>aws_cloudwatch_event_target</code>) still use the old naming but they create EventBridge resources. Both names work — the underlying service is the same.</span>
+      </div>
+
+      <h2 id="project-structure">Project Structure</h2>
+      <p>The entire solution lives in four files. Lambda code in a dedicated directory, Terraform configs at the root:</p>
+
+      <div class="file-tree">
+        <span class="ft-dir">terraform-lambda-cron/</span><br/>
+        <span style="color:#555">├── </span><span style="color:#e5c07b">main.tf</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-comment"># all AWS resources</span><br/>
+        <span style="color:#555">├── </span><span style="color:#e5c07b">variables.tf</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-comment"># configurable inputs</span><br/>
+        <span style="color:#555">├── </span><span style="color:#e5c07b">outputs.tf</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-comment"># Lambda ARN, rule name</span><br/>
+        <span style="color:#555">└── </span><span class="ft-dir">lambda/</span><br/>
+        <span style="color:#555">&nbsp;&nbsp;&nbsp;&nbsp;└── </span><span style="color:#61afef">handler.js</span>&nbsp;&nbsp;&nbsp;<span class="ft-comment"># your scheduled task logic</span>
+      </div>
+
+      <h2 id="lambda-code">Step 1 — Write Your Lambda Handler</h2>
+      <p>Your Lambda function replaces what used to be a shell script in a crontab. The handler receives an EventBridge event object (which you can mostly ignore for cron use cases) and runs your task. The key difference from an EC2 script: <strong>every execution is isolated, stateless, and logged automatically</strong>.</p>
+
+      <pre><code><span class="cmt">// lambda/handler.js</span>
+<span class="kw">exports</span>.<span class="fn">handler</span> = <span class="kw">async</span> (event) => {
+  <span class="kw">const</span> startTime = Date.<span class="fn">now</span>();
+  console.<span class="fn">log</span>(<span class="str">'Scheduled task started'</span>, {
+    triggeredAt: <span class="kw">new</span> <span class="fn">Date</span>().<span class="fn">toISOString</span>(),
+    source: event.source,          <span class="cmt">// "aws.events"</span>
+    detailType: event[<span class="str">'detail-type'</span>]  <span class="cmt">// "Scheduled Event"</span>
+  });
+
+  <span class="kw">try</span> {
+    <span class="kw">await</span> <span class="fn">runTask</span>();
+
+    <span class="kw">const</span> duration = Date.<span class="fn">now</span>() - startTime;
+    console.<span class="fn">log</span>(<span class="str">'Task completed'</span>, { durationMs: duration });
+
+    <span class="kw">return</span> {
+      statusCode: <span class="num">200</span>,
+      body: <span class="fn">JSON</span>.<span class="fn">stringify</span>({
+        message: <span class="str">'Success'</span>,
+        durationMs: duration,
+        timestamp: <span class="kw">new</span> <span class="fn">Date</span>().<span class="fn">toISOString</span>()
+      })
+    };
+  } <span class="kw">catch</span> (err) {
+    <span class="cmt">// Re-throw so Lambda marks this invocation as an error</span>
+    <span class="cmt">// and CloudWatch records it — essential for alerting</span>
+    console.<span class="fn">error</span>(<span class="str">'Task failed'</span>, { error: err.message, stack: err.stack });
+    <span class="kw">throw</span> err;
+  }
+};
+
+<span class="kw">async function</span> <span class="fn">runTask</span>() {
+  <span class="cmt">// ── Your task logic goes here ──────────────────────────
+  // Examples:
+  //   • Clean up records older than 30 days from DynamoDB
+  //   • Generate and email a daily report
+  //   • Sync data between two APIs
+  //   • Expire stale user sessions
+  //   • Trigger a downstream Step Functions workflow
+  // ──────────────────────────────────────────────────────</span>
+  console.<span class="fn">log</span>(<span class="str">'Running scheduled task...'</span>);
+}</code></pre>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠️</span>
+        <span>Always <strong>re-throw errors</strong> in your handler. If you catch an error and return a 200, Lambda marks the invocation as successful — CloudWatch error metrics won't fire and your alarms won't trigger. Let the error propagate so failures are visible.</span>
+      </div>
+
+      <h2 id="terraform">Step 2 — Terraform: Build All Five Resources</h2>
+      <p>Five Terraform resources wire the whole thing together. Each one has a specific job and they must all be present — missing even the Lambda permission resource will result in EventBridge silently failing to invoke your function.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">IAM Role — Lambda's Identity</div>
+            <div class="step-desc">Creates a role the Lambda service can assume. The trust policy restricts who can use this role to <code>lambda.amazonaws.com</code> only.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">IAM Policy Attachment — CloudWatch Permissions</div>
+            <div class="step-desc">Attaches AWS's managed <code>AWSLambdaBasicExecutionRole</code> policy — grants only the ability to write logs to CloudWatch. Add extra policies here if your function accesses S3, DynamoDB, etc.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Lambda Function — The Worker</div>
+            <div class="step-desc">Packages your handler.js into a ZIP (Terraform handles this automatically) and creates the function with runtime, timeout, memory, and environment variables.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">EventBridge Rule — The Scheduler</div>
+            <div class="step-desc">Defines <em>when</em> to trigger — using either a <code>rate()</code> expression or a <code>cron()</code> expression. The rule stays enabled/disabled independently of the Lambda function.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Lambda Permission — The Handshake</div>
+            <div class="step-desc">This is the one people forget. Even though the EventBridge rule points to Lambda, Lambda will refuse the call without an explicit <code>aws_lambda_permission</code> resource granting EventBridge invoke rights.</div>
+          </div>
+        </div>
+      </div>
+
+      <pre><code><span class="cmt"># ── main.tf ────────────────────────────────────────────────</span>
+
+<span class="cmt"># 1. IAM Role — Lambda assumes this when executing</span>
+<span class="kw">resource</span> <span class="str">"aws_iam_role"</span> <span class="str">"lambda_role"</span> {
+  name = <span class="str">"cron-lambda-role"</span>
+
+  assume_role_policy = <span class="fn">jsonencode</span>({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Action    = <span class="str">"sts:AssumeRole"</span>
+      Effect    = <span class="str">"Allow"</span>
+      Principal = { Service = <span class="str">"lambda.amazonaws.com"</span> }
+    }]
+  })
+}
+
+<span class="cmt"># 2. Attach basic execution policy (CloudWatch Logs access)</span>
+<span class="kw">resource</span> <span class="str">"aws_iam_role_policy_attachment"</span> <span class="str">"lambda_logs"</span> {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = <span class="str">"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"</span>
+}
+
+<span class="cmt"># Auto-zip the handler — Terraform recreates on file changes</span>
+<span class="kw">data</span> <span class="str">"archive_file"</span> <span class="str">"lambda_zip"</span> {
+  type        = <span class="str">"zip"</span>
+  source_file = <span class="str">"${path.module}/lambda/handler.js"</span>
+  output_path = <span class="str">"${path.module}/lambda/function.zip"</span>
+}
+
+<span class="cmt"># 3. Lambda Function</span>
+<span class="kw">resource</span> <span class="str">"aws_lambda_function"</span> <span class="str">"cron_job"</span> {
+  filename         = data.archive_file.lambda_zip.output_path
+  function_name    = <span class="str">"cron-job-${var.environment}"</span>
+  role             = aws_iam_role.lambda_role.arn
+  handler          = <span class="str">"handler.handler"</span>   <span class="cmt"># file.exportedFunction</span>
+  runtime          = <span class="str">"nodejs20.x"</span>
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+
+  timeout     = <span class="num">300</span>   <span class="cmt"># 5 minutes — adjust to your task duration</span>
+  memory_size = <span class="num">256</span>   <span class="cmt"># MB — more memory = more vCPU allocation</span>
+
+  environment {
+    variables = {
+      ENVIRONMENT = var.environment
+      <span class="cmt"># Never hardcode secrets — use SSM or Secrets Manager ARNs</span>
+      DB_SECRET_ARN = var.db_secret_arn
+    }
+  }
+
+  tags = {
+    Environment = var.environment
+    ManagedBy   = <span class="str">"terraform"</span>
+  }
+}
+
+<span class="cmt"># 4. EventBridge Rule — defines the schedule</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_event_rule"</span> <span class="str">"schedule"</span> {
+  name                = <span class="str">"cron-job-schedule"</span>
+  description         = <span class="str">"Triggers the cron Lambda on schedule"</span>
+  schedule_expression = var.schedule_expression  <span class="cmt"># e.g. "rate(1 hour)"</span>
+  state               = <span class="str">"ENABLED"</span>
+}
+
+<span class="cmt"># Connect the rule to the Lambda function</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_event_target"</span> <span class="str">"lambda_target"</span> {
+  rule      = aws_cloudwatch_event_rule.schedule.name
+  target_id = <span class="str">"cron-lambda"</span>
+  arn       = aws_lambda_function.cron_job.arn
+}
+
+<span class="cmt"># 5. Lambda Permission — REQUIRED — without this EventBridge is blocked</span>
+<span class="kw">resource</span> <span class="str">"aws_lambda_permission"</span> <span class="str">"allow_eventbridge"</span> {
+  statement_id  = <span class="str">"AllowExecutionFromEventBridge"</span>
+  action        = <span class="str">"lambda:InvokeFunction"</span>
+  function_name = aws_lambda_function.cron_job.function_name
+  principal     = <span class="str">"events.amazonaws.com"</span>
+  source_arn    = aws_cloudwatch_event_rule.schedule.arn
+}</code></pre>
+
+      <pre><code><span class="cmt"># ── variables.tf ───────────────────────────────────────────</span>
+<span class="kw">variable</span> <span class="str">"environment"</span> {
+  description = <span class="str">"Environment name (prod, staging, dev)"</span>
+  type        = string
+  default     = <span class="str">"prod"</span>
+}
+
+<span class="kw">variable</span> <span class="str">"schedule_expression"</span> {
+  description = <span class="str">"EventBridge schedule — rate() or cron() expression"</span>
+  type        = string
+  default     = <span class="str">"rate(1 hour)"</span>
+}
+
+<span class="kw">variable</span> <span class="str">"db_secret_arn"</span> {
+  description = <span class="str">"ARN of the Secrets Manager secret for DB credentials"</span>
+  type        = string
+  default     = <span class="str">""</span>
+}
+
+<span class="cmt"># ── outputs.tf ─────────────────────────────────────────────</span>
+<span class="kw">output</span> <span class="str">"lambda_function_name"</span> {
+  value = aws_lambda_function.cron_job.function_name
+}
+
+<span class="kw">output</span> <span class="str">"lambda_function_arn"</span> {
+  value = aws_lambda_function.cron_job.arn
+}
+
+<span class="kw">output</span> <span class="str">"eventbridge_rule_arn"</span> {
+  value = aws_cloudwatch_event_rule.schedule.arn
+}</code></pre>
+
+      <h2 id="schedule-expressions">Step 3 — Schedule Expression Reference</h2>
+      <p>EventBridge supports two expression formats. <code>rate()</code> is simple and readable. <code>cron()</code> gives you precise control for specific times of day, days of the week, or month-specific schedules. Note the AWS cron format has 6 fields and <strong>requires either day-of-month or day-of-week to be <code>?</code></strong> — you can't specify both.</p>
+
+      <div class="diagram">
+        <div class="diagram-title">EventBridge Cron Expression Anatomy</div>
+        <svg viewBox="0 0 700 200" width="100%" style="max-width:700px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+          <!-- Expression -->
+          <text x="350" y="35" font-family="JetBrains Mono,monospace" font-size="18" fill="#e5c07b" text-anchor="middle" font-weight="700">cron( 0  9  *  *  MON  * )</text>
+
+          <!-- Field brackets -->
+          <!-- Minutes -->
+          <line x1="157" y1="42" x2="157" y2="65" stroke="#00ff88" stroke-width="1.2"/>
+          <line x1="157" y1="65" x2="157" y2="65" stroke="#00ff88" stroke-width="1.2"/>
+          <line x1="157" y1="65" x2="180" y2="85" stroke="#00ff88" stroke-width="1.2"/>
+          <rect x="130" y="90" width="80" height="30" rx="3" fill="rgba(0,255,136,.08)" stroke="rgba(0,255,136,.3)" stroke-width="1"/>
+          <text x="170" y="104" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ff88" text-anchor="middle">Minutes</text>
+          <text x="170" y="115" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">0–59</text>
+
+          <!-- Hours -->
+          <line x1="200" y1="42" x2="200" y2="65" stroke="#00ccff" stroke-width="1.2"/>
+          <line x1="200" y1="65" x2="240" y2="85" stroke="#00ccff" stroke-width="1.2"/>
+          <rect x="210" y="90" width="80" height="30" rx="3" fill="rgba(0,204,255,.08)" stroke="rgba(0,204,255,.3)" stroke-width="1"/>
+          <text x="250" y="104" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ccff" text-anchor="middle">Hours</text>
+          <text x="250" y="115" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">0–23 (UTC)</text>
+
+          <!-- Day of month -->
+          <line x1="246" y1="42" x2="246" y2="58" stroke="#c678dd" stroke-width="1.2"/>
+          <line x1="246" y1="58" x2="310" y2="78" stroke="#c678dd" stroke-width="1.2"/>
+          <rect x="292" y="90" width="92" height="30" rx="3" fill="rgba(198,120,221,.08)" stroke="rgba(198,120,221,.3)" stroke-width="1"/>
+          <text x="338" y="104" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#c678dd" text-anchor="middle">Day-of-Month</text>
+          <text x="338" y="115" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">1–31 or *</text>
+
+          <!-- Month -->
+          <line x1="293" y1="42" x2="293" y2="55" stroke="#ff6b35" stroke-width="1.2"/>
+          <line x1="293" y1="55" x2="390" y2="78" stroke="#ff6b35" stroke-width="1.2"/>
+          <rect x="370" y="90" width="70" height="30" rx="3" fill="rgba(255,107,53,.08)" stroke="rgba(255,107,53,.3)" stroke-width="1"/>
+          <text x="405" y="104" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#ff6b35" text-anchor="middle">Month</text>
+          <text x="405" y="115" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">1–12 or *</text>
+
+          <!-- Day of week -->
+          <line x1="348" y1="42" x2="348" y2="52" stroke="#e5c07b" stroke-width="1.2"/>
+          <line x1="348" y1="52" x2="465" y2="78" stroke="#e5c07b" stroke-width="1.2"/>
+          <rect x="450" y="90" width="95" height="30" rx="3" fill="rgba(229,192,123,.08)" stroke="rgba(229,192,123,.3)" stroke-width="1"/>
+          <text x="497" y="104" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#e5c07b" text-anchor="middle">Day-of-Week</text>
+          <text x="497" y="115" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">MON–SUN or ?</text>
+
+          <!-- Year -->
+          <line x1="416" y1="42" x2="416" y2="50" stroke="#888" stroke-width="1.2"/>
+          <line x1="416" y1="50" x2="590" y2="78" stroke="#888" stroke-width="1.2"/>
+          <rect x="555" y="90" width="75" height="30" rx="3" fill="rgba(136,136,136,.06)" stroke="#555" stroke-width="1"/>
+          <text x="592" y="104" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888" text-anchor="middle">Year</text>
+          <text x="592" y="115" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">optional</text>
+
+          <!-- Result label -->
+          <text x="350" y="160" font-family="JetBrains Mono,monospace" font-size="8" fill="#555" text-anchor="middle">↑ This expression fires every Monday at 9:00 AM UTC</text>
+          <text x="350" y="175" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#555" text-anchor="middle">Day-of-month is * and day-of-week is MON — only one of these can be set per AWS rules</text>
+        </svg>
+      </div>
+
+      <table class="sched-table">
+        <thead>
+          <tr><th>Use Case</th><th>Expression</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Every 5 minutes</td><td class="sched-ex">rate(5 minutes)</td><td class="sched-desc">Simplest rate expression</td></tr>
+          <tr><td>Every hour</td><td class="sched-ex">rate(1 hour)</td><td class="sched-desc">Singular unit — not "hours"</td></tr>
+          <tr><td>Daily at 2am UTC</td><td class="sched-ex">cron(0 2 * * ? *)</td><td class="sched-desc">? in day-of-week = don't care</td></tr>
+          <tr><td>Every Mon at 9am UTC</td><td class="sched-ex">cron(0 9 ? * MON *)</td><td class="sched-desc">? in day-of-month, MON in day-of-week</td></tr>
+          <tr><td>1st of month at midnight</td><td class="sched-ex">cron(0 0 1 * ? *)</td><td class="sched-desc">Monthly billing reports etc.</td></tr>
+          <tr><td>Weekdays at 8am UTC</td><td class="sched-ex">cron(0 8 ? * MON-FRI *)</td><td class="sched-desc">Skips Sat/Sun automatically</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="deploy">Step 4 — Deploy with Terraform</h2>
+      <p>Standard three-step Terraform workflow. The <code>plan</code> output will show all five resources being created — review it before applying, especially on subsequent deployments when updating schedule expressions or Lambda code.</p>
+
+      <pre><code><span class="cmt"># Initialise providers and download modules</span>
+terraform init
+
+<span class="cmt"># Preview what will be created — review all 5 resources</span>
+terraform plan
+
+<span class="cmt"># Apply — Terraform handles dependency ordering automatically</span>
+<span class="cmt"># IAM role → Lambda → EventBridge rule → permission</span>
+terraform apply</code></pre>
+
+      <p>Terraform resolves the dependency graph automatically. The IAM role must exist before Lambda, the Lambda function before the EventBridge target, and both before the Lambda permission resource. You don't specify this order — Terraform infers it from the resource references.</p>
+
+      <h2 id="verify">Step 5 — Verify It's Running</h2>
+      <p>Three places to confirm your cron Lambda is firing correctly after deployment:</p>
+
+      <pre><code><span class="cmt"># 1. Check CloudWatch log group for invocation logs</span>
+aws logs describe-log-groups \
+  --log-group-name-prefix <span class="str">"/aws/lambda/cron-job"</span>
+
+<span class="cmt"># Tail logs in real time</span>
+aws logs tail <span class="str">"/aws/lambda/cron-job-prod"</span> --follow
+
+<span class="cmt"># 2. Check last invocation time directly on the function</span>
+aws lambda get-function \
+  --function-name cron-job-prod \
+  --query <span class="str">'Configuration.{LastModified:LastModified}'</span>
+
+<span class="cmt"># 3. Verify the EventBridge rule is ENABLED</span>
+aws events describe-rule --name cron-job-schedule \
+  --query <span class="str">'{State:State, Schedule:ScheduleExpression}'</span></code></pre>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>Use the Lambda console's <strong>Test</strong> tab to manually trigger an invocation before waiting for the schedule. Pass an empty JSON object <code>{}</code> as the test event — your handler should behave identically to a real EventBridge trigger.</span>
+      </div>
+
+      <h2 id="best-practices">Production Best Practices</h2>
+
+      <h3>Idempotency</h3>
+      <p>EventBridge guarantees <strong>at-least-once delivery</strong> — your Lambda might fire twice for the same schedule window during rare edge cases. Design your task so running it twice produces the same result. A database cleanup job should check a timestamp before deleting; a report generator should check if today's report already exists.</p>
+
+      <h3>Secrets Management</h3>
+      <p>Never put credentials in environment variables as plaintext. Reference Secrets Manager ARNs instead and fetch them at runtime:</p>
+
+      <pre><code><span class="cmt"># Terraform — pass only the ARN, not the secret value</span>
+<span class="kw">resource</span> <span class="str">"aws_lambda_function"</span> <span class="str">"cron_job"</span> {
+  <span class="cmt"># ... existing config ...</span>
+  environment {
+    variables = {
+      DB_SECRET_ARN = <span class="str">"arn:aws:secretsmanager:us-east-1:123456789:secret:prod/db"</span>
+    }
+  }
+}
+
+<span class="cmt"># Don't forget to grant Secrets Manager access in the IAM policy</span>
+<span class="kw">resource</span> <span class="str">"aws_iam_role_policy"</span> <span class="str">"lambda_secrets"</span> {
+  name = <span class="str">"cron-lambda-secrets"</span>
+  role = aws_iam_role.lambda_role.id
+  policy = <span class="fn">jsonencode</span>({
+    Statement = [{
+      Effect   = <span class="str">"Allow"</span>
+      Action   = [<span class="str">"secretsmanager:GetSecretValue"</span>]
+      Resource = <span class="str">"arn:aws:secretsmanager:*:*:secret:prod/*"</span>
+    }]
+  })
+}</code></pre>
+
+      <pre><code><span class="cmt">// In your Lambda — fetch secret at runtime</span>
+<span class="kw">const</span> { SecretsManagerClient, GetSecretValueCommand } = <span class="fn">require</span>(<span class="str">"@aws-sdk/client-secrets-manager"</span>);
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">SecretsManagerClient</span>({ region: <span class="str">"us-east-1"</span> });
+
+<span class="kw">let</span> cachedSecret; <span class="cmt">// cache across warm invocations</span>
+
+<span class="kw">async function</span> <span class="fn">getDbCredentials</span>() {
+  <span class="kw">if</span> (cachedSecret) <span class="kw">return</span> cachedSecret;
+  <span class="kw">const</span> response = <span class="kw">await</span> client.<span class="fn">send</span>(<span class="kw">new</span> <span class="fn">GetSecretValueCommand</span>({
+    SecretId: process.env.DB_SECRET_ARN
+  }));
+  cachedSecret = <span class="fn">JSON</span>.<span class="fn">parse</span>(response.SecretString);
+  <span class="kw">return</span> cachedSecret;
+}</code></pre>
+
+      <h3>Add a CloudWatch Alarm for Failures</h3>
+      <p>A cron job that silently fails is worse than one that crashes loudly. Wire up an alarm on Lambda errors so you know within minutes if your scheduled task stops working:</p>
+
+      <pre><code><span class="kw">resource</span> <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"cron_errors"</span> {
+  alarm_name          = <span class="str">"cron-job-failures"</span>
+  alarm_description   = <span class="str">"Scheduled Lambda function is failing"</span>
+  comparison_operator = <span class="str">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="num">1</span>
+  metric_name         = <span class="str">"Errors"</span>
+  namespace           = <span class="str">"AWS/Lambda"</span>
+  period              = <span class="num">300</span>
+  statistic           = <span class="str">"Sum"</span>
+  threshold           = <span class="num">0</span>
+  treat_missing_data  = <span class="str">"notBreaching"</span>
+
+  dimensions = {
+    FunctionName = aws_lambda_function.cron_job.function_name
+  }
+
+  alarm_actions = [aws_sns_topic.alerts.arn]
+}</code></pre>
+
+      <h2 id="cost">The Cost Reality</h2>
+      <p>Here's the actual numbers for a cron job that runs <strong>every hour and executes for 5 seconds</strong>, compared against the cheapest EC2 option:</p>
+
+      <div class="cost-compare">
+        <div class="cost-card bad">
+          <div class="cost-label">❌ EC2 Cron Job</div>
+          <div class="cost-amount">$45.60</div>
+          <div class="cost-period">per year · t3.nano always-on</div>
+          <div class="cost-items">
+            <div class="cost-item">Instance runs 8,760 hours/year</div>
+            <div class="cost-item">Paying 99.94% idle time</div>
+            <div class="cost-item">OS patching overhead</div>
+            <div class="cost-item">Manual failure recovery</div>
+            <div class="cost-item">Single AZ — no HA</div>
+          </div>
+        </div>
+        <div class="cost-card good">
+          <div class="cost-label">✅ Lambda + EventBridge</div>
+          <div class="cost-amount">$0.10</div>
+          <div class="cost-period">per year · 720 executions/month</div>
+          <div class="cost-items">
+            <div class="cost-item">720 invocations/month × 5s = 3,600s compute</div>
+            <div class="cost-item">Cost: ~$0.008/month at 128MB</div>
+            <div class="cost-item">Zero server management</div>
+            <div class="cost-item">Automatic multi-AZ HA</div>
+            <div class="cost-item">Built-in CloudWatch logging</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>The Lambda free tier includes <strong>1M free requests and 400,000 GB-seconds of compute per month</strong> — permanently, not just the first year. Most cron jobs will run entirely free forever within the free tier limits.</span>
+      </div>
+
+      <h2 id="advantages">Why This Beats EC2 Cron in Every Dimension</h2>
+
+      <div class="adv-grid">
+        <div class="adv-card">
+          <div class="adv-icon">💰</div>
+          <div class="adv-title">Pay Per Execution</div>
+          <div class="adv-desc">Billed in 1ms increments for actual compute time. A 5-second job running hourly costs fractions of a cent per month — not $45/year for an idle VM.</div>
+        </div>
+        <div class="adv-card">
+          <div class="adv-icon">🛡️</div>
+          <div class="adv-title">Built-in High Availability</div>
+          <div class="adv-desc">Lambda runs across multiple AZs automatically. No single EC2 instance to fail, no recovery runbook, no 2am page because a VM went into an impaired state.</div>
+        </div>
+        <div class="adv-card">
+          <div class="adv-icon">🔧</div>
+          <div class="adv-title">Zero Server Management</div>
+          <div class="adv-desc">No OS to patch, no security updates, no SSH keys, no instance monitoring. AWS handles all of it. You focus exclusively on your task logic.</div>
+        </div>
+        <div class="adv-card">
+          <div class="adv-icon">📈</div>
+          <div class="adv-title">Independent Scaling</div>
+          <div class="adv-desc">Need 10 scheduled tasks? Create 10 Lambda functions and 10 EventBridge rules. Each scales independently. No instance resizing, no capacity planning.</div>
+        </div>
+        <div class="adv-card">
+          <div class="adv-icon">📊</div>
+          <div class="adv-title">Free Observability</div>
+          <div class="adv-desc">Every invocation is automatically logged to CloudWatch — duration, memory used, errors, cold starts. No CloudWatch agent setup, no log shipping config.</div>
+        </div>
+        <div class="adv-card">
+          <div class="adv-icon">🏗️</div>
+          <div class="adv-title">Infrastructure as Code</div>
+          <div class="adv-desc">Every resource is in Terraform. Version controlled, peer-reviewed, reproducible across environments. Your cron jobs are now as auditable as your application code.</div>
+        </div>
+      </div>
+
+      <h2 id="when-ec2">When to Keep EC2 Cron Jobs</h2>
+      <p>Lambda isn't always the right answer. Stick with EC2 cron (or migrate to ECS Scheduled Tasks instead) when:</p>
+      <ul>
+        <li>Your task runs <strong>longer than 15 minutes</strong> — Lambda's hard maximum timeout</li>
+        <li>You need <strong>more than 10GB of memory</strong> — Lambda's ceiling</li>
+        <li>Your task requires a <strong>specific OS, GPU, or custom runtime</strong> that Lambda doesn't support</li>
+        <li>You need <strong>persistent local disk storage</strong> beyond Lambda's 512MB–10GB ephemeral /tmp</li>
+      </ul>
+      <p>For everything else — database cleanup, report generation, data sync, notification sending, cache warming — Lambda + EventBridge is the right default.</p>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>Migrating? Start with your least critical cron job — something whose failure has low business impact. Run it in parallel with the EC2 version for a week, validate the logs, then cut over. Don't try to migrate all cron jobs at once.</span>
+      </div>
+
+    </div>
+  </article>
+
+  <aside class="sr">
+    <div class="toc-title">On this page</div>
+    <ul class="toc-list" id="toc"></ul>
+    <div class="related-title">Related Posts</div>
+    <a href="aws-lambda-serverless-scale.html" class="related-post"><div class="related-cat">cloud</div><div class="related-ttl">Serverless at Scale: Lambda & Event-Driven Patterns</div></a>
+    <a href="aws-monitoring-alerting-webapp.html" class="related-post"><div class="related-cat">devops</div><div class="related-ttl">Monitoring & Alerting a Web App on AWS</div></a>
+    <a href="gitops-argocd.html" class="related-post"><div class="related-cat">devops</div><div class="related-ttl">Unifying GitOps: ArgoCD & Terraform</div></a>
+    <a href="terraform-at-scale.html" class="related-post"><div class="related-cat">devops</div><div class="related-ttl">Terraform at Scale: Modules & State</div></a>
+    <a href="observability-stack-aws.html" class="related-post"><div class="related-cat">devops</div><div class="related-ttl">Production Observability Stack on AWS</div></a>
+    <a href="platform-engineering-idp.html" class="related-post"><div class="related-cat">devops</div><div class="related-ttl">Platform Engineering & IDP on AWS</div></a>
+  </aside>
+
+</div>
+
+<script>
+window.addEventListener('scroll', () => {
+  const art = document.querySelector('article');
+  const rect = art.getBoundingClientRect();
+  const total = art.offsetHeight - window.innerHeight;
+  const scrolled = Math.max(0, -rect.top);
+  document.getElementById('rp').style.width = Math.min(100, (scrolled / total) * 100) + '%';
+});
+const headings = document.querySelectorAll('.prose h2, .prose h3');
+const toc = document.getElementById('toc');
+headings.forEach((h, i) => {
+  h.id = h.id || 'sec-' + i;
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+  a.href = '#' + h.id;
+  a.textContent = h.textContent;
+  if (h.tagName === 'H3') a.style.paddingLeft = '1.25rem';
+  li.appendChild(a);
+  toc.appendChild(li);
+});
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    const a = toc.querySelector('a[href="#' + e.target.id + '"]');
+    if (a) a.classList.toggle('active', e.isIntersecting);
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+headings.forEach(h => obs.observe(h));
+</script>
+</body>
+</html>

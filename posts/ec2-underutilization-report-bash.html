@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Automating EC2 Underutilization Reports with Bash & CloudWatch — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0a0a0a;--bg2:#111;--bg3:#161616;--bg4:#1c1c1c;
+      --border:#222;--border2:#2a2a2a;
+      --accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;
+      --muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;
+      --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+    a{color:inherit;text-decoration:none}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+
+    .page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+    .sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+    .sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+
+    .logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+    .logo span{color:var(--dim)}
+    nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+    nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+    nav a::before{content:'> ';color:var(--muted);transition:color .15s}
+    nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+    nav a:hover::before{color:var(--accent)}
+    .sfooter{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+    .sfooter a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+    .sfooter a:hover{color:var(--accent)}
+    .status{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    article{padding:3rem 3.5rem;min-width:0;animation:fadeUp .5s ease both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .back-link{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+    .back-link:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+
+    .post-header{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+    .meta-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+    .badge{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+    .badge-cat{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+    .badge-feat{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+    .badge-date,.badge-rt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+    .sep{color:var(--muted);font-size:.6rem}
+    h1.post-title{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+    .post-sub{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+    .author-row{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+    .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+    .author-name{font-size:.82rem;font-weight:600;color:var(--white)}
+    .author-role{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+    .tags-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+    .ptag{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+
+    .prose{max-width:760px}
+    .prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+    .prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+    .prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+    .prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+    .prose li{margin-bottom:.45rem}
+    .prose strong{color:var(--white);font-weight:600}
+    .prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+    .prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto;position:relative}
+    .prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+    .pre-label{position:absolute;top:.55rem;right:.75rem;font-family:var(--mono);font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+    .kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}
+    .cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}.op{color:#56b6c2}
+    .bash-var{color:#e5c07b}.bash-cmd{color:#61afef}.bash-flag{color:#56b6c2}
+
+    .callout{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem;line-height:1.65}
+    .callout-info{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+    .callout-warn{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+    .callout-tip{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+    .callout-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+
+    .diagram{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+    .diagram-title{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+    .diagram-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+    .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+    .stat-num{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--accent);line-height:1}
+    .stat-label{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+
+    /* feature cards */
+    .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1.5rem 0}
+    .feat-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;transition:border-color .2s}
+    .feat-card:hover{border-color:rgba(0,255,136,.25)}
+    .feat-icon{font-size:1.1rem;margin-bottom:.35rem}
+    .feat-title{font-size:.85rem;font-weight:600;color:var(--white);margin-bottom:.3rem;font-family:var(--mono)}
+    .feat-desc{font-size:.78rem;color:var(--dim);line-height:1.55}
+
+    /* threshold table */
+    .thresh-table{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.83rem}
+    .thresh-table th{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--border2);background:var(--bg3)}
+    .thresh-table td{padding:.55rem .75rem;border-bottom:1px solid var(--border);vertical-align:middle;font-family:var(--mono);font-size:.78rem}
+    .thresh-table tr:last-child td{border-bottom:none}
+    .thresh-table tr:hover td{background:rgba(255,255,255,.015)}
+    .chip{display:inline-block;padding:.15rem .45rem;border-radius:3px;font-size:.7rem;font-family:var(--mono)}
+    .chip-red{color:var(--accent3);background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.25)}
+    .chip-yellow{color:var(--prop);background:rgba(229,192,123,.1);border:1px solid rgba(229,192,123,.25)}
+    .chip-green{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.25)}
+
+    /* section steps */
+    .steps{display:flex;flex-direction:column;gap:0;margin:2rem 0}
+    .step{display:flex;gap:1.25rem;align-items:flex-start}
+    .step-num{width:28px;height:28px;border-radius:50%;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:.15rem}
+    .step-body{flex:1;padding-bottom:1.75rem;border-left:1px solid var(--border);margin-left:14px;padding-left:1.25rem}
+    .step:last-child .step-body{border-left-color:transparent}
+    .step-title{font-size:.9rem;font-weight:600;color:var(--white);margin-bottom:.35rem}
+    .step-desc{font-size:.85rem;color:var(--dim);line-height:1.65}
+
+    /* prereq pills */
+    .prereq-grid{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.2rem 0}
+    .prereq{font-family:var(--mono);font-size:.75rem;color:var(--text);background:var(--bg3);border:1px solid var(--border2);padding:.35rem .75rem;border-radius:4px;display:flex;align-items:center;gap:.4rem}
+    .prereq::before{content:'✓';color:var(--accent);font-size:.7rem}
+
+    .toc-title{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+    .toc-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+    .toc-list li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+    .toc-list li a:hover,.toc-list li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+    .related-title{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+    .related-post{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+    .related-post:hover{background:rgba(0,255,136,.04)}
+    .related-cat{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+    .related-ttl{font-size:.78rem;color:var(--text);line-height:1.35}
+    .read-progress{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+
+    @media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}.feat-grid{grid-template-columns:1fr}}
+    @media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}
+  </style>
+</head>
+<body>
+<div class="read-progress" id="rp"></div>
+<div class="page">
+
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <!-- <a href="#">Home</a>
+      <a href="#">Projects</a>
+      <a href="#">Experience</a> -->
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="status"><span class="dot"></span>status: building</div>
+    <div class="sfooter">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+      <!-- <a href="#">Twitter / X</a> -->
+    </div>
+  </aside>
+
+  <article>
+    <a href="../index.html" class="back-link">← back to blog</a>
+
+    <div class="post-header">
+      <div class="meta-bar">
+        <span class="badge badge-cat">devops</span>
+        <span class="badge badge-feat">Featured</span>
+        <span class="sep">·</span>
+        <span class="badge-date">Mar 6, 2025</span>
+        <span class="sep">·</span>
+        <span class="badge-rt">12 min read</span>
+      </div>
+      <h1 class="post-title">Stop Paying for Idle EC2: Automate Underutilization Reports with Bash & CloudWatch</h1>
+      <p class="post-sub">A Bash script that queries CloudWatch for 7-day CPU and memory averages across every running EC2 instance, flags the underutilized ones, emails an HTML report with a CSV attachment, and runs itself every morning via cron — so you never miss a wasteful instance again.</p>
+      <div class="author-row">
+        <div class="avatar">SJ</div>
+        <div>
+          <div class="author-name">Sabin Joshi</div>
+          <div class="author-role">DevOps Engineer</div>
+        </div>
+      </div>
+      <div class="tags-bar">
+        <span class="ptag">#aws</span>
+        <span class="ptag">#bash</span>
+        <span class="ptag">#cloudwatch</span>
+        <span class="ptag">#finops</span>
+        <span class="ptag">#ec2</span>
+        <span class="ptag">#cost-optimization</span>
+        <span class="ptag">#devops</span>
+        <span class="ptag">#scripting</span>
+      </div>
+    </div>
+
+    <div class="prose">
+
+      <h2 id="the-problem">The Idle Instance Tax</h2>
+      <p>Every AWS account has them. EC2 instances that were spun up for a project, a test, a demo — and never sized down or terminated when the load disappeared. They sit at 3–5% CPU, consuming a Reserved Instance or racking up On-Demand charges every hour, every day, every month.</p>
+      <p>AWS Cost Explorer will tell you your bill is high. It won't tell you <em>which specific instances</em> are wasting money or what you should do about them. That gap is exactly what this script fills: a daily automated report that names names, shows the data, and recommends an action.</p>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">30%</div><div class="stat-label">avg EC2 waste in most AWS accounts</div></div>
+        <div class="stat-card"><div class="stat-num">7d</div><div class="stat-label">CloudWatch lookback window</div></div>
+        <div class="stat-card"><div class="stat-num">2</div><div class="stat-label">metrics checked: CPU + memory</div></div>
+        <div class="stat-card"><div class="stat-num">08:00</div><div class="stat-label">daily report delivery via cron</div></div>
+      </div>
+
+      <h2 id="how-it-works">How the Script Works</h2>
+      <p>The pipeline is simple: query every running EC2 instance → pull 7-day average CloudWatch metrics for CPU and memory → compare against configurable thresholds → generate an HTML email with a colour-coded table and a CSV attachment for tracking in spreadsheets.</p>
+
+      <div class="diagram">
+        <div class="diagram-title">EC2 Underutilization Report — Data Pipeline</div>
+        <svg viewBox="0 0 720 310" width="100%" style="max-width:720px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#555"/></marker>
+            <marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#00ff88"/></marker>
+            <marker id="aro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#ff6b35"/></marker>
+          </defs>
+
+          <!-- Step 1: Cron trigger -->
+          <rect x="15" y="120" width="95" height="55" rx="5" fill="#1c1c1c" stroke="#e5c07b" stroke-width="1.5"/>
+          <text x="62" y="143" font-family="JetBrains Mono,monospace" font-size="8" fill="#e5c07b" text-anchor="middle">Cron Job</text>
+          <text x="62" y="157" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">0 8 * * *</text>
+          <text x="62" y="168" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">daily 8am</text>
+          <line x1="110" y1="147" x2="130" y2="147" stroke="#555" stroke-width="1.5" marker-end="url(#ar)"/>
+
+          <!-- Step 2: describe-instances -->
+          <rect x="130" y="108" width="115" height="78" rx="5" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.5"/>
+          <text x="187" y="130" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">EC2 Discovery</text>
+          <text x="187" y="145" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">describe-instances</text>
+          <text x="187" y="159" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">instance-id</text>
+          <text x="187" y="172" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">instance-type · Name tag</text>
+          <line x1="245" y1="147" x2="270" y2="147" stroke="#555" stroke-width="1.5" marker-end="url(#ar)"/>
+
+          <!-- Step 3: CloudWatch queries -->
+          <rect x="270" y="80" width="125" height="130" rx="5" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.5"/>
+          <text x="332" y="103" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">CloudWatch</text>
+          <text x="332" y="118" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">get-metric-statistics</text>
+          <!-- CPU metric box -->
+          <rect x="282" y="126" width="100" height="28" rx="3" fill="#161616" stroke="#00ccff" stroke-width="1"/>
+          <text x="332" y="138" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ccff" text-anchor="middle">CPUUtilization</text>
+          <text x="332" y="149" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">7d avg · AWS/EC2</text>
+          <!-- Mem metric box -->
+          <rect x="282" y="162" width="100" height="28" rx="3" fill="#161616" stroke="#c678dd" stroke-width="1"/>
+          <text x="332" y="174" font-family="JetBrains Mono,monospace" font-size="7" fill="#c678dd" text-anchor="middle">mem_used_percent</text>
+          <text x="332" y="185" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">7d avg · CWAgent</text>
+          <line x1="395" y1="147" x2="420" y2="147" stroke="#555" stroke-width="1.5" marker-end="url(#ar)"/>
+
+          <!-- Step 4: Threshold check -->
+          <rect x="420" y="108" width="110" height="78" rx="5" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.5"/>
+          <text x="475" y="130" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">Threshold Check</text>
+          <text x="475" y="145" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">CPU &lt; 10%?</text>
+          <text x="475" y="158" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">MEM &lt; 20%?</text>
+          <text x="475" y="171" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">→ recommendation</text>
+          <line x1="530" y1="147" x2="555" y2="147" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arg)"/>
+
+          <!-- Step 5: Outputs -->
+          <rect x="555" y="60" width="115" height="40" rx="4" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.2"/>
+          <text x="612" y="78" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">HTML Email</text>
+          <text x="612" y="92" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">colour-coded table</text>
+
+          <rect x="555" y="115" width="115" height="40" rx="4" fill="#1c1c1c" stroke="#c678dd" stroke-width="1.2"/>
+          <text x="612" y="133" font-family="JetBrains Mono,monospace" font-size="8" fill="#c678dd" text-anchor="middle">CSV Attachment</text>
+          <text x="612" y="147" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">spreadsheet tracking</text>
+
+          <rect x="555" y="170" width="115" height="40" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+          <text x="612" y="188" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">Log File</text>
+          <text x="612" y="202" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">ec2_report.log</text>
+
+          <line x1="555" y1="130" x2="530" y2="130" stroke="#00ccff" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#ar)"/>
+          <line x1="555" y1="155" x2="540" y2="155" stroke="#c678dd" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#ar)"/>
+          <line x1="555" y1="188" x2="540" y2="175" stroke="#555" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#ar)"/>
+
+          <!-- IAM role label -->
+          <rect x="270" y="235" width="300" height="28" rx="4" fill="rgba(0,255,136,.04)" stroke="rgba(0,255,136,.18)" stroke-width="1"/>
+          <text x="420" y="253" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ff88" text-anchor="middle">IAM Role: CloudWatchReadOnly + EC2DescribeInstances (no static creds)</text>
+        </svg>
+      </div>
+
+      <h2 id="prereqs">Prerequisites</h2>
+      <p>Three things need to be in place before the script runs correctly. The memory metric is optional — the script gracefully shows "N/A" for instances without the CloudWatch Agent installed.</p>
+
+      <div class="prereq-grid">
+        <span class="prereq">AWS CLI configured</span>
+        <span class="prereq">IAM role with CloudWatch + EC2 read permissions</span>
+        <span class="prereq">sendmail installed on the host</span>
+        <span class="prereq">CloudWatch Agent (for memory metrics)</span>
+        <span class="prereq">jq installed</span>
+      </div>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>Run this script on an EC2 instance with an <strong>instance profile</strong> — no AWS keys in config files. The IAM role only needs <code>ec2:DescribeInstances</code> and <code>cloudwatch:GetMetricStatistics</code>. Read-only, minimal blast radius.</span>
+      </div>
+
+      <h2 id="thresholds">Underutilization Thresholds</h2>
+      <p>The script uses three severity tiers. Tune these constants at the top of the script to match your organisation's cost policies:</p>
+
+      <table class="thresh-table">
+        <thead>
+          <tr><th>Tier</th><th>CPU (7d avg)</th><th>Memory (7d avg)</th><th>Recommendation</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="chip chip-red">Critical</span></td>
+            <td><code>&lt; 5%</code></td>
+            <td><code>&lt; 10%</code></td>
+            <td style="color:var(--accent3)">Terminate or stop immediately</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-yellow">Warning</span></td>
+            <td><code>&lt; 10%</code></td>
+            <td><code>&lt; 20%</code></td>
+            <td style="color:var(--prop)">Downsize to next smaller type</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-green">Healthy</span></td>
+            <td><code>≥ 10%</code></td>
+            <td><code>≥ 20%</code></td>
+            <td style="color:var(--accent)">No action needed</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="script">The Full Script</h2>
+      <p>Drop this in <code>/opt/ec2-report/ec2_underutilized_report.sh</code>, set your email address and thresholds at the top, then run <code>chmod +x</code> on it. The script is fully self-contained — no external dependencies beyond the AWS CLI, <code>jq</code>, and <code>sendmail</code>.</p>
+
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Configuration block</div><div class="step-desc">Variables at the top — email, thresholds, lookback window, log path. Change these without touching the logic.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">EC2 discovery</div><div class="step-desc">Queries all running instances in the configured region, extracting instance ID, type, and Name tag in one <code>describe-instances</code> call.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">CloudWatch metric fetch</div><div class="step-desc">For each instance, pulls 7-day average CPU from <code>AWS/EC2</code> namespace and memory from <code>CWAgent</code> namespace. Handles missing CWAgent gracefully.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Threshold evaluation + recommendation</div><div class="step-desc">Compares metrics against thresholds with <code>bc</code> for float arithmetic, assigns a severity level and a human-readable recommendation string.</div></div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-title">HTML + CSV generation + email</div><div class="step-desc">Builds a colour-coded HTML table, writes a CSV file, then sends both via <code>sendmail</code> as a MIME multipart email with the CSV attached.</div></div></div>
+      </div>
+
+      <pre><code><span class="bash-cmd">#!/bin/bash</span>
+<span class="cmt"># ─────────────────────────────────────────────────────────────────
+# ec2_underutilized_report.sh
+# Identifies underutilized EC2 instances via CloudWatch,
+# generates an HTML email report + CSV attachment, logs everything.
+# ─────────────────────────────────────────────────────────────────</span>
+<span class="kw">set</span> -euo pipefail
+
+<span class="cmt"># ── Configuration ─────────────────────────────────────────────────</span>
+<span class="bash-var">REPORT_EMAIL</span>=<span class="str">"devops-team@yourcompany.com"</span>
+<span class="bash-var">FROM_EMAIL</span>=<span class="str">"aws-reports@yourcompany.com"</span>
+<span class="bash-var">REGION</span>=<span class="str">"us-east-1"</span>
+<span class="bash-var">LOOKBACK_DAYS</span>=<span class="num">7</span>
+<span class="bash-var">PERIOD_SECONDS</span>=$(( LOOKBACK_DAYS * 86400 ))
+
+<span class="cmt"># Underutilization thresholds</span>
+<span class="bash-var">CPU_WARN_THRESHOLD</span>=<span class="num">10</span>    <span class="cmt"># % — downsize recommendation</span>
+<span class="bash-var">CPU_CRIT_THRESHOLD</span>=<span class="num">5</span>     <span class="cmt"># % — terminate/stop recommendation</span>
+<span class="bash-var">MEM_WARN_THRESHOLD</span>=<span class="num">20</span>    <span class="cmt"># % — downsize recommendation</span>
+<span class="bash-var">MEM_CRIT_THRESHOLD</span>=<span class="num">10</span>    <span class="cmt"># % — terminate/stop recommendation</span>
+
+<span class="cmt"># Paths</span>
+<span class="bash-var">REPORT_DIR</span>=<span class="str">"/opt/ec2-report"</span>
+<span class="bash-var">LOG_FILE</span>=<span class="str">"${REPORT_DIR}/ec2_report.log"</span>
+<span class="bash-var">CSV_FILE</span>=<span class="str">"${REPORT_DIR}/ec2_underutilized_$(date +%Y%m%d).csv"</span>
+<span class="bash-var">HTML_BODY</span>=<span class="str">"${REPORT_DIR}/report_body.html"</span>
+
+<span class="kw">mkdir</span> <span class="bash-flag">-p</span> <span class="str">"${REPORT_DIR}"</span>
+
+<span class="cmt"># ── Logging ────────────────────────────────────────────────────────</span>
+<span class="fn">log</span>() {
+  <span class="kw">echo</span> <span class="str">"[$(date '+%Y-%m-%d %H:%M:%S')] $*"</span> | <span class="bash-cmd">tee</span> <span class="bash-flag">-a</span> <span class="str">"${LOG_FILE}"</span>
+}
+
+<span class="fn">log</span> <span class="str">"=== EC2 Underutilization Report started ==="</span>
+
+<span class="cmt"># ── Time window for CloudWatch queries ────────────────────────────</span>
+<span class="bash-var">END_TIME</span>=$(date <span class="bash-flag">-u</span> +<span class="str">"%Y-%m-%dT%H:%M:%SZ"</span>)
+<span class="bash-var">START_TIME</span>=$(date <span class="bash-flag">-u</span> <span class="bash-flag">-d</span> <span class="str">"${LOOKBACK_DAYS} days ago"</span> +<span class="str">"%Y-%m-%dT%H:%M:%SZ"</span>)
+
+<span class="cmt"># ── Fetch all running EC2 instances ───────────────────────────────</span>
+<span class="fn">log</span> <span class="str">"Discovering running EC2 instances in ${REGION}..."</span>
+
+<span class="bash-var">INSTANCES</span>=$(aws ec2 describe-instances \
+  <span class="bash-flag">--region</span> <span class="str">"${REGION}"</span> \
+  <span class="bash-flag">--filters</span> <span class="str">"Name=instance-state-name,Values=running"</span> \
+  <span class="bash-flag">--query</span> <span class="str">"Reservations[].Instances[].[InstanceId,InstanceType,Tags[?Key=='Name'].Value|[0]]"</span> \
+  <span class="bash-flag">--output</span> json)
+
+<span class="bash-var">INSTANCE_COUNT</span>=$(echo <span class="str">"${INSTANCES}"</span> | jq <span class="str">'length'</span>)
+<span class="fn">log</span> <span class="str">"Found ${INSTANCE_COUNT} running instances"</span>
+
+<span class="kw">if</span> [[ <span class="str">"${INSTANCE_COUNT}"</span> <span class="bash-flag">-eq</span> <span class="num">0</span> ]]; then
+  <span class="fn">log</span> <span class="str">"No running instances found — exiting."</span>
+  <span class="kw">exit</span> <span class="num">0</span>
+<span class="kw">fi</span>
+
+<span class="cmt"># ── CloudWatch metric helper ───────────────────────────────────────</span>
+<span class="fn">get_metric</span>() {
+  <span class="kw">local</span> <span class="bash-var">instance_id</span>=<span class="str">"$1"</span>
+  <span class="kw">local</span> <span class="bash-var">namespace</span>=<span class="str">"$2"</span>
+  <span class="kw">local</span> <span class="bash-var">metric_name</span>=<span class="str">"$3"</span>
+  <span class="kw">local</span> <span class="bash-var">dim_name</span>=<span class="str">"$4"</span>
+
+  <span class="bash-var">result</span>=$(aws cloudwatch get-metric-statistics \
+    <span class="bash-flag">--region</span> <span class="str">"${REGION}"</span> \
+    <span class="bash-flag">--namespace</span> <span class="str">"${namespace}"</span> \
+    <span class="bash-flag">--metric-name</span> <span class="str">"${metric_name}"</span> \
+    <span class="bash-flag">--dimensions</span> <span class="str">"Name=${dim_name},Value=${instance_id}"</span> \
+    <span class="bash-flag">--start-time</span> <span class="str">"${START_TIME}"</span> \
+    <span class="bash-flag">--end-time</span> <span class="str">"${END_TIME}"</span> \
+    <span class="bash-flag">--period</span> <span class="str">"${PERIOD_SECONDS}"</span> \
+    <span class="bash-flag">--statistics</span> Average \
+    <span class="bash-flag">--query</span> <span class="str">"Datapoints[0].Average"</span> \
+    <span class="bash-flag">--output</span> text <span class="num">2</span>>/dev/null)
+
+  <span class="cmt"># Return "N/A" if CloudWatch has no data (CWAgent not installed etc.)</span>
+  <span class="kw">if</span> [[ <span class="str">"${result}"</span> == <span class="str">"None"</span> ]] || [[ <span class="bash-flag">-z</span> <span class="str">"${result}"</span> ]]; then
+    <span class="kw">echo</span> <span class="str">"N/A"</span>
+  <span class="kw">else</span>
+    <span class="cmt"># Round to 2 decimal places</span>
+    <span class="kw">printf</span> <span class="str">"%.2f"</span> <span class="str">"${result}"</span>
+  <span class="kw">fi</span>
+}
+
+<span class="cmt"># ── Severity classification ────────────────────────────────────────</span>
+<span class="fn">get_severity</span>() {
+  <span class="kw">local</span> <span class="bash-var">cpu</span>=<span class="str">"$1"</span> <span class="bash-var">mem</span>=<span class="str">"$2"</span>
+
+  <span class="kw">if</span> [[ <span class="str">"${cpu}"</span> == <span class="str">"N/A"</span> ]]; then
+    <span class="kw">echo</span> <span class="str">"unknown"</span>
+    <span class="kw">return</span>
+  <span class="kw">fi</span>
+
+  <span class="kw">local</span> <span class="bash-var">cpu_crit</span>=$(echo <span class="str">"${cpu} < ${CPU_CRIT_THRESHOLD}"</span> | bc <span class="bash-flag">-l</span>)
+  <span class="kw">local</span> <span class="bash-var">cpu_warn</span>=$(echo <span class="str">"${cpu} < ${CPU_WARN_THRESHOLD}"</span> | bc <span class="bash-flag">-l</span>)
+
+  <span class="kw">if</span> [[ <span class="str">"${cpu_crit}"</span> <span class="bash-flag">-eq</span> <span class="num">1</span> ]]; then
+    <span class="kw">echo</span> <span class="str">"critical"</span>
+  <span class="kw">elif</span> [[ <span class="str">"${cpu_warn}"</span> <span class="bash-flag">-eq</span> <span class="num">1</span> ]]; then
+    <span class="kw">echo</span> <span class="str">"warning"</span>
+  <span class="kw">else</span>
+    <span class="kw">echo</span> <span class="str">"healthy"</span>
+  <span class="kw">fi</span>
+}
+
+<span class="fn">get_recommendation</span>() {
+  <span class="kw">case</span> <span class="str">"$1"</span> <span class="kw">in</span>
+    critical) <span class="kw">echo</span> <span class="str">"Consider stopping or terminating"</span> ;;
+    warning)  <span class="kw">echo</span> <span class="str">"Downsize to smaller instance type"</span> ;;
+    healthy)  <span class="kw">echo</span> <span class="str">"No action needed"</span> ;;
+    *)        <span class="kw">echo</span> <span class="str">"Install CloudWatch Agent for memory metrics"</span> ;;
+  <span class="kw">esac</span>
+}
+
+<span class="cmt"># ── Build HTML report ──────────────────────────────────────────────</span>
+<span class="fn">log</span> <span class="str">"Building HTML report..."</span>
+
+<span class="kw">cat</span> > <span class="str">"${HTML_BODY}"</span> <span class="op">&lt;&lt;'HTML'</span>
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta charset="UTF-8"/&gt;
+&lt;style&gt;
+  body{font-family:Arial,sans-serif;background:#f4f4f4;padding:20px}
+  h2{color:#232f3e}
+  table{border-collapse:collapse;width:100%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+  th{background:#232f3e;color:#fff;padding:10px 14px;text-align:left;font-size:13px}
+  td{padding:9px 14px;font-size:13px;border-bottom:1px solid #eee}
+  .critical{background:#fff0f0;color:#c0392b;font-weight:bold}
+  .warning{background:#fffbe6;color:#d68910}
+  .healthy{background:#f0fff4;color:#1e8449}
+  .unknown{background:#f8f8f8;color:#888}
+  .badge{padding:2px 8px;border-radius:10px;font-size:11px}
+  .badge-crit{background:#fadbd8;color:#c0392b}
+  .badge-warn{background:#fef9e7;color:#d68910}
+  .badge-ok{background:#d5f5e3;color:#1e8449}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+HTML
+
+<span class="kw">echo</span> <span class="str">"&lt;h2&gt;EC2 Underutilization Report — $(date '+%B %d, %Y')&lt;/h2&gt;"</span> >> <span class="str">"${HTML_BODY}"</span>
+<span class="kw">echo</span> <span class="str">"&lt;p&gt;Region: &lt;strong&gt;${REGION}&lt;/strong&gt; &amp;nbsp;|&amp;nbsp; Lookback: &lt;strong&gt;${LOOKBACK_DAYS} days&lt;/strong&gt; &amp;nbsp;|&amp;nbsp; Instances scanned: &lt;strong&gt;${INSTANCE_COUNT}&lt;/strong&gt;&lt;/p&gt;"</span> >> <span class="str">"${HTML_BODY}"</span>
+<span class="kw">echo</span> <span class="str">"&lt;table&gt;&lt;tr&gt;&lt;th&gt;Instance ID&lt;/th&gt;&lt;th&gt;Name&lt;/th&gt;&lt;th&gt;Type&lt;/th&gt;&lt;th&gt;CPU Avg (7d)&lt;/th&gt;&lt;th&gt;Memory Avg (7d)&lt;/th&gt;&lt;th&gt;Status&lt;/th&gt;&lt;th&gt;Recommendation&lt;/th&gt;&lt;/tr&gt;"</span> >> <span class="str">"${HTML_BODY}"</span>
+
+<span class="cmt"># CSV header</span>
+<span class="kw">echo</span> <span class="str">"InstanceId,Name,InstanceType,CPU_7d_Avg,Memory_7d_Avg,Status,Recommendation"</span> > <span class="str">"${CSV_FILE}"</span>
+
+<span class="cmt"># ── Per-instance loop ──────────────────────────────────────────────</span>
+<span class="kw">while</span> <span class="bash-cmd">IFS=</span> <span class="kw">read</span> <span class="bash-flag">-r</span> <span class="bash-var">instance</span>; do
+  <span class="bash-var">INSTANCE_ID</span>=$(echo <span class="str">"${instance}"</span> | jq <span class="bash-flag">-r</span> <span class="str">'.[0]'</span>)
+  <span class="bash-var">INSTANCE_TYPE</span>=$(echo <span class="str">"${instance}"</span> | jq <span class="bash-flag">-r</span> <span class="str">'.[1]'</span>)
+  <span class="bash-var">INSTANCE_NAME</span>=$(echo <span class="str">"${instance}"</span> | jq <span class="bash-flag">-r</span> <span class="str">'.[2] // "Unnamed"'</span>)
+
+  <span class="fn">log</span> <span class="str">"Processing ${INSTANCE_ID} (${INSTANCE_NAME} / ${INSTANCE_TYPE})"</span>
+
+  <span class="cmt"># Pull metrics</span>
+  <span class="bash-var">CPU_AVG</span>=$(get_metric <span class="str">"${INSTANCE_ID}"</span> <span class="str">"AWS/EC2"</span> <span class="str">"CPUUtilization"</span> <span class="str">"InstanceId"</span>)
+  <span class="bash-var">MEM_AVG</span>=$(get_metric <span class="str">"${INSTANCE_ID}"</span> <span class="str">"CWAgent"</span>   <span class="str">"mem_used_percent"</span> <span class="str">"InstanceId"</span>)
+
+  <span class="bash-var">SEVERITY</span>=$(get_severity <span class="str">"${CPU_AVG}"</span> <span class="str">"${MEM_AVG}"</span>)
+  <span class="bash-var">RECOMMENDATION</span>=$(get_recommendation <span class="str">"${SEVERITY}"</span>)
+
+  <span class="cmt"># HTML badge styling</span>
+  <span class="kw">case</span> <span class="str">"${SEVERITY}"</span> <span class="kw">in</span>
+    critical) <span class="bash-var">BADGE</span>=<span class="str">'&lt;span class="badge badge-crit"&gt;Critical&lt;/span&gt;'</span>  ;;
+    warning)  <span class="bash-var">BADGE</span>=<span class="str">'&lt;span class="badge badge-warn"&gt;Warning&lt;/span&gt;'</span>   ;;
+    healthy)  <span class="bash-var">BADGE</span>=<span class="str">'&lt;span class="badge badge-ok"&gt;Healthy&lt;/span&gt;'</span>    ;;
+    *)        <span class="bash-var">BADGE</span>=<span class="str">'&lt;span class="badge"&gt;Unknown&lt;/span&gt;'</span>              ;;
+  <span class="kw">esac</span>
+
+  <span class="cmt"># Append HTML table row</span>
+  <span class="kw">cat</span> >> <span class="str">"${HTML_BODY}"</span> <span class="op">&lt;&lt;EOF</span>
+&lt;tr class="${SEVERITY}"&gt;
+  &lt;td&gt;&lt;code&gt;${INSTANCE_ID}&lt;/code&gt;&lt;/td&gt;
+  &lt;td&gt;${INSTANCE_NAME}&lt;/td&gt;
+  &lt;td&gt;&lt;code&gt;${INSTANCE_TYPE}&lt;/code&gt;&lt;/td&gt;
+  &lt;td&gt;${CPU_AVG}%&lt;/td&gt;
+  &lt;td&gt;${MEM_AVG}%&lt;/td&gt;
+  &lt;td&gt;${BADGE}&lt;/td&gt;
+  &lt;td&gt;${RECOMMENDATION}&lt;/td&gt;
+&lt;/tr&gt;
+EOF
+
+  <span class="cmt"># Append CSV row</span>
+  <span class="kw">echo</span> <span class="str">"${INSTANCE_ID},${INSTANCE_NAME},${INSTANCE_TYPE},${CPU_AVG},${MEM_AVG},${SEVERITY},${RECOMMENDATION}"</span> >> <span class="str">"${CSV_FILE}"</span>
+
+<span class="kw">done</span> < <(echo <span class="str">"${INSTANCES}"</span> | jq <span class="bash-flag">-c</span> <span class="str">'.[]'</span>)
+
+<span class="cmt"># Close HTML</span>
+<span class="kw">echo</span> <span class="str">"&lt;/table&gt;&lt;p style='color:#999;font-size:11px'&gt;Generated by ec2_underutilized_report.sh at $(date)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;"</span> >> <span class="str">"${HTML_BODY}"</span>
+
+<span class="cmt"># ── Send email via sendmail (MIME multipart) ───────────────────────</span>
+<span class="fn">log</span> <span class="str">"Sending report to ${REPORT_EMAIL}..."</span>
+
+<span class="bash-var">BOUNDARY</span>=<span class="str">"boundary_$(date +%s)"</span>
+<span class="bash-var">CSV_BASENAME</span>=$(basename <span class="str">"${CSV_FILE}"</span>)
+<span class="bash-var">CSV_B64</span>=$(base64 <span class="bash-flag">-w</span> <span class="num">0</span> <span class="str">"${CSV_FILE}"</span>)
+
+<span class="bash-cmd">sendmail</span> <span class="bash-flag">-t</span> <span class="op">&lt;&lt;MAIL</span>
+To: ${REPORT_EMAIL}
+From: ${FROM_EMAIL}
+Subject: [AWS] EC2 Underutilization Report — $(date '+%Y-%m-%d') (${REGION})
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="${BOUNDARY}"
+
+--${BOUNDARY}
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+$(cat "${HTML_BODY}")
+
+--${BOUNDARY}
+Content-Type: text/csv; name="${CSV_BASENAME}"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="${CSV_BASENAME}"
+
+${CSV_B64}
+--${BOUNDARY}--
+MAIL
+
+<span class="fn">log</span> <span class="str">"Report sent successfully."</span>
+<span class="fn">log</span> <span class="str">"CSV saved to: ${CSV_FILE}"</span>
+<span class="fn">log</span> <span class="str">"=== Report complete ==="</span></code></pre>
+
+      <h2 id="iam-policy">IAM Policy — Least Privilege</h2>
+      <p>Attach this policy to the EC2 instance profile running the script. It covers exactly what's needed — describe instances, read CloudWatch metrics, nothing else.</p>
+
+      <pre><code><span class="cmt">{</span>
+  <span class="str">"Version"</span>: <span class="str">"2012-10-17"</span>,
+  <span class="str">"Statement"</span>: [
+    <span class="cmt">{</span>
+      <span class="str">"Sid"</span>: <span class="str">"EC2Describe"</span>,
+      <span class="str">"Effect"</span>: <span class="str">"Allow"</span>,
+      <span class="str">"Action"</span>: [
+        <span class="str">"ec2:DescribeInstances"</span>,
+        <span class="str">"ec2:DescribeTags"</span>
+      ],
+      <span class="str">"Resource"</span>: <span class="str">"*"</span>
+    },
+    <span class="cmt">{</span>
+      <span class="str">"Sid"</span>: <span class="str">"CloudWatchReadMetrics"</span>,
+      <span class="str">"Effect"</span>: <span class="str">"Allow"</span>,
+      <span class="str">"Action"</span>: [
+        <span class="str">"cloudwatch:GetMetricStatistics"</span>,
+        <span class="str">"cloudwatch:ListMetrics"</span>
+      ],
+      <span class="str">"Resource"</span>: <span class="str">"*"</span>
+    }
+  ]
+}</code></pre>
+
+      <h2 id="memory-metrics">Enabling Memory Metrics with CloudWatch Agent</h2>
+      <p>By default, CloudWatch has no memory data for EC2 — memory usage is not exposed by the hypervisor. You need the <strong>CloudWatch Agent</strong> running inside the instance to push <code>mem_used_percent</code>. Without it, the script shows "N/A" for memory — still useful, just without memory signal.</p>
+
+      <div class="diagram">
+        <div class="diagram-title">CloudWatch Agent — Memory Metric Flow</div>
+        <svg viewBox="0 0 700 200" width="100%" style="max-width:700px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#555"/></marker>
+            <marker id="arg2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,1 L9,5 L0,9 Z" fill="#00ff88"/></marker>
+          </defs>
+          <!-- EC2 instance -->
+          <rect x="30" y="70" width="160" height="80" rx="5" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+          <text x="110" y="95" font-family="JetBrains Mono,monospace" font-size="8" fill="#888" text-anchor="middle">EC2 Instance</text>
+          <rect x="50" y="104" width="120" height="30" rx="3" fill="#161616" stroke="#00ff88" stroke-width="1"/>
+          <text x="110" y="118" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ff88" text-anchor="middle">CloudWatch Agent</text>
+          <text x="110" y="130" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">reads /proc/meminfo</text>
+          <!-- Arrow to CW -->
+          <line x1="190" y1="119" x2="320" y2="119" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arg2)"/>
+          <!-- CloudWatch -->
+          <rect x="320" y="75" width="140" height="88" rx="5" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.5"/>
+          <text x="390" y="100" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">CloudWatch</text>
+          <text x="390" y="115" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Namespace: CWAgent</text>
+          <text x="390" y="129" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Metric: mem_used_percent</text>
+          <text x="390" y="143" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Dim: InstanceId</text>
+          <!-- Arrow to script -->
+          <line x1="460" y1="119" x2="580" y2="119" stroke="#555" stroke-width="1.5" marker-end="url(#ar2)"/>
+          <!-- Script box -->
+          <rect x="580" y="90" width="110" height="60" rx="5" fill="#1c1c1c" stroke="#e5c07b" stroke-width="1.2"/>
+          <text x="635" y="115" font-family="JetBrains Mono,monospace" font-size="8" fill="#e5c07b" text-anchor="middle">Bash Script</text>
+          <text x="635" y="130" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">get-metric-statistics</text>
+          <text x="635" y="143" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">7d Average</text>
+          <!-- No CWAgent note -->
+          <text x="110" y="170" font-family="JetBrains Mono,monospace" font-size="7" fill="#555" text-anchor="middle">Without CWAgent → script reports N/A for memory</text>
+        </svg>
+      </div>
+
+      <pre><code><span class="cmt"># Quick install + configure CloudWatch Agent for memory metrics</span>
+
+<span class="cmt"># 1. Install</span>
+sudo yum install <span class="bash-flag">-y</span> amazon-cloudwatch-agent   <span class="cmt"># Amazon Linux</span>
+<span class="cmt"># sudo apt install -y amazon-cloudwatch-agent  # Ubuntu/Debian</span>
+
+<span class="cmt"># 2. Minimal config — writes mem_used_percent every 60s</span>
+sudo <span class="bash-cmd">tee</span> /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /dev/null <span class="op">&lt;&lt;'EOF'</span>
+{
+  "metrics": {
+    "namespace": "CWAgent",
+    "metrics_collected": {
+      "mem": {
+        "measurement": ["mem_used_percent"],
+        "metrics_collection_interval": 60
+      }
+    },
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}"
+    }
+  }
+}
+EOF
+
+<span class="cmt"># 3. Start and enable</span>
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  <span class="bash-flag">-a</span> fetch-config \
+  <span class="bash-flag">-m</span> ec2 \
+  <span class="bash-flag">-c</span> file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
+  <span class="bash-flag">-s</span>
+
+<span class="cmt"># Verify it's running</span>
+sudo systemctl status amazon-cloudwatch-agent</code></pre>
+
+      <h2 id="deployment">Deploy & Schedule</h2>
+      <p>Get the script onto your reporting EC2 instance, make it executable, then wire it into cron for daily delivery:</p>
+
+      <pre><code><span class="cmt"># 1. Create directory and drop script in place</span>
+sudo mkdir <span class="bash-flag">-p</span> /opt/ec2-report
+sudo <span class="bash-cmd">curl</span> <span class="bash-flag">-o</span> /opt/ec2-report/ec2_underutilized_report.sh <span class="str">[your-script-url]</span>
+sudo chmod +x /opt/ec2-report/ec2_underutilized_report.sh
+
+<span class="cmt"># 2. Test run first — check output before scheduling</span>
+/opt/ec2-report/ec2_underutilized_report.sh
+
+<span class="cmt"># Watch logs in real-time during test</span>
+tail <span class="bash-flag">-f</span> /opt/ec2-report/ec2_report.log
+
+<span class="cmt"># 3. Schedule via cron — every day at 8am</span>
+<span class="cmt"># (crontab -e, then add this line)</span>
+<span class="str">0 8 * * * /opt/ec2-report/ec2_underutilized_report.sh >> /opt/ec2-report/ec2_report.log 2>&1</span>
+
+<span class="cmt"># 4. Verify cron registered the job</span>
+crontab <span class="bash-flag">-l</span></code></pre>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠️</span>
+        <span>Keep at least 7 days of CloudWatch data before trusting the averages. A newly launched instance with 2 days of 90% CPU will look healthy — but it's just a short window. The thresholds are most reliable after 2 weeks of data.</span>
+      </div>
+
+      <h2 id="what-the-report-looks-like">What the Report Looks Like</h2>
+      <p>Every morning, the team receives an email with a table like this. Rows are colour-coded by severity — red for critical, yellow for warnings, green for healthy. The CSV attachment lets you paste straight into a spreadsheet to track trends over weeks.</p>
+
+      <div class="diagram">
+        <div class="diagram-title">Sample HTML Report Output — Colour-Coded by Severity</div>
+        <svg viewBox="0 0 700 260" width="100%" style="max-width:700px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+          <!-- Email container -->
+          <rect x="15" y="10" width="670" height="240" rx="6" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1.5"/>
+          <!-- Email header bar -->
+          <rect x="15" y="10" width="670" height="34" rx="6" fill="#222" stroke="#2a2a2a" stroke-width="1"/>
+          <text x="30" y="31" font-family="JetBrains Mono,monospace" font-size="8" fill="#555">From: aws-reports@yourcompany.com</text>
+          <text x="420" y="31" font-family="JetBrains Mono,monospace" font-size="8" fill="#555">Subject: [AWS] EC2 Underutilization Report — 2025-03-06</text>
+          <!-- Table header -->
+          <rect x="30" y="58" width="640" height="24" rx="2" fill="#232f3e"/>
+          <text x="45" y="74" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#fff">Instance ID</text>
+          <text x="145" y="74" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#fff">Name</text>
+          <text x="255" y="74" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#fff">Type</text>
+          <text x="325" y="74" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#fff">CPU Avg</text>
+          <text x="395" y="74" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#fff">Mem Avg</text>
+          <text x="465" y="74" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#fff">Status</text>
+          <text x="530" y="74" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#fff">Recommendation</text>
+          <!-- Row 1 — critical (red) -->
+          <rect x="30" y="82" width="640" height="28" rx="2" fill="rgba(192,57,43,.18)"/>
+          <text x="45" y="100" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#e06c75">i-0a1b2c3d4e</text>
+          <text x="145" y="100" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#d4d4d4">old-staging-api</text>
+          <text x="255" y="100" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888">m5.xlarge</text>
+          <text x="325" y="100" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#e06c75">2.31%</text>
+          <text x="395" y="100" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#e06c75">4.18%</text>
+          <rect x="460" y="88" width="55" height="14" rx="6" fill="rgba(192,57,43,.3)"/>
+          <text x="487" y="99" font-family="JetBrains Mono,monospace" font-size="7" fill="#e06c75" text-anchor="middle">Critical</text>
+          <text x="530" y="100" font-family="JetBrains Mono,monospace" font-size="7" fill="#e06c75">Stop/Terminate</text>
+          <!-- Row 2 — warning (yellow) -->
+          <rect x="30" y="110" width="640" height="28" rx="2" fill="rgba(214,136,16,.12)"/>
+          <text x="45" y="128" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#e5c07b">i-0f9e8d7c6b</text>
+          <text x="145" y="128" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#d4d4d4">prod-worker-2</text>
+          <text x="255" y="128" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888">c5.2xlarge</text>
+          <text x="325" y="128" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#e5c07b">7.84%</text>
+          <text x="395" y="128" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#e5c07b">15.22%</text>
+          <rect x="460" y="116" width="55" height="14" rx="6" fill="rgba(214,136,16,.25)"/>
+          <text x="487" y="127" font-family="JetBrains Mono,monospace" font-size="7" fill="#e5c07b" text-anchor="middle">Warning</text>
+          <text x="530" y="128" font-family="JetBrains Mono,monospace" font-size="7" fill="#e5c07b">Downsize type</text>
+          <!-- Row 3 — healthy (green) -->
+          <rect x="30" y="138" width="640" height="28" rx="2" fill="rgba(30,132,73,.1)"/>
+          <text x="45" y="156" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ff88">i-0e5d4c3b2a</text>
+          <text x="145" y="156" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#d4d4d4">prod-api-primary</text>
+          <text x="255" y="156" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888">c5.xlarge</text>
+          <text x="325" y="156" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ff88">38.56%</text>
+          <text x="395" y="156" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#00ff88">54.11%</text>
+          <rect x="460" y="144" width="55" height="14" rx="6" fill="rgba(0,255,136,.1)"/>
+          <text x="487" y="155" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ff88" text-anchor="middle">Healthy</text>
+          <text x="530" y="156" font-family="JetBrains Mono,monospace" font-size="7" fill="#00ff88">No action needed</text>
+          <!-- Row 4 — N/A memory -->
+          <rect x="30" y="166" width="640" height="28" rx="2" fill="rgba(255,107,53,.1)"/>
+          <text x="45" y="184" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#ff6b35">i-0d4c3b2a1f</text>
+          <text x="145" y="184" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#d4d4d4">test-batch-runner</text>
+          <text x="255" y="184" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888">t3.medium</text>
+          <text x="325" y="184" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#ff6b35">3.20%</text>
+          <text x="395" y="184" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#555">N/A</text>
+          <rect x="460" y="172" width="55" height="14" rx="6" fill="rgba(255,107,53,.2)"/>
+          <text x="487" y="183" font-family="JetBrains Mono,monospace" font-size="7" fill="#ff6b35" text-anchor="middle">Critical</text>
+          <text x="530" y="184" font-family="JetBrains Mono,monospace" font-size="7" fill="#ff6b35">Stop/Terminate</text>
+          <!-- CSV badge -->
+          <rect x="30" y="215" width="130" height="20" rx="3" fill="#1c1c1c" stroke="#c678dd" stroke-width="1"/>
+          <text x="95" y="229" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#c678dd" text-anchor="middle">📎 ec2_underutilized_20250306.csv</text>
+        </svg>
+      </div>
+
+      <h2 id="features-summary">What You Get</h2>
+
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-icon">🔍</div>
+          <div class="feat-title">CPU + Memory Dual Signal</div>
+          <div class="feat-desc">CPU alone lies. An instance processing batch jobs can spike to 80% for 2 minutes then idle for an hour — yet average 8%. Memory gives you a second signal that confirms whether the instance is genuinely underloaded.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">📧</div>
+          <div class="feat-title">HTML Email + CSV Attachment</div>
+          <div class="feat-desc">The HTML table gives instant visual triage — red rows stand out immediately. The CSV attachment lets you paste into Sheets or Excel to track which instances have been actioned, week-over-week cost savings, and trend patterns.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">⚙️</div>
+          <div class="feat-title">Configurable Thresholds</div>
+          <div class="feat-desc">Four constants at the top of the script. Development environments might warrant a 20% CPU warning threshold; production billing services might need stricter checks. No code changes — just edit the variables.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">📝</div>
+          <div class="feat-title">Full Audit Log</div>
+          <div class="feat-desc">Every run appends timestamped entries to <code>ec2_report.log</code>. When your finance team asks why a specific instance was terminated last Tuesday, the log has the metric values that triggered the recommendation.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">🛡️</div>
+          <div class="feat-title">Graceful Degradation</div>
+          <div class="feat-desc">Instances without the CloudWatch Agent show "N/A" for memory and are still evaluated on CPU alone. The script never crashes on missing metrics — it reports what it can and keeps moving.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">⏰</div>
+          <div class="feat-title">Cron-Scheduled</div>
+          <div class="feat-desc">One crontab line runs the full pipeline every morning. Reports land in your inbox before standup. Engineers arrive knowing exactly which instances to action that day — no manual checks, no forgotten instances.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>Want to go further? Pipe the CSV into a Slack webhook so the report drops into your <code>#finops</code> channel. Or feed it into a DynamoDB table and build a week-over-week savings tracker. The script is a data source — the HTML email is just the simplest output format to start with.</span>
+      </div>
+
+    </div>
+  </article>
+
+  <aside class="sr">
+    <div class="toc-title">On this page</div>
+    <ul class="toc-list" id="toc"></ul>
+    <div class="related-title">Related Posts</div>
+    <a href="cloud-finops.html" class="related-post"><div class="related-cat">cloud</div><div class="related-ttl">Cloud FinOps Framework: AWS Cost Intelligence</div></a>
+    <a href="aws-monitoring-alerting-webapp.html" class="related-post"><div class="related-cat">devops</div><div class="related-ttl">Monitoring & Alerting a Web App on AWS</div></a>
+    <a href="lambda-eventbridge-cron.html" class="related-post"><div class="related-cat">serverless</div><div class="related-ttl">Kill EC2 Cron Jobs with Lambda + EventBridge</div></a>
+    <a href="aws-cloudwatch-monitoring.html" class="related-post"><div class="related-cat">devops</div><div class="related-ttl">CloudWatch Monitoring Deep Dive</div></a>
+    <a href="aws-iam-least-privilege.html" class="related-post"><div class="related-cat">security</div><div class="related-ttl">AWS IAM Mastery: Least Privilege at Scale</div></a>
+    <a href="observability-stack-aws.html" class="related-post"><div class="related-cat">devops</div><div class="related-ttl">Production Observability Stack on AWS</div></a>
+  </aside>
+
+</div>
+
+<script>
+window.addEventListener('scroll', () => {
+  const art = document.querySelector('article');
+  const rect = art.getBoundingClientRect();
+  const total = art.offsetHeight - window.innerHeight;
+  const scrolled = Math.max(0, -rect.top);
+  document.getElementById('rp').style.width = Math.min(100, (scrolled / total) * 100) + '%';
+});
+const headings = document.querySelectorAll('.prose h2, .prose h3');
+const toc = document.getElementById('toc');
+headings.forEach((h, i) => {
+  h.id = h.id || 'sec-' + i;
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+  a.href = '#' + h.id;
+  a.textContent = h.textContent;
+  if (h.tagName === 'H3') a.style.paddingLeft = '1.25rem';
+  li.appendChild(a);
+  toc.appendChild(li);
+});
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    const a = toc.querySelector('a[href="#' + e.target.id + '"]');
+    if (a) a.classList.toggle('active', e.isIntersecting);
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+headings.forEach(h => obs.observe(h));
+</script>
+</body>
+</html>

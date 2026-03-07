@@ -130,11 +130,11 @@
     </div>
 
     <div class="filter-bar" id="filter-bar">
-      <button class="filter-btn active" data-filter="all" onclick="filterPosts('all',this)">All Posts <span class="filter-count">16</span></button>
+      <button class="filter-btn active" data-filter="all" onclick="filterPosts('all',this)">All Posts <span class="filter-count">17</span></button>
       <button class="filter-btn" data-filter="cloud" onclick="filterPosts('cloud',this)">Cloud <span class="filter-count">6</span></button>
       <button class="filter-btn" data-filter="kubernetes" onclick="filterPosts('kubernetes',this)">Kubernetes <span class="filter-count">1</span></button>
       <button class="filter-btn" data-filter="security" onclick="filterPosts('security',this)">Security <span class="filter-count">3</span></button>
-      <button class="filter-btn" data-filter="devops" onclick="filterPosts('devops',this)">DevOps <span class="filter-count">6</span></button>
+      <button class="filter-btn" data-filter="devops" onclick="filterPosts('devops',this)">DevOps <span class="filter-count">7</span></button>
     </div>
 
     <div class="blog-layout">
@@ -444,17 +444,55 @@
           </div>
         </a>
 
+        <!-- Post17 -->
+        <a class="post-card" data-category="devops" href="posts/ec2-underutilization-report-bash.html">
+          <div class="post-meta">
+            <span class="post-category">devops</span>
+            <span class="dot-sep">·</span><span class="post-date">Mar 6, 2025</span>
+            <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
+          </div>
+          <div class="author-chip">
+            <div class="author-avatar">SJ</div>
+            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+          </div>
+          <h2 class="post-title">Stop Paying for Idle EC2: Automate Underutilization Reports with Bash & CloudWatch</h2>
+          <p class="post-excerpt">A Bash script that queries CloudWatch for 7-day CPU and memory averages across every running EC2 instance, flags the underutilized ones, emails an HTML report with a CSV attachment, and runs itself every morning via cron — so you never miss a wasteful instance again.</p>
+          <div class="post-footer">
+            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#cloudwatch</span><span class="tag">#bash</span></div>
+            <span class="read-more">read more →</span>
+          </div>
+        </a>
+
+        <!-- Post18 -->
+        <a class="post-card" data-category="serverless" href="posts/lambda-eventbridge-cron.html">
+          <div class="post-meta">
+            <span class="post-category">serverless</span>
+            <span class="dot-sep">·</span><span class="post-date">Jun 14, 2025</span>
+            <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
+          </div>
+          <div class="author-chip">
+            <div class="author-avatar">SJ</div>
+            <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+          </div>
+          <h2 class="post-title">Kill Your EC2 Cron Jobs: Serverless Scheduling with Lambda, EventBridge & Terraform</h2>
+          <p class="post-excerpt">That EC2 instance running your cron jobs costs $45/year, needs OS patches, and is a single point of failure. Here's the complete Terraform-based migration to Lambda + EventBridge — with 99.8% cost savings and zero server management.</p>
+          <div class="post-footer">
+            <div class="post-tags"><span class="tag">#aws</span><span class="tag">#lambda</span><span class="tag">#eventbridge</span></div>
+            <span class="read-more">read more →</span>
+          </div>
+        </a>
+
       </div>
 
       <aside class="blog-sidebar">
         <div class="widget">
           <div class="widget-title">### Categories</div>
           <div class="category-list">
-            <div class="category-item active" onclick="filterPosts('all')"><span class="cat-name">All Posts</span><span class="cat-count">16</span></div>
+            <div class="category-item active" onclick="filterPosts('all')"><span class="cat-name">All Posts</span><span class="cat-count">17</span></div>
             <div class="category-item" onclick="filterPosts('cloud')"><span class="cat-name">Cloud</span><span class="cat-count">6</span></div>
             <div class="category-item" onclick="filterPosts('kubernetes')"><span class="cat-name">Kubernetes</span><span class="cat-count">1</span></div>
             <div class="category-item" onclick="filterPosts('security')"><span class="cat-name">Security</span><span class="cat-count">3</span></div>
-            <div class="category-item" onclick="filterPosts('devops')"><span class="cat-name">DevOps</span><span class="cat-count">6</span></div>
+            <div class="category-item" onclick="filterPosts('devops')"><span class="cat-name">DevOps</span><span class="cat-count">7</span></div>
           </div>
         </div>
         <div class="widget">
