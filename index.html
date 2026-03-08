@@ -125,8 +125,8 @@
     </div>
 
     <div class="filter-bar" id="filter-bar">
-      <button class="filter-btn active" data-filter="all" onclick="filterPosts('all',this)">All Posts <span class="filter-count">18</span></button>
-      <button class="filter-btn" data-filter="cloud" onclick="filterPosts('cloud',this)">Cloud <span class="filter-count">6</span></button>
+      <button class="filter-btn active" data-filter="all" onclick="filterPosts('all',this)">All Posts <span class="filter-count">19</span></button>
+      <button class="filter-btn" data-filter="cloud" onclick="filterPosts('cloud',this)">Cloud <span class="filter-count">7</span></button>
       <button class="filter-btn" data-filter="kubernetes" onclick="filterPosts('kubernetes',this)">Kubernetes <span class="filter-count">1</span></button>
       <button class="filter-btn" data-filter="security" onclick="filterPosts('security',this)">Security <span class="filter-count">3</span></button>
       <button class="filter-btn" data-filter="devops" onclick="filterPosts('devops',this)">DevOps <span class="filter-count">8</span></button>
@@ -190,6 +190,25 @@
             <p class="post-excerpt">That EC2 instance running your cron jobs costs $45/year, needs OS patches, and is a single point of failure. Here's the complete Terraform-based migration to Lambda + EventBridge — with 99.8% cost savings and zero server management.</p>
             <div class="post-footer">
               <div class="post-tags"><span class="tag">#aws</span><span class="tag">#lambda</span><span class="tag">#eventbridge</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
+
+          <!-- Post 04 · Oct 6, 2025 -->
+          <a class="post-card" data-category="cloud" href="posts/aws-discord-notifications-terraform.html">
+            <div class="post-meta">
+              <span class="post-category">cloud</span>
+              <span class="dot-sep">·</span><span class="post-date">Oct 6, 2025</span>
+              <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">Real-Time AWS Resource Notifications to Discord Using Terraform</h2>
+            <p class="post-excerpt">Your AWS account changes silently — instances spin up, VPCs get deleted, RDS clusters get created — and nobody knows until something breaks. Here's how I built a fully event-driven notification pipeline with CloudTrail, EventBridge, SNS, and Lambda that fires a rich Discord message the moment anything changes in your infrastructure.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#terraform</span><span class="tag">#lambda</span></div>
               <span class="read-more">read more →</span>
             </div>
           </a>
@@ -494,8 +513,8 @@
         <div class="widget">
           <div class="widget-title">### Categories</div>
           <div class="category-list">
-            <div class="category-item active" onclick="filterPosts('all')"><span class="cat-name">All Posts</span><span class="cat-count">18</span></div>
-            <div class="category-item" onclick="filterPosts('cloud')"><span class="cat-name">Cloud</span><span class="cat-count">6</span></div>
+            <div class="category-item active" onclick="filterPosts('all')"><span class="cat-name">All Posts</span><span class="cat-count">19</span></div>
+            <div class="category-item" onclick="filterPosts('cloud')"><span class="cat-name">Cloud</span><span class="cat-count">7</span></div>
             <div class="category-item" onclick="filterPosts('kubernetes')"><span class="cat-name">Kubernetes</span><span class="cat-count">1</span></div>
             <div class="category-item" onclick="filterPosts('security')"><span class="cat-name">Security</span><span class="cat-count">3</span></div>
             <div class="category-item" onclick="filterPosts('devops')"><span class="cat-name">DevOps</span><span class="cat-count">8</span></div>

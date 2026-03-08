@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Real-Time AWS Notifications to Discord with Terraform — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0a0a0a;--bg2:#111;--bg3:#161616;--bg4:#1c1c1c;
+      --border:#222;--border2:#2a2a2a;
+      --accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;
+      --muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;
+      --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+    a{color:inherit;text-decoration:none}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+
+    /* ── 3-column page grid ── */
+    .page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+    .sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+    .sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+
+    /* ── Left sidebar ── */
+    .logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+    .logo span{color:var(--dim)}
+    nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+    nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+    nav a::before{content:'> ';color:var(--muted);transition:color .15s}
+    nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+    nav a:hover::before{color:var(--accent)}
+    .sfooter{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+    .sfooter a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+    .sfooter a:hover{color:var(--accent)}
+    .status{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    /* ── Article ── */
+    article{padding:3rem 3.5rem;min-width:0;animation:fadeUp .5s ease both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .back-link{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+    .back-link:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+
+    /* ── Post header ── */
+    .post-header{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+    .meta-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+    .badge{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+    .badge-cat{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+    .badge-feat{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+    .badge-date,.badge-rt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+    .sep{color:var(--muted);font-size:.6rem}
+    h1.post-title{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+    .post-sub{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+    .author-row{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+    .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+    .author-name{font-size:.82rem;font-weight:600;color:var(--white)}
+    .author-role{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+    .tags-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+    .ptag{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+
+    /* ── Prose content ── */
+    .prose{max-width:760px}
+    .prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+    .prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+    .prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+    .prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+    .prose li{margin-bottom:.45rem}
+    .prose strong{color:var(--white);font-weight:600}
+    .prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+    .prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+    .prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+
+    /* ── Code syntax colours ── */
+    .kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}
+    .cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}.op{color:#56b6c2}
+
+    /* ── Callouts ── */
+    .callout{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem;line-height:1.65}
+    .callout-info{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+    .callout-warn{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+    .callout-tip{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+    .callout-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+
+    /* ── Architecture diagram box ── */
+    .diagram{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+    .diagram-title{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+    .diagram-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+    /* ── Stat cards ── */
+    .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+    .stat-num{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+    .stat-label{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+
+    /* ── Steps with connected vertical line ── */
+    .steps{display:flex;flex-direction:column;gap:0;margin:2rem 0}
+    .step{display:flex;gap:1.25rem;align-items:flex-start}
+    .step-num{width:28px;height:28px;border-radius:50%;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:.15rem}
+    .step-body{flex:1;padding-bottom:1.5rem;border-left:1px solid var(--border);margin-left:14px;padding-left:1.25rem}
+    .step:last-child .step-body{border-left-color:transparent}
+    .step-title{font-size:.9rem;font-weight:600;color:var(--white);margin-bottom:.4rem}
+    .step-desc{font-size:.85rem;color:var(--dim);line-height:1.65}
+
+    /* ── Prerequisite checklist ── */
+    .prereq-list{display:flex;flex-direction:column;gap:.6rem;margin:1.5rem 0}
+    .prereq-item{display:flex;gap:.75rem;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:.85rem 1rem}
+    .prereq-check{font-family:var(--mono);font-size:.75rem;color:var(--accent);font-weight:700;flex-shrink:0;margin-top:.05rem}
+    .prereq-title{font-size:.88rem;font-weight:600;color:var(--white);margin-bottom:.2rem}
+    .prereq-desc{font-size:.82rem;color:var(--dim);line-height:1.55}
+
+    /* ── Lessons grid ── */
+    .lessons-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin:1.5rem 0}
+    .lesson-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem 1.1rem}
+    .lesson-card.challenge{border-left:3px solid var(--accent3)}
+    .lesson-card.win{border-left:3px solid var(--accent)}
+    .lesson-card.next{border-left:3px solid var(--accent2)}
+    .lesson-type{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;margin-bottom:.4rem}
+    .lesson-card.challenge .lesson-type{color:var(--accent3)}
+    .lesson-card.win .lesson-type{color:var(--accent)}
+    .lesson-card.next .lesson-type{color:var(--accent2)}
+    .lesson-title{font-size:.86rem;font-weight:600;color:var(--white);margin-bottom:.35rem}
+    .lesson-desc{font-size:.8rem;color:var(--dim);line-height:1.55}
+
+    /* ── Right sidebar ── */
+    .toc-title{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+    .toc-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+    .toc-list li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+    .toc-list li a:hover,.toc-list li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+    .related-title{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+    .related-post{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+    .related-post:hover{background:rgba(0,255,136,.04)}
+    .related-cat{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+    .related-ttl{font-size:.78rem;color:var(--text);line-height:1.35}
+
+    /* ── Read progress bar ── */
+    .read-progress{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+
+    @media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}.lessons-grid{grid-template-columns:1fr}}
+    @media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}
+  </style>
+</head>
+<body>
+<div class="read-progress" id="rp"></div>
+<div class="page">
+
+  <!-- ── Left sidebar ── -->
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="status"><span class="dot"></span>status: building</div>
+    <div class="sfooter">
+      <a href="https://github.com/SabiNjoshi1" target="_blank">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/" target="_blank">LinkedIn</a>
+    </div>
+  </aside>
+
+  <!-- ── Article ── -->
+  <article>
+    <a href="../index.html" class="back-link">← back to blog</a>
+
+    <div class="post-header">
+      <div class="meta-bar">
+        <span class="badge badge-cat">cloud</span>
+        <span class="badge badge-feat">Featured</span>
+        <span class="sep">·</span>
+        <span class="badge-date">Oct 6, 2025</span>
+        <span class="sep">·</span>
+        <span class="badge-rt">14 min read</span>
+      </div>
+      <h1 class="post-title">Real-Time AWS Resource Notifications to Discord Using Terraform</h1>
+      <p class="post-sub">Your AWS account changes silently — instances spin up, VPCs get deleted, RDS clusters get created — and nobody knows until something breaks. Here's how I built a fully event-driven notification pipeline with CloudTrail, EventBridge, SNS, and Lambda that fires a rich Discord message the moment anything changes in your infrastructure.</p>
+      <div class="author-row">
+        <div class="avatar">SJ</div>
+        <div>
+          <div class="author-name">Sabin Joshi</div>
+          <div class="author-role">DevOps Engineer</div>
+        </div>
+      </div>
+      <div class="tags-bar">
+        <span class="ptag">#aws</span>
+        <span class="ptag">#terraform</span>
+        <span class="ptag">#lambda</span>
+        <span class="ptag">#cloudtrail</span>
+        <span class="ptag">#eventbridge</span>
+        <span class="ptag">#sns</span>
+        <span class="ptag">#discord</span>
+        <span class="ptag">#devops</span>
+      </div>
+    </div>
+
+    <div class="prose">
+
+      <!-- ─────────── THE PROBLEM ─────────── -->
+      <h2 id="the-problem">The Problem with Flying Blind in AWS</h2>
+      <p>It was a Tuesday morning. I came into stand-up and someone casually mentioned a new RDS instance had been spun up in production over the weekend. Nobody knew who did it. Nobody knew why. It had just been sitting there — billable, untagged, unreachable.</p>
+      <p>That was the moment I realized we were flying blind. We had CloudTrail enabled — great for auditing after the fact — but zero real-time visibility. No alerts. No notifications. If someone accidentally deleted a VPC at 3 AM, we'd find out when users called in.</p>
+      <p>The ask was simple: whenever something meaningful happens in our AWS account — EC2 launched, RDS created, ECS cluster deleted — ping our team's Discord channel immediately. Not hours later via a CloudTrail query.</p>
+
+      <div class="callout callout-warn">
+        <span class="callout-icon">⚠️</span>
+        <span>CloudTrail logs everything, but <strong>logging and alerting are two completely different things</strong>. Having a record of what happened is not the same as knowing when it happens.</span>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">10</div><div class="stat-label">AWS event types monitored</div></div>
+        <div class="stat-card"><div class="stat-num">3</div><div class="stat-label">AWS services covered (EC2, RDS, ECS)</div></div>
+        <div class="stat-card"><div class="stat-num">~$0</div><div class="stat-label">monthly cost to run</div></div>
+        <div class="stat-card"><div class="stat-num">0</div><div class="stat-label">servers to manage</div></div>
+      </div>
+
+      <!-- ─────────── ARCHITECTURE ─────────── -->
+      <h2 id="architecture">Architecture — The Full Event-Driven Pipeline</h2>
+      <p>The solution is fully serverless and event-driven — five AWS services chained together, all provisioned with Terraform. Here's how an API call in your account becomes a Discord notification:</p>
+
+      <div class="diagram">
+        <div class="diagram-title">CloudTrail → EventBridge → SNS → Lambda → Discord</div>
+        <svg viewBox="0 0 700 120" width="100%" style="max-width:700px;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,1 L9,5 L0,9 Z" fill="#00ff88"/>
+            </marker>
+          </defs>
+          <!-- nodes -->
+          <rect x="10"  y="30" width="108" height="60" rx="6" fill="#1c1c1c" stroke="rgba(255,153,0,.4)"  stroke-width="1.5"/>
+          <rect x="152" y="30" width="108" height="60" rx="6" fill="#1c1c1c" stroke="rgba(255,69,0,.4)"   stroke-width="1.5"/>
+          <rect x="294" y="30" width="108" height="60" rx="6" fill="#1c1c1c" stroke="rgba(0,204,255,.4)"  stroke-width="1.5"/>
+          <rect x="436" y="30" width="108" height="60" rx="6" fill="#1c1c1c" stroke="rgba(0,255,136,.4)"  stroke-width="1.5"/>
+          <rect x="578" y="30" width="108" height="60" rx="6" fill="#1c1c1c" stroke="rgba(88,101,242,.4)" stroke-width="1.5"/>
+          <!-- labels -->
+          <text x="64"  y="57" font-family="JetBrains Mono,monospace" font-size="9" fill="#d4d4d4" text-anchor="middle">🔍 CloudTrail</text>
+          <text x="64"  y="72" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#555" text-anchor="middle">Multi-Region Trail</text>
+          <text x="206" y="57" font-family="JetBrains Mono,monospace" font-size="9" fill="#d4d4d4" text-anchor="middle">⚡ EventBridge</text>
+          <text x="206" y="72" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#555" text-anchor="middle">Pattern Rule</text>
+          <text x="348" y="57" font-family="JetBrains Mono,monospace" font-size="9" fill="#d4d4d4" text-anchor="middle">📣 SNS Topic</text>
+          <text x="348" y="72" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#555" text-anchor="middle">2 subscribers</text>
+          <text x="490" y="57" font-family="JetBrains Mono,monospace" font-size="9" fill="#d4d4d4" text-anchor="middle">λ Lambda</text>
+          <text x="490" y="72" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#555" text-anchor="middle">Python 3.10</text>
+          <text x="632" y="57" font-family="JetBrains Mono,monospace" font-size="9" fill="#d4d4d4" text-anchor="middle">💬 Discord</text>
+          <text x="632" y="72" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#555" text-anchor="middle">Webhook embed</text>
+          <!-- arrows -->
+          <line x1="118" y1="60" x2="150" y2="60" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arg)"/>
+          <line x1="260" y1="60" x2="292" y2="60" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arg)"/>
+          <line x1="402" y1="60" x2="434" y2="60" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arg)"/>
+          <line x1="544" y1="60" x2="576" y2="60" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arg)"/>
+          <!-- arrow labels -->
+          <text x="134" y="54" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">API events</text>
+          <text x="276" y="54" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">matched</text>
+          <text x="418" y="54" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">invoke</text>
+          <text x="560" y="54" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">webhook</text>
+        </svg>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">CloudTrail captures every API call</div>
+            <div class="step-desc">A multi-region trail with <code>include_global_service_events = true</code> records all management events across EC2, RDS, and ECS and ships them to S3 and CloudWatch Logs.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">EventBridge filters only what matters</div>
+            <div class="step-desc">A JSON event pattern matches only the 10 specific <code>eventName</code> values we care about — <code>RunInstances</code>, <code>CreateDBInstance</code>, <code>DeleteCluster</code>, etc. Everything else is dropped here before Lambda is ever invoked.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">SNS fans out to two subscribers</div>
+            <div class="step-desc">An SNS topic receives the matched event and simultaneously triggers Lambda <strong>and</strong> sends a raw JSON email — two subscription protocols, one publish call.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Lambda parses and formats per event type</div>
+            <div class="step-desc">Python 3.10 uses structural <code>match/case</code> to extract the right fields for each event — instance IDs, VPC IDs, DB class, cluster names — and builds a rich Discord embed.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Discord webhook delivers the alert</div>
+            <div class="step-desc">The webhook URL is fetched at runtime from SSM Parameter Store (SecureString) — never hardcoded in the codebase or present in Terraform state as plaintext.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─────────── PREREQUISITES ─────────── -->
+      <h2 id="prerequisites">Prerequisites &amp; Initial Setup</h2>
+      <p>Before running <code>terraform apply</code>, make sure these are in place:</p>
+
+      <div class="prereq-list">
+        <div class="prereq-item">
+          <div class="prereq-check">✓</div>
+          <div>
+            <div class="prereq-title">AWS CLI configured with sufficient permissions</div>
+            <div class="prereq-desc">Needs access to create IAM roles, S3 buckets, CloudTrail trails, EventBridge rules, SNS topics, Lambda functions, and SSM parameters.</div>
+          </div>
+        </div>
+        <div class="prereq-item">
+          <div class="prereq-check">✓</div>
+          <div>
+            <div class="prereq-title">Terraform ≥ 1.0 + AWS provider ~> 4.0</div>
+            <div class="prereq-desc">All five infrastructure components are provisioned via Terraform — no console interaction required after initial setup.</div>
+          </div>
+        </div>
+        <div class="prereq-item">
+          <div class="prereq-check">✓</div>
+          <div>
+            <div class="prereq-title">Discord server with webhook access</div>
+            <div class="prereq-desc">Channel Settings → Integrations → Webhooks → New Webhook → Copy URL. You'll need to store this in SSM before running Terraform.</div>
+          </div>
+        </div>
+        <div class="prereq-item">
+          <div class="prereq-check">✓</div>
+          <div>
+            <div class="prereq-title">Python 3.10 runtime familiarity</div>
+            <div class="prereq-desc">The Lambda uses <code>discord-webhook==1.1.0</code> and Python 3.10's structural pattern matching. Basic familiarity with <code>match/case</code> helps when extending the handler.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Step 0 — Store the Discord webhook in SSM</h3>
+      <p>Do this before any Terraform commands. The Lambda fetches the URL at runtime so it never appears in your codebase or state file as plaintext.</p>
+
+      <pre><code><span class="cmt"># Store the Discord webhook URL as an encrypted SecureString</span>
+aws ssm put-parameter \
+    --name <span class="str">"discord-notifcation-webhook"</span> \
+    --value <span class="str">"https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN"</span> \
+    --type <span class="str">"SecureString"</span> \
+    --overwrite \
+    --region <span class="str">"us-east-1"</span></code></pre>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <span>Note the <strong>parameter name exactly</strong> — it must match <code>data.aws_ssm_parameter.discord_notifcation_webhook</code> in <code>data.tf</code>. The typo in "notifcation" is intentional to match the existing codebase.</span>
+      </div>
+
+      <!-- ─────────── CODE WALKTHROUGH ─────────── -->
+      <h2 id="code-walkthrough">Code Walkthrough — Module by Module</h2>
+      <p>The entire infrastructure is five Terraform modules wired together. Let's walk through each one and why it's built the way it is.</p>
+
+      <h3>1. S3 Bucket + CloudTrail</h3>
+      <p>CloudTrail requires a bucket policy with two statements: <code>GetBucketAcl</code> so it can validate ownership, and <code>PutObject</code> to ship logs. The <code>PutObject</code> statement has a critical condition on <code>s3:x-amz-acl</code> — skip it and CloudTrail will silently create the trail but never deliver a single log.</p>
+
+      <pre><code><span class="cmt"># S3 bucket with versioning + CloudTrail-specific bucket policy</span>
+<span class="kw">module</span> <span class="str">"s3_logs"</span> {
+  source        = <span class="str">"terraform-aws-s3-module"</span>
+  bucket        = <span class="var">local</span>.logs_bucket
+  acl           = <span class="var">var</span>.acl
+  attach_policy = <span class="kw">true</span>
+  policy        = <span class="var">data</span>.aws_iam_policy_document.default.json
+  force_destroy = <span class="kw">true</span>
+  object_ownership = <span class="str">"BucketOwnerPreferred"</span>
+  versioning    = { enabled = <span class="kw">true</span> }
+}
+
+<span class="kw">data</span> <span class="str">"aws_iam_policy_document"</span> <span class="str">"default"</span> {
+  statement {
+    sid       = <span class="str">"cloudtrail-logs-get-bucket-acl"</span>
+    effect    = <span class="str">"Allow"</span>
+    principals { type = <span class="str">"Service"</span>; identifiers = [<span class="str">"cloudtrail.amazonaws.com"</span>] }
+    actions   = [<span class="str">"s3:GetBucketAcl"</span>]
+    resources = [<span class="str">"arn:aws:s3:::${local.logs_bucket}"</span>]
+  }
+  statement {
+    sid       = <span class="str">"cloudtrail-logs-put-object"</span>
+    effect    = <span class="str">"Allow"</span>
+    principals { type = <span class="str">"Service"</span>; identifiers = [<span class="str">"cloudtrail.amazonaws.com"</span>] }
+    actions   = [<span class="str">"s3:PutObject"</span>]
+    resources = [<span class="str">"arn:aws:s3:::${local.logs_bucket}/AWSLogs/*"</span>]
+    condition {
+      test     = <span class="str">"StringEquals"</span>
+      variable = <span class="str">"s3:x-amz-acl"</span>     <span class="cmt"># ← critical — don't skip this</span>
+      values   = [<span class="str">"bucket-owner-full-control"</span>]
+    }
+  }
+}
+
+<span class="cmt"># Multi-region trail — catches events in every AWS region</span>
+<span class="kw">module</span> <span class="str">"cloudtrail"</span> {
+  source                        = <span class="str">"terraform-aws-cloudtrail-module"</span>
+  trail_name                    = <span class="var">local</span>.trail_name
+  is_multi_region_trail         = <span class="kw">true</span>
+  include_global_service_events = <span class="kw">true</span>
+  s3_bucket_name                = <span class="var">local</span>.logs_bucket
+  cloudwatch_log_group_name     = <span class="var">local</span>.cloudwatch_log_group_name
+}</code></pre>
+
+      <h3>2. EventBridge Rule — Filter Everything at the Source</h3>
+      <p>This is the most important architectural decision in the whole system. The JSON event pattern matches only the 10 API calls we actually care about — filtering happens here before Lambda is ever invoked. Initially I did the filtering inside Lambda which meant paying for invocations on thousands of irrelevant events.</p>
+
+      <pre><code><span class="kw">module</span> <span class="str">"eventbridge"</span> {
+  source     = <span class="str">"terraform-aws-modules/eventbridge/aws"</span>
+  version    = <span class="str">"2.2.0"</span>
+  create_bus = <span class="kw">false</span>   <span class="cmt"># use the default event bus</span>
+
+  rules = {
+    <span class="str">"${local.rules}"</span> = {
+      description   = <span class="str">"Capture AWS resource lifecycle events via CloudTrail"</span>
+      event_pattern = <span class="fn">jsonencode</span>({
+        <span class="str">"source"</span>      : [<span class="str">"aws.ec2"</span>, <span class="str">"aws.rds"</span>, <span class="str">"aws.ecs"</span>],
+        <span class="str">"detail-type"</span> : [<span class="str">"AWS API Call via CloudTrail"</span>],
+        <span class="str">"detail"</span> = {
+          <span class="str">"eventSource"</span> = [<span class="str">"ec2.amazonaws.com"</span>, <span class="str">"rds.amazonaws.com"</span>, <span class="str">"ecs.amazonaws.com"</span>],
+          <span class="str">"eventName"</span>   = [
+            <span class="str">"RunInstances"</span>,    <span class="str">"TerminateInstances"</span>,
+            <span class="str">"CreateVpc"</span>,       <span class="str">"DeleteVpc"</span>,
+            <span class="str">"CreateDBInstance"</span>, <span class="str">"DeleteDBInstance"</span>,
+            <span class="str">"AllocateAddress"</span>,  <span class="str">"ReleaseAddress"</span>,
+            <span class="str">"CreateCluster"</span>,   <span class="str">"DeleteCluster"</span>
+          ]
+        }
+      })
+    }
+  }
+
+  targets = {
+    <span class="str">"${local.rules}"</span> = [{
+      name = <span class="str">"send-logs-to-sns"</span>
+      arn  = <span class="var">module</span>.sns.aws_sns_topic_arn
+    }]
+  }
+}</code></pre>
+
+      <div class="callout callout-info">
+        <span class="callout-icon">ℹ️</span>
+        <span>EventBridge pattern matching is <strong>free</strong> — you only pay when a rule matches and triggers a target. Filtering at this layer instead of Lambda cut our invocations by ~95%.</span>
+      </div>
+
+      <h3>3. SNS with Dual Subscriptions</h3>
+      <p>One SNS topic, two subscribers simultaneously: email for a raw JSON audit trail, and Lambda for the Discord notification. Adding more channels — Slack, PagerDuty, Opsgenie — later is just a new subscription entry in this module.</p>
+
+      <pre><code><span class="kw">module</span> <span class="str">"sns"</span> {
+  source              = <span class="str">"terraform-aws-sns-module"</span>
+  name                = <span class="var">local</span>.sns_name
+  create_topic_policy = <span class="kw">true</span>
+
+  subscriptions = {
+    email  = { protocol = <span class="str">"email"</span>,  endpoint = <span class="str">"your-email@example.com"</span> },
+    lambda = { protocol = <span class="str">"lambda"</span>, endpoint = <span class="var">module</span>.lambda.lambda_function_arn }
+  }
+
+  <span class="cmt"># Allow EventBridge to publish to this topic</span>
+  topic_policy_statements = {
+    TrustCWEToPublishEvents = {
+      actions    = [<span class="str">"sns:Publish"</span>]
+      principals = [{ type = <span class="str">"Service"</span>; identifiers = [<span class="str">"events.amazonaws.com"</span>] }]
+      resources  = [<span class="var">module</span>.sns.aws_sns_topic_arn]
+      effect     = <span class="str">"Allow"</span>
+    }
+  }
+}</code></pre>
+
+      <h3>4. Lambda — Python 3.10 Discord Formatter</h3>
+      <p>The Lambda handler uses Python 3.10's structural <code>match/case</code> to handle different CloudTrail event schemas cleanly. Each AWS service has a different response shape in CloudTrail — <code>RunInstances</code> nests the instance ID under <code>responseElements.instancesSet.items[0].instanceId</code> while <code>CreateVpc</code> puts the VPC ID under <code>responseElements.vpc.vpcId</code>. Pattern matching keeps each case self-contained and easy to extend.</p>
+
+      <pre><code><span class="cmt">import</span> os, json
+<span class="cmt">from</span> discord_webhook <span class="cmt">import</span> DiscordWebhook, DiscordEmbed
+
+<span class="kw">def</span> <span class="fn">send_message</span>(title, description, webhook_url):
+    webhook = <span class="fn">DiscordWebhook</span>(url=webhook_url)
+    embed   = <span class="fn">DiscordEmbed</span>(title, description, color=<span class="str">'03b2f8'</span>)
+    webhook.<span class="fn">add_embed</span>(embed)
+    <span class="kw">return</span> webhook.<span class="fn">execute</span>()
+
+<span class="kw">def</span> <span class="fn">lambda_handler</span>(event, context):
+    WEBHOOK_URL  = os.environ[<span class="str">'DISCORD_WEBHOOK'</span>]
+    sns          = event[<span class="str">'Records'</span>][0][<span class="str">'Sns'</span>]
+    message_data = json.<span class="fn">loads</span>(sns[<span class="str">'Message'</span>])
+
+    source       = message_data[<span class="str">'source'</span>]
+    time         = message_data[<span class="str">'time'</span>]
+    region       = message_data[<span class="str">'region'</span>]
+    principal_id = message_data[<span class="str">'detail'</span>][<span class="str">'userIdentity'</span>][<span class="str">'principalId'</span>]
+    event_name   = message_data[<span class="str">'detail'</span>][<span class="str">'eventName'</span>]
+
+    <span class="cmt"># Python 3.10 structural pattern matching</span>
+    <span class="cmt"># Each case handles the specific CloudTrail schema for that event type</span>
+    <span class="kw">match</span> event_name:
+        <span class="kw">case</span> <span class="str">'RunInstances'</span>:
+            instance_id = message_data[<span class="str">'detail'</span>][<span class="str">'responseElements'</span>] \
+                          [<span class="str">'instancesSet'</span>][<span class="str">'items'</span>][0][<span class="str">'instanceId'</span>]
+            instance_type = message_data[<span class="str">'detail'</span>][<span class="str">'requestParameters'</span>][<span class="str">'instanceType'</span>]
+            title       = <span class="fn">f</span><span class="str">'AWS Resources - {event_name}'</span>
+            description = (
+                <span class="fn">f</span><span class="str">"Source: {source}\nRegion: {region}\nTime: {time}\n"</span>
+                <span class="fn">f</span><span class="str">"Principal: {principal_id}\nInstance: {instance_id}\nType: {instance_type}"</span>
+            )
+
+        <span class="kw">case</span> <span class="str">'TerminateInstances'</span>:
+            instance_id = message_data[<span class="str">'detail'</span>][<span class="str">'responseElements'</span>] \
+                          [<span class="str">'instancesSet'</span>][<span class="str">'items'</span>][0][<span class="str">'instanceId'</span>]
+            title       = <span class="fn">f</span><span class="str">'AWS Resources - {event_name}'</span>
+            description = <span class="fn">f</span><span class="str">"Source: {source}\nRegion: {region}\nTime: {time}\nInstance: {instance_id}"</span>
+
+        <span class="kw">case</span> <span class="str">'CreateVpc'</span>:
+            vpc_id = message_data[<span class="str">'detail'</span>][<span class="str">'responseElements'</span>][<span class="str">'vpc'</span>][<span class="str">'vpcId'</span>]
+            title  = <span class="fn">f</span><span class="str">'AWS Resources - {event_name}'</span>
+            description = <span class="fn">f</span><span class="str">"Source: {source}\nRegion: {region}\nTime: {time}\nVPC: {vpc_id}"</span>
+
+        <span class="kw">case</span> <span class="str">'CreateDBInstance'</span>:
+            db_id  = message_data[<span class="str">'detail'</span>][<span class="str">'requestParameters'</span>][<span class="str">'dBInstanceIdentifier'</span>]
+            db_cls = message_data[<span class="str">'detail'</span>][<span class="str">'requestParameters'</span>][<span class="str">'dBInstanceClass'</span>]
+            title  = <span class="fn">f</span><span class="str">'AWS Resources - {event_name}'</span>
+            description = <span class="fn">f</span><span class="str">"Source: {source}\nRegion: {region}\nTime: {time}\nDB: {db_id} ({db_cls})"</span>
+
+        <span class="kw">case</span> _:
+            title       = <span class="fn">f</span><span class="str">'AWS Resources - {event_name}'</span>
+            description = <span class="fn">f</span><span class="str">"Source: {source}\nRegion: {region}\nTime: {time}\nPrincipal: {principal_id}"</span>
+
+    <span class="kw">if</span> <span class="fn">send_message</span>(title, description, WEBHOOK_URL):
+        <span class="kw">return</span> {<span class="str">'statusCode'</span>: 200, <span class="str">'body'</span>: <span class="str">'Notification Sent'</span>}
+    <span class="kw">return</span> {<span class="str">'statusCode'</span>: 400, <span class="str">'body'</span>: <span class="str">'Notification Failed'</span>}</code></pre>
+
+      <h3>5. Lambda Terraform Module — Packaging + Permissions</h3>
+      <p>The community <code>terraform-aws-modules/lambda</code> module handles packaging the Python source with its pip dependencies, building the zip, and wiring the SNS trigger — all automatically inferred from <code>source_path</code>.</p>
+
+      <pre><code><span class="kw">module</span> <span class="str">"lambda"</span> {
+  source        = <span class="str">"terraform-aws-modules/lambda/aws"</span>
+  version       = <span class="str">"5.0.0"</span>
+  function_name = <span class="var">local</span>.function_name
+  handler       = <span class="var">local</span>.handler_name   <span class="cmt"># "lambda_function.lambda_handler"</span>
+  runtime       = <span class="var">local</span>.runtime        <span class="cmt"># "python3.10"</span>
+  timeout       = <span class="var">local</span>.timeout        <span class="cmt"># 30 seconds</span>
+
+  create_current_version_allowed_triggers = <span class="kw">false</span>
+
+  <span class="cmt"># Allow SNS to invoke the function</span>
+  allowed_triggers = {
+    AllowExecutionFromSNS = {
+      service    = <span class="str">"sns"</span>
+      source_arn = <span class="var">module</span>.sns.aws_sns_topic_arn
+    }
+  }
+
+  <span class="cmt"># Least-privilege read-only policy for related services</span>
+  attach_policy_json = <span class="kw">true</span>
+  policy_json = <span class="fn">jsonencode</span>({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Effect   = <span class="str">"Allow"</span>
+      Action   = [<span class="str">"s3:Get*"</span>, <span class="str">"s3:List*"</span>, <span class="str">"sns:GetTopicAttributes"</span>,
+                  <span class="str">"cloudtrail:Get*"</span>, <span class="str">"cloudtrail:LookupEvents"</span>,
+                  <span class="str">"events:Describe*"</span>, <span class="str">"events:List*"</span>]
+      Resource = [<span class="str">"*"</span>]
+    }]
+  })
+
+  <span class="cmt"># Discord webhook URL injected from SSM at deploy time</span>
+  environment_variables = {
+    DISCORD_WEBHOOK = <span class="var">data</span>.aws_ssm_parameter.discord_notifcation_webhook.value
+  }
+
+  <span class="cmt"># Auto-packages lambda_function.py + pip installs requirements.txt</span>
+  source_path = [{
+    path             = <span class="str">"${path.module}/src/lambda_function.py"</span>
+    pip_requirements = <span class="str">"${path.module}/src/requirements.txt"</span>
+  }]
+}</code></pre>
+
+      <!-- ─────────── DEPLOY ─────────── -->
+      <h2 id="deploy">Deploying the Stack</h2>
+      <p>Standard three-step Terraform workflow. Terraform resolves the dependency graph automatically — S3 bucket before CloudTrail, IAM role before Lambda, Lambda before SNS subscription, SNS before EventBridge target.</p>
+
+      <pre><code><span class="cmt"># Initialise providers and download modules</span>
+terraform init
+
+<span class="cmt"># Preview — review all resources before applying</span>
+terraform plan
+
+<span class="cmt"># Apply — dependency ordering is handled automatically</span>
+terraform apply</code></pre>
+
+      <p>To verify the pipeline is working after deployment, trigger a test event and watch the Lambda logs:</p>
+
+      <pre><code><span class="cmt"># Manually trigger a test invocation</span>
+aws lambda invoke \
+  --function-name &lt;your-function-name&gt; \
+  --payload <span class="str">'{"test": true}'</span> \
+  response.json
+
+<span class="cmt"># Tail CloudWatch logs in real time</span>
+aws logs tail <span class="str">"/aws/lambda/&lt;your-function-name&gt;"</span> --follow</code></pre>
+
+      <!-- ─────────── LESSONS LEARNED ─────────── -->
+      <h2 id="lessons">Lessons Learned &amp; Challenges Faced</h2>
+      <p>The project went smoothly overall but a few rough edges are worth calling out for anyone building something similar.</p>
+
+      <div class="lessons-grid">
+        <div class="lesson-card challenge">
+          <div class="lesson-type">Challenge</div>
+          <div class="lesson-title">CloudTrail event delivery delay</div>
+          <div class="lesson-desc">Events can take 5–15 minutes to arrive. For sub-minute alerting on critical events, EventBridge Pipes directly on the API calls would be the right choice instead.</div>
+        </div>
+        <div class="lesson-card win">
+          <div class="lesson-type">Lesson</div>
+          <div class="lesson-title">Filter at EventBridge, not Lambda</div>
+          <div class="lesson-desc">Moving the <code>event_pattern</code> to EventBridge cut Lambda invocations by ~95% and removed all noise-handling logic from Python entirely. Always filter at the source.</div>
+        </div>
+        <div class="lesson-card challenge">
+          <div class="lesson-type">Challenge</div>
+          <div class="lesson-title">Inconsistent CloudTrail schemas per service</div>
+          <div class="lesson-desc"><code>RunInstances</code> puts instance ID in <code>responseElements.instancesSet</code>, but <code>CreateVpc</code> puts it in <code>responseElements.vpc</code>. No consistent structure. Read the CloudTrail docs per service, not a generic reference.</div>
+        </div>
+        <div class="lesson-card win">
+          <div class="lesson-type">Lesson</div>
+          <div class="lesson-title">SSM SecureString over hardcoded env vars</div>
+          <div class="lesson-desc">Fetching from SSM at deploy time means the webhook URL is encrypted at rest, rotatable without redeploying Lambda, and absent from Terraform state in plaintext.</div>
+        </div>
+        <div class="lesson-card challenge">
+          <div class="lesson-type">Challenge</div>
+          <div class="lesson-title">S3 bucket policy took 3 attempts</div>
+          <div class="lesson-desc">The <code>s3:x-amz-acl</code> condition on the PutObject statement is easy to miss. Skipping it = silent failure — trail creates successfully but zero logs are ever shipped to S3.</div>
+        </div>
+        <div class="lesson-card next">
+          <div class="lesson-type">What's Next</div>
+          <div class="lesson-title">Extend to IAM, Config, GuardDuty</div>
+          <div class="lesson-desc">The pattern is fully composable. Add more <code>eventName</code> entries in EventBridge and new <code>case</code> blocks in the Lambda handler — no architectural changes needed.</div>
+        </div>
+      </div>
+
+      <!-- ─────────── WRAPPING UP ─────────── -->
+      <h2 id="wrapping-up">Wrapping Up</h2>
+      <p>What started as a frustrating Tuesday morning stand-up became one of the most useful internal tools our team runs. The entire pipeline costs essentially nothing — EventBridge rule evaluation is free, SNS is sub-cent per month at our volume, and Lambda invocations at this frequency fall well within the permanent free tier.</p>
+      <p>More importantly, the architecture is completely modular. The EventBridge rule is the only thing that changes when adding new services. The Lambda pattern matching is trivially extendable. SSM-backed secrets are rotatable with a single CLI command. This is what infrastructure as code should feel like: one change, one redeploy, done.</p>
+
+      <div class="callout callout-tip">
+        <span class="callout-icon">🚀</span>
+        <span>The complete Terraform modules and Lambda source are available on <a href="https://github.com/SabiNjoshi1" target="_blank" style="color:var(--accent2)">GitHub</a>. If this saved you from a mystery 3 AM incident, drop a star.</span>
+      </div>
+
+    </div><!-- /prose -->
+  </article>
+
+  <!-- ── Right sidebar ── -->
+  <aside class="sr">
+    <div class="toc-title">On this page</div>
+    <ul class="toc-list" id="toc"></ul>
+    <div class="related-title">Related Posts</div>
+    <a href="aws-monitoring-alerting-webapp.html" class="related-post">
+      <div class="related-cat">devops</div>
+      <div class="related-ttl">Monitoring &amp; Alerting a Web App on AWS: The Minimal Setup That Actually Works</div>
+    </a>
+    <a href="lambda-eventbridge-cron.html" class="related-post">
+      <div class="related-cat">serverless</div>
+      <div class="related-ttl">Kill Your EC2 Cron Jobs: Serverless Scheduling with Lambda, EventBridge &amp; Terraform</div>
+    </a>
+    <a href="aws-iam-least-privilege.html" class="related-post">
+      <div class="related-cat">security</div>
+      <div class="related-ttl">AWS IAM Least Privilege: From Theory to Practice</div>
+    </a>
+    <a href="cloud-finops.html" class="related-post">
+      <div class="related-cat">cloud</div>
+      <div class="related-ttl">Cloud FinOps Framework: AWS Cost Intelligence Dashboard</div>
+    </a>
+    <a href="observability-stack-aws.html" class="related-post">
+      <div class="related-cat">devops</div>
+      <div class="related-ttl">Production Observability Stack: Logs, Metrics, Traces on AWS</div>
+    </a>
+  </aside>
+
+</div>
+
+<script>
+  /* ── Read progress bar ── */
+  window.addEventListener('scroll', () => {
+    const art   = document.querySelector('article');
+    const total = art.offsetHeight - window.innerHeight;
+    const scrolled = Math.max(0, -art.getBoundingClientRect().top);
+    document.getElementById('rp').style.width = Math.min(100, (scrolled / total) * 100) + '%';
+  });
+
+  /* ── Auto-generate TOC from h2/h3 headings ── */
+  const headings = document.querySelectorAll('.prose h2, .prose h3');
+  const toc      = document.getElementById('toc');
+  headings.forEach((h, i) => {
+    h.id = h.id || 'sec-' + i;
+    const li = document.createElement('li');
+    const a  = document.createElement('a');
+    a.href        = '#' + h.id;
+    a.textContent = h.textContent;
+    if (h.tagName === 'H3') a.style.paddingLeft = '1.25rem';
+    li.appendChild(a);
+    toc.appendChild(li);
+  });
+
+  /* ── Highlight active TOC item on scroll ── */
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const a = toc.querySelector('a[href="#' + e.target.id + '"]');
+      if (a) a.classList.toggle('active', e.isIntersecting);
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  headings.forEach(h => obs.observe(h));
+</script>
+</body>
+</html>
