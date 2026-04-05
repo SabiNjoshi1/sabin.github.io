@@ -125,11 +125,11 @@
     </div>
 
     <div class="filter-bar" id="filter-bar">
-      <button class="filter-btn active" data-filter="all" onclick="filterPosts('all',this)">All Posts <span class="filter-count">19</span></button>
+      <button class="filter-btn active" data-filter="all" onclick="filterPosts('all',this)">All Posts <span class="filter-count">21</span></button>
       <button class="filter-btn" data-filter="cloud" onclick="filterPosts('cloud',this)">Cloud <span class="filter-count">7</span></button>
       <button class="filter-btn" data-filter="kubernetes" onclick="filterPosts('kubernetes',this)">Kubernetes <span class="filter-count">1</span></button>
       <button class="filter-btn" data-filter="security" onclick="filterPosts('security',this)">Security <span class="filter-count">3</span></button>
-      <button class="filter-btn" data-filter="devops" onclick="filterPosts('devops',this)">DevOps <span class="filter-count">8</span></button>
+      <button class="filter-btn" data-filter="devops" onclick="filterPosts('devops',this)">DevOps <span class="filter-count">9</span></button>
       <button class="filter-btn" data-filter="serverless" onclick="filterPosts('serverless',this)">Serverless <span class="filter-count">1</span></button>
     </div>
 
@@ -137,6 +137,25 @@
       <div>
         <div class="posts-list" id="posts-list">
 
+          <!-- Post 001 · Apr 5, 2026 -->
+          <a class="post-card" data-category="devops" href="posts/aws-devops-agent-ga.html">
+            <div class="post-meta">
+              <span class="post-category">devops</span>
+              <span class="dot-sep">·</span><span class="post-date">Apr 5, 2026</span>
+              <span class="dot-sep">·</span><span class="post-read-time">12 min read</span>
+            </div>
+            <div class="author-chip">
+              <div class="author-avatar">SJ</div>
+              <div><div class="author-name">Sabin Joshi</div><div class="author-role">DevOps Engineer</div></div>
+            </div>
+            <h2 class="post-title">AWS DevOps Agent is Generally Available — and It's a Big Deal</h2>
+            <p class="post-excerpt">AWS just shipped an autonomous SRE that investigates incidents, learns your runbooks, indexes your code, and integrates with your entire observability stack — let's break down what actually changed from Preview to GA.</p>
+            <div class="post-footer">
+              <div class="post-tags"><span class="tag">#aws</span><span class="tag">#devops</span><span class="tag">#sre</span></div>
+              <span class="read-more">read more →</span>
+            </div>
+          </a>
+          
           <!-- Post 01 · Jan 5, 2026 -->
           <a class="post-card" data-category="devops" href="posts/aws-monitoring-alerting-webapp.html">
             <div class="post-meta">
@@ -513,11 +532,13 @@
         <div class="widget">
           <div class="widget-title">### Categories</div>
           <div class="category-list">
-            <div class="category-item active" onclick="filterPosts('all')"><span class="cat-name">All Posts</span><span class="cat-count">19</span></div>
+            <div class="category-item active" onclick="filterPosts('all')"><span class="cat-name">All Posts</span><span class="cat-count">21
+
+            </span></div>
             <div class="category-item" onclick="filterPosts('cloud')"><span class="cat-name">Cloud</span><span class="cat-count">7</span></div>
             <div class="category-item" onclick="filterPosts('kubernetes')"><span class="cat-name">Kubernetes</span><span class="cat-count">1</span></div>
             <div class="category-item" onclick="filterPosts('security')"><span class="cat-name">Security</span><span class="cat-count">3</span></div>
-            <div class="category-item" onclick="filterPosts('devops')"><span class="cat-name">DevOps</span><span class="cat-count">8</span></div>
+            <div class="category-item" onclick="filterPosts('devops')"><span class="cat-name">DevOps</span><span class="cat-count">9</span></div>
             <div class="category-item" onclick="filterPosts('serverless')"><span class="cat-name">Serverless</span><span class="cat-count">1</span></div>
           </div>
         </div>

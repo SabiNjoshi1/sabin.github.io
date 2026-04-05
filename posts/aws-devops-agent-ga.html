@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AWS DevOps Agent is Generally Available — and It's a Big Deal — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--bg2:#111;--bg3:#161616;--border:#222;--border2:#2a2a2a;--accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;--muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted)}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sf{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sf a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+.sf a:hover{color:var(--accent)}
+.sb{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+article{padding:3rem 3.5rem;min-width:0;animation:fu .5s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.bl{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.bl:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.ph{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.mb{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.b{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.bc{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.bf{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.bd,.bt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.ds{color:var(--muted);font-size:.6rem}
+h1.pt{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.ps{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+.ar{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.an{font-size:.82rem;font-weight:600;color:var(--white)}
+.ao{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.tb{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.tg{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+.cl{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.ci{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+.cw{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+.ct{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+.ico{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.dg{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.dt{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.dt::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+.sn{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+.sl2{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+.tt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.tl{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.tl li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.tl li a:hover,.tl li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.rt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.rp{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.rp:hover{background:rgba(0,255,136,.04)}
+.rc{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.rx{font-size:.78rem;color:var(--text);line-height:1.35}
+.rpr{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+/* Integration table */
+.itbl{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.85rem}
+.itbl th{font-family:var(--mono);font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);padding:.6rem .75rem;border-bottom:1px solid var(--border2);text-align:left}
+.itbl td{padding:.6rem .75rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
+.itbl tr:last-child td{border-bottom:none}
+.itbl tr:hover td{background:rgba(0,255,136,.02)}
+.chip{font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px;text-transform:uppercase;letter-spacing:.06em}
+.chip-new{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.chip-ga{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}</style>
+</head>
+<body>
+<div class="rpr" id="rp"></div>
+<div class="page">
+
+  <!-- Left Sidebar -->
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="sb"><span class="sd"></span>status: building</div>
+    <div class="sf">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+    </div>
+  </aside>
+
+  <!-- Main Article -->
+  <article>
+    <a href="../index.html" class="bl">← back to blog</a>
+
+    <div class="ph">
+      <div class="mb">
+        <span class="b bc">devops</span>
+        <span class="b bf">Featured</span>
+        <span class="ds">·</span>
+        <span class="bd">Apr 5, 2026</span>
+        <span class="ds">·</span>
+        <span class="bt">12 min read</span>
+      </div>
+      <h1 class="pt">AWS DevOps Agent is Generally Available — and It's a Big Deal</h1>
+      <p class="ps">AWS just shipped an autonomous SRE that investigates incidents, learns your runbooks, indexes your code, and integrates with your entire observability stack — let's break down what actually changed from Preview to GA.</p>
+      <div class="ar">
+        <div class="av">SJ</div>
+        <div>
+          <div class="an">Sabin Joshi</div>
+          <div class="ao">DevOps Engineer</div>
+        </div>
+      </div>
+      <div class="tb">
+        <span class="tg">#aws</span>
+        <span class="tg">#devops</span>
+        <span class="tg">#sre</span>
+        <span class="tg">#incident-response</span>
+        <span class="tg">#agentic-ai</span>
+        <span class="tg">#observability</span>
+        <span class="tg">#cloudwatch</span>
+      </div>
+    </div>
+
+    <div class="prose">
+
+      <h2 id="tldr">The Short Version</h2>
+      <p>On March 31, 2026, AWS announced the general availability of <strong>AWS DevOps Agent</strong> — an autonomous operations agent that investigates incidents, prevents future ones, and handles on-demand SRE tasks across AWS, Azure, and on-premises environments. If you were in the preview, the GA release adds multicloud support, a Triage Agent, PagerDuty + Grafana integrations, private MCP, and six-region availability.</p>
+      <p>For those of us who've spent 2AM staring at CloudWatch dashboards trying to correlate five different tools — this one hits different.</p>
+
+      <div class="sg">
+        <div class="sc"><div class="sn">75%</div><div class="sl2">lower MTTR reported</div></div>
+        <div class="sc"><div class="sn">80%</div><div class="sl2">faster investigations</div></div>
+        <div class="sc"><div class="sn">94%</div><div class="sl2">root cause accuracy</div></div>
+        <div class="sc"><div class="sn">3–5×</div><div class="sl2">faster resolution</div></div>
+      </div>
+
+      <h2 id="problem">The Problem It Actually Solves</h2>
+      <p>Let me paint the picture every ops engineer knows: 3AM alert fires, you open five browser tabs — CloudWatch, your APM tool, the deployment pipeline, GitHub, and a Slack thread from a week ago. You're mentally joining data across all of them trying to figure out if this correlates with last Tuesday's deploy. That's operational toil. It's slow, error-prone, and it burns out good engineers.</p>
+      <p>AWS DevOps Agent tackles this by acting as a senior DevOps engineer who already knows your system. It learns your application topology, your runbooks, your deployment patterns, and your historical incident data — then investigates autonomously the moment an alert fires.</p>
+      <div class="cl ci"><span class="ico">ℹ️</span><span>AWS DevOps Agent is part of a new class of <strong>frontier agents</strong> — autonomous systems that operate independently, scale to handle concurrent tasks, and run persistently without requiring constant human oversight. This isn't a chatbot with a CloudWatch plugin.</span></div>
+
+      <h2 id="how-it-works">How It Actually Works</h2>
+      <p>AWS DevOps Agent covers the full incident lifecycle. Here's the breakdown:</p>
+
+      <h3>1. Autonomous Incident Response</h3>
+      <p>The moment an alert fires — PagerDuty, CloudWatch, Datadog, whatever — the agent starts investigating without waiting for a human. It correlates telemetry, deployment history, code changes, and runbook knowledge to identify root cause and generate a mitigation plan. The output is an <strong>investigation journal</strong>: a timestamped, step-by-step record of what the agent found and why.</p>
+      <p>WGU's SRE team saw a real production investigation shrink from an estimated two hours to 28 minutes using this. The agent pinpointed a Lambda function configuration issue and surfaced operational knowledge buried in internal documentation that the team hadn't found manually.</p>
+
+      <h3>2. Proactive Incident Prevention</h3>
+      <p>After enough incident data, the agent switches from reactive to proactive. It analyzes patterns across your historical incidents and surfaces targeted recommendations — things like "this service fails every time memory utilization crosses 78%" or "IAM permission gaps in this role have caused 3 of your last 5 incidents."</p>
+      <p>This is the feature I'm most excited about long-term. Firefighting is expensive. Prevention compounds.</p>
+
+      <h3>3. On-Demand SRE Tasks</h3>
+      <p>Think of this as a conversational interface to your entire infrastructure. Query deployment history, alarm status, resource configurations, and incident patterns in plain English. You can build and save custom charts, share reports, and ask things like:</p>
+      <pre><code><span class="cmt"># Real queries you can run against your environment</span>
+<span class="str">"What changed in the payment service in the last 24 hours?"</span>
+<span class="str">"Show me all ECS services with error rates above 1% this week"</span>
+<span class="str">"Which Lambda functions had cold start times over 500ms yesterday?"</span>
+<span class="str">"What was the root cause of last Tuesday's API timeout incident?"</span></code></pre>
+
+      <div class="dg">
+        <div class="dt">AWS DevOps Agent — Incident Lifecycle</div>
+        <svg viewBox="0 0 680 260" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#555"/>
+            </marker>
+            <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#00ff88"/>
+            </marker>
+            <marker id="ao" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#ff6b35"/>
+            </marker>
+          </defs>
+          <!-- Alert Sources -->
+          <rect x="10" y="100" width="90" height="60" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+          <text x="55" y="124" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888" text-anchor="middle">Alert Sources</text>
+          <text x="55" y="138" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">PagerDuty · CW</text>
+          <text x="55" y="151" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">Datadog · Grafana</text>
+          <!-- DevOps Agent (center) -->
+          <rect x="130" y="80" width="130" height="100" rx="6" fill="#0f1f14" stroke="#00ff88" stroke-width="2"/>
+          <text x="195" y="112" font-family="JetBrains Mono,monospace" font-size="8.5" fill="#00ff88" text-anchor="middle" font-weight="700">DevOps Agent</text>
+          <text x="195" y="129" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">correlates telemetry</text>
+          <text x="195" y="142" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">code + deployments</text>
+          <text x="195" y="155" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">runbooks + history</text>
+          <line x1="100" y1="130" x2="129" y2="130" stroke="#555" stroke-width="1.2" marker-end="url(#a)"/>
+          <!-- Investigate -->
+          <rect x="300" y="30" width="110" height="50" rx="4" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.5"/>
+          <text x="355" y="52" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ccff" text-anchor="middle">Investigate</text>
+          <text x="355" y="66" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">root cause analysis</text>
+          <line x1="260" y1="105" x2="299" y2="60" stroke="#00ff88" stroke-width="1.2" marker-end="url(#ag)"/>
+          <!-- Mitigate -->
+          <rect x="300" y="105" width="110" height="50" rx="4" fill="#1c1c1c" stroke="#00ff88" stroke-width="1.5"/>
+          <text x="355" y="127" font-family="JetBrains Mono,monospace" font-size="8" fill="#00ff88" text-anchor="middle">Mitigate</text>
+          <text x="355" y="141" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">code-level fixes</text>
+          <line x1="260" y1="130" x2="299" y2="130" stroke="#00ff88" stroke-width="1.2" marker-end="url(#ag)"/>
+          <!-- Prevent -->
+          <rect x="300" y="180" width="110" height="50" rx="4" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.5"/>
+          <text x="355" y="202" font-family="JetBrains Mono,monospace" font-size="8" fill="#ff6b35" text-anchor="middle">Prevent</text>
+          <text x="355" y="216" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">pattern detection</text>
+          <line x1="260" y1="155" x2="299" y2="198" stroke="#00ff88" stroke-width="1.2" marker-end="url(#ag)"/>
+          <!-- Outcomes -->
+          <rect x="460" y="30" width="110" height="50" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1"/>
+          <text x="515" y="53" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888" text-anchor="middle">Investigation</text>
+          <text x="515" y="67" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">Journal + RCA</text>
+          <line x1="410" y1="55" x2="459" y2="55" stroke="#444" stroke-width="1" marker-end="url(#a)"/>
+          <rect x="460" y="105" width="110" height="50" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1"/>
+          <text x="515" y="128" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888" text-anchor="middle">Mitigation Plan</text>
+          <text x="515" y="142" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">+ PR suggestions</text>
+          <line x1="410" y1="130" x2="459" y2="130" stroke="#444" stroke-width="1" marker-end="url(#a)"/>
+          <rect x="460" y="180" width="110" height="50" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1"/>
+          <text x="515" y="203" font-family="JetBrains Mono,monospace" font-size="7.5" fill="#888" text-anchor="middle">Prevention</text>
+          <text x="515" y="217" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">Recommendations</text>
+          <line x1="410" y1="205" x2="459" y2="205" stroke="#444" stroke-width="1" marker-end="url(#a)"/>
+        </svg>
+      </div>
+
+      <h2 id="ga-whats-new">What's New in GA (vs Preview)</h2>
+      <p>The preview was already impressive, but GA brings some meaningful upgrades that make this production-ready at scale.</p>
+
+      <h3>Triage Agent</h3>
+      <p>This is immediately useful if you're dealing with noisy alert environments. The Triage Agent automatically assesses incident severity and detects duplicate tickets — when it finds duplicates, it links them to the main investigation with a <code>LINKED</code> status so they won't spawn parallel investigations. If your on-call team gets 40 alerts during an outage and 35 of them are the same downstream symptom, this saves significant cognitive load.</p>
+
+      <h3>Code Indexing</h3>
+      <p>The agent now indexes your application code repositories. This is a big deal for root cause accuracy — instead of stopping at "elevated error rate in Lambda function X," it can now say "elevated error rate in Lambda function X, likely caused by this unhandled exception on line 47 of handler.py, introduced in commit abc123 two hours ago."</p>
+
+      <h3>Learned Skills & Custom Skills</h3>
+      <p>Over time, the agent builds skills from how your team resolves incidents — your unique patterns, tool preferences, and topology. You can also inject custom skills: runbooks, investigation procedures, and institutional knowledge specific to your systems.</p>
+
+      <pre><code><span class="cmt"># Example: Custom skill for database incidents</span>
+<span class="cmt"># Create once, applied automatically across all relevant investigations</span>
+
+<span class="prop">skill</span>: <span class="str">"postgres-connection-pool-exhaustion"</span>
+<span class="prop">trigger</span>: <span class="str">["FATAL: remaining connection slots", "max_connections"]</span>
+<span class="prop">applies_to</span>: [<span class="str">"Incident RCA"</span>, <span class="str">"Incident Mitigation"</span>]
+<span class="prop">steps</span>:
+  - <span class="fn">check_pg_stat_activity</span>  <span class="cmt"># who's holding connections</span>
+  - <span class="fn">check_rds_metrics</span>       <span class="cmt"># DatabaseConnections CW metric</span>
+  - <span class="fn">review_pgbouncer_config</span>  <span class="cmt"># pool sizing</span>
+  - <span class="fn">check_recent_deploys</span>    <span class="cmt"># connection leak in new code?</span></code></pre>
+
+      <div class="cl ct"><span class="ico">💡</span><span>Target skills to specific agent types (On-demand, Triage, RCA, Mitigation, Evaluation) to reduce context consumption. Don't dump everything into every investigation — the agent works better with focused, relevant context.</span></div>
+
+      <h2 id="integrations">New Integrations Worth Knowing</h2>
+      <p>The integration list was already solid in preview (Datadog, Dynatrace, New Relic, Splunk, GitHub, GitLab, ServiceNow). GA adds:</p>
+
+      <table class="itbl">
+        <thead>
+          <tr>
+            <th>Integration</th>
+            <th>What it unlocks</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>PagerDuty</strong></td>
+            <td>Native alert routing — PD fires, agent auto-investigates</td>
+            <td><span class="chip chip-new">New GA</span></td>
+          </tr>
+          <tr>
+            <td><strong>Grafana</strong></td>
+            <td>Connects to any Grafana instance (self-managed, Cloud, Amazon Managed). Pulls all configured datasources — Prometheus, Loki, OpenSearch</td>
+            <td><span class="chip chip-new">New GA</span></td>
+          </tr>
+          <tr>
+            <td><strong>Azure DevOps</strong></td>
+            <td>Tracks deployments and code changes in Azure Pipelines — cross-cloud correlation</td>
+            <td><span class="chip chip-new">New GA</span></td>
+          </tr>
+          <tr>
+            <td><strong>Amazon EventBridge</strong></td>
+            <td>Investigation events published to EventBridge for custom automation workflows</td>
+            <td><span class="chip chip-new">New GA</span></td>
+          </tr>
+          <tr>
+            <td><strong>Private MCP</strong></td>
+            <td>Connect your internal tools securely — no confidential data over the internet</td>
+            <td><span class="chip chip-new">New GA</span></td>
+          </tr>
+          <tr>
+            <td><strong>On-Premises (MCP)</strong></td>
+            <td>Extend incident investigation to on-prem workloads via Model Context Protocol</td>
+            <td><span class="chip chip-new">New GA</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="cl cw"><span class="ico">⚠️</span><span>Grafana MCP integration is powerful but watch your datasource permissions carefully. The agent gets access to <em>all</em> datasources configured in the Grafana instance you connect — scope that appropriately before pointing it at production.</span></div>
+
+      <h2 id="multicloud">Multicloud & On-Premises Support</h2>
+      <p>This is probably the most strategically significant addition in GA. AWS DevOps Agent now investigates incidents in <strong>Azure workloads</strong> and correlates data across multicloud deployments. For organizations running a hybrid cloud strategy, this means unified incident response regardless of where the workload lives.</p>
+      <p>On-premises coverage works through MCP — the agent discovers on-prem resources by analyzing metrics, logs, and code to build a comprehensive topology map. T-Mobile's team, whose application logs live in an on-premises Splunk deployment, called this out specifically as a key capability during their pilot.</p>
+
+      <h2 id="regions">Regional Availability</h2>
+      <p>GA launches across six AWS regions:</p>
+      <ul>
+        <li><strong>US East (N. Virginia)</strong> — us-east-1</li>
+        <li><strong>US West (Oregon)</strong> — us-west-2</li>
+        <li><strong>EU (Frankfurt)</strong> — eu-central-1</li>
+        <li><strong>EU (Ireland)</strong> — eu-west-1</li>
+        <li><strong>AP (Sydney)</strong> — ap-southeast-2</li>
+        <li><strong>AP (Tokyo)</strong> — ap-northeast-1</li>
+      </ul>
+      <p>No AP South (Mumbai) at launch — if that's a data residency requirement for you, worth checking with your AWS account team on the roadmap.</p>
+
+      <h2 id="getting-started">Getting Started</h2>
+      <p>AWS DevOps Agent is live in the console now. Here's the practical path to first value:</p>
+
+      <pre><code><span class="cmt"># Step 1 — Create your Agent Space</span>
+<span class="cmt"># Navigate to: AWS Console → AWS DevOps Agent</span>
+<span class="cmt"># URL: https://console.aws.amazon.com/aidevops/</span>
+
+<span class="cmt"># Step 2 — Connect your observability tools</span>
+<span class="cmt"># Start with whatever you already use:</span>
+<span class="str">Datadog, Grafana, CloudWatch, Dynatrace, New Relic, Splunk</span>
+
+<span class="cmt"># Step 3 — Connect your code repo</span>
+<span class="cmt"># GitHub or GitLab — this powers Code Indexing</span>
+
+<span class="cmt"># Step 4 — Reinvestigate a recent incident</span>
+<span class="cmt"># Pick something from the last 30 days your team already solved</span>
+<span class="cmt"># Run it through the agent — compare findings + time</span>
+<span class="cmt"># This is the fastest way to prove ROI internally</span></code></pre>
+
+      <div class="cl ct"><span class="ico">💡</span><span>Don't start by connecting everything at once. Pick one team, one service, one observability tool. Get the agent familiar with that scope, tune the skills, measure MTTR improvement, then expand. Trying to onboard your entire infrastructure on day one is how you get garbage context and garbage outputs.</span></div>
+
+      <h2 id="pricing">Pricing Model</h2>
+      <p>You pay per second of agent activity — no upfront commitments, no minimum usage. AWS Support customers get monthly credits toward usage based on a percentage of their gross AWS Support spend (percentage varies by support tier).</p>
+      <p>For detailed numbers, check the <strong>AWS DevOps Agent pricing page</strong> — I won't quote figures here since they'll evolve as the service matures.</p>
+
+      <h2 id="my-take">My Take</h2>
+      <p>I've been following this since the preview announcement, and the GA feature set makes this production-viable for most engineering teams. The numbers from early adopters are hard to ignore — WGU's 2-hour investigation collapsing to 28 minutes, Zenchef resolving a production issue without pulling engineers off a hackathon. These are real operational wins, not marketing metrics.</p>
+      <p>The features I think will matter most in practice:</p>
+      <ul>
+        <li><strong>Code Indexing</strong> — closes the gap between "symptom detected" and "here's the specific line causing it"</li>
+        <li><strong>Triage Agent</strong> — alert fatigue is real; deduplication is underrated</li>
+        <li><strong>Learned Skills</strong> — the compounding value as the agent understands your patterns better over time</li>
+        <li><strong>Private MCP</strong> — enterprise teams blocked by data egress concerns now have a path forward</li>
+      </ul>
+      <p>The thing that would push this from "impressive" to "essential" for me is deeper cost attribution and a way to measure how many incidents were <em>prevented</em> (not just resolved faster). That's a hard metric to surface, but it's the one that would justify this at budget review time.</p>
+      <p>Worth spinning up in a dev environment this week and reinvestigating a past incident. The bar for demonstrating value to your team is low — just show the side-by-side comparison.</p>
+
+      <div class="cl ci"><span class="ico">🔗</span><span>Links: <a href="https://aws.amazon.com/devops-agent/" style="color:var(--accent2)">AWS DevOps Agent</a> · <a href="https://docs.aws.amazon.com/devopsagent/latest/userguide/about-aws-devops-agent.html" style="color:var(--accent2)">User Guide</a> · <a href="https://aws.amazon.com/blogs/devops/best-practices-for-deploying-aws-devops-agent-in-production/" style="color:var(--accent2)">Production Best Practices</a> · <a href="https://aws.amazon.com/devops-agent/pricing" style="color:var(--accent2)">Pricing</a></span></div>
+
+    </div>
+  </article>
+
+  <!-- Right Sidebar -->
+  <aside class="sr">
+    <div class="tt">On this page</div>
+    <ul class="tl" id="toc"></ul>
+    <div class="rt">Related Posts</div>
+    <a href="aws-lambda-serverless-scale.html" class="rp"><div class="rc">cloud</div><div class="rx">Serverless at Scale: AWS Lambda</div></a>
+    <a href="multi-region-aws.html" class="rp"><div class="rc">cloud</div><div class="rx">Multi-Region AWS Infrastructure</div></a>
+    <a href="gitops-argocd.html" class="rp"><div class="rc">devops</div><div class="rx">GitOps with ArgoCD & Terraform</div></a>
+    <a href="platform-engineering-idp.html" class="rp"><div class="rc">devops</div><div class="rx">Platform Engineering & IDP</div></a>
+    <a href="pci-dss-aws.html" class="rp"><div class="rc">security</div><div class="rx">PCI-DSS on AWS</div></a>
+    <a href="zero-trust-aws.html" class="rp"><div class="rc">security</div><div class="rx">Zero Trust Architecture on AWS</div></a>
+    <a href="eks-zero-downtime.html" class="rp"><div class="rc">kubernetes</div><div class="rx">Zero-Downtime EKS Upgrades</div></a>
+  </aside>
+
+</div>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const a=document.querySelector('article'),r=a.getBoundingClientRect(),t=a.offsetHeight-window.innerHeight,s=Math.max(0,-r.top);
+  document.getElementById('rp').style.width=Math.min(100,(s/t)*100)+'%'
+});
+const hs=document.querySelectorAll('.prose h2,.prose h3'),toc=document.getElementById('toc');
+hs.forEach((h,i)=>{
+  h.id=h.id||'s'+i;
+  const li=document.createElement('li'),a=document.createElement('a');
+  a.href='#'+h.id;a.textContent=h.textContent;
+  if(h.tagName==='H3')a.style.paddingLeft='1.25rem';
+  li.appendChild(a);toc.appendChild(li)
+});
+const obs=new IntersectionObserver(e=>{
+  e.forEach(e=>{
+    const a=toc.querySelector('a[href="#'+e.target.id+'"]');
+    if(a)a.classList.toggle('active',e.isIntersecting)
+  })
+},{rootMargin:'-20% 0px -70% 0px'});
+hs.forEach(h=>obs.observe(h));
+</script>
+</body>
+</html>
