@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>You Can Now Keep Your AWS Cert Without Retaking the Exam — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--bg2:#111;--bg3:#161616;--border:#222;--border2:#2a2a2a;--accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;--muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted)}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sf{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sf a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+.sf a:hover{color:var(--accent)}
+.sb{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+article{padding:3rem 3.5rem;min-width:0;animation:fu .5s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.bl{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.bl:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.ph{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.mb{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.b{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.bc{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.bf{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.bd,.bt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.ds{color:var(--muted);font-size:.6rem}
+h1.pt{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.ps{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+.ar{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.an{font-size:.82rem;font-weight:600;color:var(--white)}
+.ao{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.tb{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.tg{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.4rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:var(--muted);font-style:italic}.var{color:#e06c75}.prop{color:#e5c07b}
+.cl{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.ci{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+.cw{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+.ct{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+.ico{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.dg{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:2rem;margin:2rem 0;overflow-x:auto}
+.dt{font-family:var(--mono);font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem}
+.dt::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+.sn{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+.sl2{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+.tt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.tl{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.tl li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.tl li a:hover,.tl li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.rt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.rp{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.rp:hover{background:rgba(0,255,136,.04)}
+.rc{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.rx{font-size:.78rem;color:var(--text);line-height:1.35}
+.rpr{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+/* Integration table */
+.itbl{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.85rem}
+.itbl th{font-family:var(--mono);font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);padding:.6rem .75rem;border-bottom:1px solid var(--border2);text-align:left}
+.itbl td{padding:.6rem .75rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
+.itbl tr:last-child td{border-bottom:none}
+.itbl tr:hover td{background:rgba(0,255,136,.02)}
+.chip{font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px;text-transform:uppercase;letter-spacing:.06em}
+.chip-new{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.chip-ga{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}</style>
+</head>
+<body>
+<div class="rpr" id="rp"></div>
+<div class="page">
+
+  <!-- Left Sidebar -->
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="sb"><span class="sd"></span>status: building</div>
+    <div class="sf">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+    </div>
+  </aside>
+
+  <!-- Main Article -->
+  <article>
+    <a href="../index.html" class="bl">← back to blog</a>
+
+    <div class="ph">
+      <div class="mb">
+        <span class="b bc">cloud</span>
+        <span class="b bf">Featured</span>
+        <span class="ds">·</span>
+        <span class="bd">Jun 26, 2026</span>
+        <span class="ds">·</span>
+        <span class="bt">8 min read</span>
+      </div>
+      <h1 class="pt">You Can Now Keep Your AWS Cert Without Retaking the Exam</h1>
+      <p class="ps">AWS just shipped a new way to recertify — work through curated training and hands-on labs on Skill Builder instead of sitting a full exam, and your certification extends by a year. Here's how it works and whether it's actually worth it.</p>
+      <div class="ar">
+        <div class="av">SJ</div>
+        <div>
+          <div class="an">Sabin Joshi</div>
+          <div class="ao">DevOps Engineer</div>
+        </div>
+      </div>
+      <div class="tb">
+        <span class="tg">#aws</span>
+        <span class="tg">#certification</span>
+        <span class="tg">#recertification</span>
+        <span class="tg">#skill-builder</span>
+        <span class="tg">#cloud-career</span>
+        <span class="tg">#solutions-architect</span>
+        <span class="tg">#devops</span>
+      </div>
+    </div>
+
+    <div class="prose">
+
+      <h2 id="tldr">The Short Version</h2>
+      <p>As of <strong>June 23, 2026</strong>, AWS gave us a second way to stay certified. Instead of rebooking a full exam every three years, you can now <strong>maintain</strong> your certification for an extra year by working through curated training and hands-on labs on <strong>AWS Skill Builder</strong>. Hit the required points before your cert expires, and it renews automatically — the new date shows up in your AWS Certification account right away.</p>
+      <p>For anyone who's ever blocked off a stressful Saturday to re-sit an exam they already passed once — this one's a relief.</p>
+
+      <div class="sg">
+        <div class="sc"><div class="sn">+1 yr</div><div class="sl2">extension per cycle</div></div>
+        <div class="sc"><div class="sn">90 days</div><div class="sl2">eligibility window</div></div>
+        <div class="sc"><div class="sn">500</div><div class="sl2">points (Associate)</div></div>
+        <div class="sc"><div class="sn">700</div><div class="sl2">points (Professional)</div></div>
+      </div>
+
+      <div class="cl ci"><span class="ico">ℹ️</span><span>This is currently in <strong>open Beta</strong>. It sits <em>alongside</em> the traditional exam route — it doesn't replace it. Both paths leave you with the exact same active, valid credential.</span></div>
+
+      <h2 id="problem">The Problem It Actually Solves</h2>
+      <p>Here's the situation every certified engineer knows. You grind for weeks, pass your Solutions Architect exam, get the badge, feel great. Then three years quietly tick by, and suddenly you're staring down a renewal — booking a testing center slot, dusting off flashcards, and re-proving knowledge you've literally been using at work every single day.</p>
+      <p>That whole ritual always felt backwards to me. The point of staying certified shouldn't be to survive another exam day. It should be to actually stay <em>current</em> — because the cloud you certified on three years ago isn't the cloud you're shipping to now.</p>
+      <p>The new maintenance path fixes exactly that. You keep your credential by learning the things that have changed, not by re-memorizing the things that haven't.</p>
+
+      <h2 id="how-it-works">How It Actually Works</h2>
+      <p>The flow is refreshingly simple. Once your certification is within 90 days of expiring, you're eligible — here's the path:</p>
+
+      <h3>1. Pick your certification</h3>
+      <p>In AWS Skill Builder, head to <strong>Explore → Validate your skills → Recertify</strong> and choose the certification you want to keep alive.</p>
+
+      <h3>2. Work through the training</h3>
+      <p>You move through curated digital courses and hands-on labs tied to your certification's domain. The key word is <strong>hands-on</strong> — these aren't multiple-choice drills, they drop you into live AWS environments where you build, configure, and troubleshoot real scenarios.</p>
+
+      <h3>3. Get extended automatically</h3>
+      <p>Once you hit the point threshold, your certification extends by one year from your completion date. No review queue, no waiting — it's reflected immediately in your account.</p>
+
+      <pre><code><span class="cmt"># Where to start inside AWS Skill Builder</span>
+<span class="cmt"># Explore → Validate your skills → Recertify</span>
+
+<span class="prop">eligibility</span>:   <span class="str">"certification within 90 days of expiry"</span>
+<span class="prop">associate</span>:     <span class="num">500</span> points  <span class="cmt"># includes ≥ 1 practical activity</span>
+<span class="prop">professional</span>:  <span class="num">700</span> points  <span class="cmt"># includes ≥ 2 practical activities</span>
+<span class="prop">pace</span>:         <span class="str">"self-paced, finish anytime before expiry"</span>
+<span class="prop">result</span>:       <span class="str">"+1 year from completion date"</span></code></pre>
+
+      <div class="cl ct"><span class="ico">💡</span><span>No testing center appointment. No single high-stakes exam day. You complete everything <strong>at your own pace</strong> — chip away at it over a few weeks of evenings if that's your style.</span></div>
+
+      <div class="dg">
+        <div class="dt">AWS Certification — Maintenance Path</div>
+        <svg viewBox="0 0 680 150" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#00ff88"/>
+            </marker>
+          </defs>
+          <!-- Step 1 -->
+          <rect x="8" y="50" width="120" height="50" rx="4" fill="#1c1c1c" stroke="#00ccff" stroke-width="1.5"/>
+          <text x="68" y="72" font-family="JetBrains Mono,monospace" font-size="8.5" fill="#00ccff" text-anchor="middle">90 days out</text>
+          <text x="68" y="86" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">eligibility opens</text>
+          <line x1="128" y1="75" x2="157" y2="75" stroke="#00ff88" stroke-width="1.2" marker-end="url(#ag)"/>
+          <!-- Step 2 -->
+          <rect x="158" y="50" width="120" height="50" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+          <text x="218" y="72" font-family="JetBrains Mono,monospace" font-size="8.5" fill="#888" text-anchor="middle">Pick cert</text>
+          <text x="218" y="86" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">on Skill Builder</text>
+          <line x1="278" y1="75" x2="307" y2="75" stroke="#00ff88" stroke-width="1.2" marker-end="url(#ag)"/>
+          <!-- Step 3 -->
+          <rect x="308" y="40" width="120" height="70" rx="6" fill="#0f1f14" stroke="#00ff88" stroke-width="2"/>
+          <text x="368" y="68" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ff88" text-anchor="middle">Training</text>
+          <text x="368" y="82" font-family="JetBrains Mono,monospace" font-size="9" fill="#00ff88" text-anchor="middle">+ Labs</text>
+          <text x="368" y="96" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">earn points</text>
+          <line x1="428" y1="75" x2="457" y2="75" stroke="#00ff88" stroke-width="1.2" marker-end="url(#ag)"/>
+          <!-- Step 4 -->
+          <rect x="458" y="50" width="120" height="50" rx="4" fill="#1c1c1c" stroke="#555" stroke-width="1.2"/>
+          <text x="518" y="72" font-family="JetBrains Mono,monospace" font-size="8.5" fill="#888" text-anchor="middle">Hit threshold</text>
+          <text x="518" y="86" font-family="JetBrains Mono,monospace" font-size="6.5" fill="#555" text-anchor="middle">500 / 700 pts</text>
+          <line x1="578" y1="75" x2="607" y2="75" stroke="#00ff88" stroke-width="1.2" marker-end="url(#ag)"/>
+          <!-- Outcome -->
+          <rect x="608" y="50" width="64" height="50" rx="4" fill="#1c1c1c" stroke="#ff6b35" stroke-width="1.5"/>
+          <text x="640" y="72" font-family="JetBrains Mono,monospace" font-size="8.5" fill="#ff6b35" text-anchor="middle">+1 yr</text>
+          <text x="640" y="86" font-family="JetBrains Mono,monospace" font-size="6" fill="#555" text-anchor="middle">auto-extend</text>
+        </svg>
+      </div>
+
+      <h2 id="supported">What's Supported at Launch</h2>
+      <p>The maintenance path is live in Beta for five certifications right now, with more landing later this year.</p>
+
+      <table class="itbl">
+        <thead>
+          <tr>
+            <th>Certification</th>
+            <th>Level</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Solutions Architect – Associate</strong></td>
+            <td>Associate</td>
+            <td><span class="chip chip-ga">Beta now</span></td>
+          </tr>
+          <tr>
+            <td><strong>Developer – Associate</strong></td>
+            <td>Associate</td>
+            <td><span class="chip chip-ga">Beta now</span></td>
+          </tr>
+          <tr>
+            <td><strong>CloudOps Engineer – Associate</strong> <span style="color:var(--dim)">(also maintains SysOps Administrator – Associate)</span></td>
+            <td>Associate</td>
+            <td><span class="chip chip-ga">Beta now</span></td>
+          </tr>
+          <tr>
+            <td><strong>DevOps Engineer – Professional</strong></td>
+            <td>Professional</td>
+            <td><span class="chip chip-ga">Beta now</span></td>
+          </tr>
+          <tr>
+            <td><strong>Solutions Architect – Professional</strong></td>
+            <td>Professional</td>
+            <td><span class="chip chip-ga">Beta now</span></td>
+          </tr>
+          <tr>
+            <td><strong>Data Engineer – Associate</strong></td>
+            <td>Associate</td>
+            <td><span class="chip chip-new">Coming soon</span></td>
+          </tr>
+          <tr>
+            <td><strong>Security – Specialty</strong></td>
+            <td>Specialty</td>
+            <td><span class="chip chip-new">Coming soon</span></td>
+          </tr>
+          <tr>
+            <td><strong>Machine Learning Engineer – Associate</strong></td>
+            <td>Associate</td>
+            <td><span class="chip chip-new">Coming soon</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="value">Training That Makes You Better, Not Just Recertified</h2>
+      <p>This is the part I actually care about. The courses and labs are built by the same AWS teams who develop the services — so you're learning current best practices, not a rehash of what was on the exam when you first sat it.</p>
+      <p>The practical activities put you in realistic scenarios where you build, configure, and troubleshoot in live AWS environments. That's a genuinely different experience from memorizing exam-style questions. The time you spend maintaining your cert is time spent getting measurably better at the job — which is how recertification should have worked all along.</p>
+
+      <h2 id="exam-path">How It Fits With Exam Recertification</h2>
+      <p>If you actually like the exam route — some people do, it's a clean, well-defined goal — nothing's been taken away. You can still recertify by:</p>
+      <ul>
+        <li>Retaking your certification exam</li>
+        <li>Passing a higher-level exam</li>
+        <li>(For Cloud Practitioner) completing AWS Cloud Quest</li>
+      </ul>
+      <p>The maintenance path is simply an <em>additional</em> option for people who'd rather learn continuously than test periodically. Both routes end at the same place: an active, valid credential.</p>
+
+      <h2 id="cascading">The Bonus: Cascading Extensions</h2>
+      <p>Here's a detail worth knowing if you hold a stack of AWS certs. When you maintain a higher-level credential, any related lower-level cert that's still active gets bumped to the same new expiration date — as long as it's valid and within a year of expiring.</p>
+      <p>So if you maintain your <strong>Solutions Architect – Professional</strong>, your <strong>Solutions Architect – Associate</strong> rides along to the same date. One effort, two credentials kept current. That's a quiet but genuinely useful design choice.</p>
+
+      <h2 id="get-started">What You Need to Start</h2>
+      <p>The entry bar is low:</p>
+      <ul>
+        <li>An active <strong>AWS Skill Builder subscription</strong> (Individual or Team)</li>
+        <li>A certification that's <strong>within 90 days</strong> of expiring</li>
+        <li>One of the five supported certifications above</li>
+      </ul>
+      <div class="cl cw"><span class="ico">⚠️</span><span>Watch the 90-day window. You can't start early, and you have to <strong>finish before your certification expires</strong> — if you let it lapse, you're back to taking the full exam. Set a calendar reminder for the 90-day mark so you don't get caught out.</span></div>
+
+      <h2 id="my-take">My Take</h2>
+      <p>I think this is the most learner-friendly change AWS Certification has made in years. The three-year exam treadmill always felt like it was testing your tolerance for exam stress more than your actual competence. Swapping that for hands-on labs that reflect what's changed in the platform is the right call.</p>
+      <p>The thing I'll be watching: how much <em>time</em> 500–700 points actually translates to in practice, and whether the labs stay genuinely fresh or drift into busywork. If AWS keeps the content tied to real, evolving topics — the way the announcement promises — this becomes the default path for most working engineers, and the exam becomes the thing you only do when you're leveling up.</p>
+      <p>If your cert is anywhere near that 90-day window, it's worth logging in this week and seeing what the path looks like. Worst case, you spend a few evenings sharpening skills you'll use anyway. Best case, you never book a testing center slot again.</p>
+      <p><strong>Stay current. Stay certified.</strong> And maybe stop dreading renewal season.</p>
+
+      <div class="cl ci"><span class="ico">🔗</span><span>Links: <a href="https://skillbuilder.aws/certification/recertification" style="color:var(--accent2)">Recertify on Skill Builder</a> · <a href="https://aws.amazon.com/certification/recertification/" style="color:var(--accent2)">AWS Recertification Overview</a> · <a href="https://aws.amazon.com/blogs/training-and-certification/a-new-way-to-keep-your-aws-certification-current/" style="color:var(--accent2)">Original Announcement</a></span></div>
+
+    </div>
+  </article>
+
+  <!-- Right Sidebar -->
+  <aside class="sr">
+    <div class="tt">On this page</div>
+    <ul class="tl" id="toc"></ul>
+    <div class="rt">Related Posts</div>
+    <a href="aws-lambda-serverless-scale.html" class="rp"><div class="rc">cloud</div><div class="rx">Serverless at Scale: AWS Lambda</div></a>
+    <a href="multi-region-aws.html" class="rp"><div class="rc">cloud</div><div class="rx">Multi-Region AWS Infrastructure</div></a>
+    <a href="gitops-argocd.html" class="rp"><div class="rc">devops</div><div class="rx">GitOps with ArgoCD & Terraform</div></a>
+    <a href="platform-engineering-idp.html" class="rp"><div class="rc">devops</div><div class="rx">Platform Engineering & IDP</div></a>
+    <a href="pci-dss-aws.html" class="rp"><div class="rc">security</div><div class="rx">PCI-DSS on AWS</div></a>
+    <a href="zero-trust-aws.html" class="rp"><div class="rc">security</div><div class="rx">Zero Trust Architecture on AWS</div></a>
+    <a href="eks-zero-downtime.html" class="rp"><div class="rc">kubernetes</div><div class="rx">Zero-Downtime EKS Upgrades</div></a>
+  </aside>
+
+</div>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const a=document.querySelector('article'),r=a.getBoundingClientRect(),t=a.offsetHeight-window.innerHeight,s=Math.max(0,-r.top);
+  document.getElementById('rp').style.width=Math.min(100,(s/t)*100)+'%'
+});
+const hs=document.querySelectorAll('.prose h2,.prose h3'),toc=document.getElementById('toc');
+hs.forEach((h,i)=>{
+  h.id=h.id||'s'+i;
+  const li=document.createElement('li'),a=document.createElement('a');
+  a.href='#'+h.id;a.textContent=h.textContent;
+  if(h.tagName==='H3')a.style.paddingLeft='1.25rem';
+  li.appendChild(a);toc.appendChild(li)
+});
+const obs=new IntersectionObserver(e=>{
+  e.forEach(e=>{
+    const a=toc.querySelector('a[href="#'+e.target.id+'"]');
+    if(a)a.classList.toggle('active',e.isIntersecting)
+  })
+},{rootMargin:'-20% 0px -70% 0px'});
+hs.forEach(h=>obs.observe(h));
+</script>
+</body>
+</html>
