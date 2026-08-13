@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>What's New with AWS — June 2026: The Month in Review — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--bg2:#111;--bg3:#161616;--border:#222;--border2:#2a2a2a;--accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;--muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted)}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sf{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sf a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+.sf a:hover{color:var(--accent)}
+.sb{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+article{padding:3rem 3.5rem;min-width:0;animation:fu .5s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.bl{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.bl:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.ph{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.mb{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.b{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.bc{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.bf{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.bd,.bt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.ds{color:var(--muted);font-size:.6rem}
+h1.pt{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.ps{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+.ar{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.an{font-size:.82rem;font-weight:600;color:var(--white)}
+.ao{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.tb{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.tg{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.55rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose a.lnk{color:var(--accent2);border-bottom:1px solid rgba(0,204,255,.25);transition:all .15s}
+.prose a.lnk:hover{color:var(--accent);border-color:rgba(0,255,136,.4)}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.cl{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.ci{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+.cw{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+.ct{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+.ico{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+.sn{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+.sl2{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+/* launch item */
+.li{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--border2);border-radius:6px;padding:1rem 1.25rem;margin-bottom:.9rem;transition:border-color .15s}
+.li:hover{border-left-color:var(--accent)}
+.li h4{font-size:.95rem;font-weight:600;color:var(--white);margin-bottom:.4rem;font-family:var(--sans);display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+.li h4 a{color:var(--white);transition:color .15s}
+.li h4 a:hover{color:var(--accent)}
+.li p{font-size:.86rem;color:var(--dim);margin:0;line-height:1.6}
+.li .src{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.tt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.tl{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.tl li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.tl li a:hover,.tl li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.rt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.rp{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.rp:hover{background:rgba(0,255,136,.04)}
+.rc{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.rx{font-size:.78rem;color:var(--text);line-height:1.35}
+.rpr{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}</style>
+</head>
+<body>
+<div class="rpr" id="rp"></div>
+<div class="page">
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="sb"><span class="sd"></span>status: building</div>
+    <div class="sf">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+    </div>
+  </aside>
+  <article>
+    <a href="../index.html" class="bl">← back to blog</a>
+    <div class="ph">
+      <div class="mb"><span class="b bc">cloud</span><span class="b bf">Featured</span><span class="ds">·</span><span class="bd">Jul 1, 2026</span><span class="ds">·</span><span class="bt">13 min read</span></div>
+      <h1 class="pt">What's New with AWS — June 2026: The Month in Review</h1>
+      <p class="ps">A themed roundup of every headline launch AWS shipped in June 2026 — the AWS Summit New York City keynote and its stack of agent launches, Graviton5-powered EC2, Claude Opus 4.8 and a wave of new Bedrock models, plus AgentCore's harness reaching GA and a batch of price cuts. Every item links back to the original announcement.</p>
+      <div class="ar"><div class="av">SJ</div><div><div class="an">Sabin Joshi</div><div class="ao">DevOps Engineer</div></div></div>
+      <div class="tb"><span class="tg">#aws</span><span class="tg">#whats-new</span><span class="tg">#summit-nyc</span><span class="tg">#agentcore</span><span class="tg">#graviton5</span><span class="tg">#bedrock</span><span class="tg">#roundup</span></div>
+    </div>
+    <div class="prose">
+
+<p>June 2026 was one of the densest months of the year, anchored by <strong>AWS Summit New York City</strong> on June 17, where Swami Sivasubramanian's keynote unveiled a full stack of agent launches around a single thesis: agents that compound value over time. Around the Summit, AWS shipped its first <strong>Graviton5</strong> EC2 instances, brought <strong>Claude Opus 4.8</strong> and a wave of new Bedrock models (OpenAI GPT-5.5/Codex, Gemma 4, Grok 4.3) online, moved <strong>AgentCore's harness</strong> to GA, and rolled out a batch of price reductions.</p>
+
+<p>Below is a roundup of the month's most notable launches, grouped by theme. Every item links straight to its original announcement.</p>
+
+<div class="cl ci"><span class="ico">ℹ️</span><div><strong>A note on scope.</strong> AWS pushes far more to its <em>What's New</em> feed than any single post can capture — often dozens of items a week, many of them regional expansions or incremental availability updates. This covers the headline, developer-relevant launches AWS itself highlighted in its weekly roundups for the month. For the exhaustive, item-by-item list, the canonical source is the <a class="lnk" href="https://aws.amazon.com/new/">What's New with AWS</a> page.</div></div>
+
+<div class="sg">
+  <div class="sc"><div class="sn">5</div><div class="sl2">weekly roundups</div></div>
+  <div class="sc"><div class="sn">G5</div><div class="sl2">first Graviton5 EC2</div></div>
+  <div class="sc"><div class="sn">4</div><div class="sl2">new Bedrock model families</div></div>
+  <div class="sc"><div class="sn">GA</div><div class="sl2">AgentCore harness</div></div>
+</div>
+
+<h2 id="summit">The Headline: AWS Summit New York City</h2>
+<p>Swami Sivasubramanian's June 17 keynote grouped its launches into four kinds of agents. Here's the shape of it.</p>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/machine-learning/get-back-hours-every-day-with-autonomous-agents-in-amazon-quick/">Agents for working — autonomous agents in Amazon Quick</a> <span class="src">amazon-quick</span></h4><p>Quick can now create and run multi-step autonomous agents directly in the desktop app, and consolidates email, Slack, calendar, and tasks into a single prioritized activity feed with personalized rules.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/security/introducing-aws-continuum-security-at-machine-speed/">Agents for securing — AWS Continuum</a> <span class="src">security</span></h4><p>A new AI-native security service that reasons, validates, and acts at machine speed across the full code-vulnerability lifecycle. The AWS Security Agent (now part of Continuum) adds threat modeling, PR code scanning with remediation across major Git platforms, and IDE integrations via Kiro power, Claude Code plugin, and MCP.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/proactively-reduce-tech-debt-autonomously-with-aws-transform-continuous-modernization-preview">Agents for building — Kiro, DevOps Agent &amp; Transform</a> <span class="src">dev-tools</span></h4><p>Write, ship, and modernize code in one loop: Kiro gains a native iOS app, AWS DevOps Agent adds release-management capabilities to assess code changes before production, and AWS Transform introduces continuous modernization to reduce tech debt autonomously.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/machine-learning/amazon-bedrock-agentcore-harness-is-now-generally-available-go-from-idea-to-production-grade-agent-in-minutes/">Agents customers create — Bedrock AgentCore harness (GA)</a> <span class="src">agentcore</span></h4><p>Go from idea to production-grade agent in minutes. The GA harness handles infrastructure and orchestration, joined by AgentCore Web Search, a Managed Knowledge Base, policy integrations with Guardrails, and the new AWS Context service for mapping organizational data relationships.</p></div>
+
+<h2 id="models">Foundation Models on Bedrock</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/05/claude-opus-4.8-aws/">Claude Opus 4.8 on AWS</a> <span class="src">bedrock</span></h4><p>Anthropic's most capable GA model, available through both Amazon Bedrock and Claude Platform on AWS. Built for agentic coding, knowledge work, and extended autonomous execution — it sustains longer sessions, recovers from errors, and reads codebases like an engineer, planning before it edits.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/get-started-with-openai-gpt-5-5-gpt-5-4-models-and-codex-on-amazon-bedrock/">OpenAI GPT-5.5, GPT-5.4, and Codex (GA on Bedrock)</a> <span class="src">bedrock</span></h4><p>GPT-5.5 and GPT-5.4 are now GA for production workloads on Bedrock, with Codex for AI-powered development via the Codex app, CLI, and IDE integrations (VS Code, JetBrains, Xcode). Pricing matches OpenAI first-party rates and usage counts toward AWS commitments.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/gemma-4-amazon-bedrock/">Gemma 4 on Amazon Bedrock</a> <span class="src">bedrock</span></h4><p>Google DeepMind's Gemma 4 family lands in three variants: a 31B dense model (256K context) for reasoning and coding, a 26B-A4B mixture-of-experts for cost/latency-sensitive work, and a small E2B for low-latency interactive use — all with native function calling, multimodal input, and 35+ languages.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/grok-amazon-bedrock/">Grok 4.3 from xAI on Amazon Bedrock</a> <span class="src">bedrock</span></h4><p>xAI's Grok 4.3 is now available on Bedrock for reasoning, agentic, and enterprise workflows, running on a new price-performance inference engine with tool calling, structured output, and streaming.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/anthropic-claude-fable-5-on-aws-mythos-class-capabilities-with-built-in-safeguards-now-available/">Claude Fable 5 on Amazon Bedrock (access later revoked)</a> <span class="src">bedrock</span></h4><p>Claude Fable 5 — a Mythos-class model with built-in safeguards — launched on Bedrock on June 9 with extended asynchronous task execution and advanced vision. On June 12, Anthropic asked AWS to revoke access to Fable 5 and Mythos 5 for all users to comply with a US export-control directive; other models, including Opus 4.8, were unaffected. See Anthropic's statement for details.</p></div>
+
+<h2 id="agents">Agentic AI &amp; Developer Tools</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/aws-finops-agent-preview/">AWS FinOps Agent (preview)</a> <span class="src">finops</span></h4><p>An agent for FinOps and engineering teams that answers cost questions, surfaces rightsizing/idle/Savings Plans recommendations from Cost Optimization Hub and Compute Optimizer, opens Jira tickets, and investigates cost anomalies — posting root-cause findings to Slack.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/aws-step-functions-agentcore/">AWS Step Functions — AgentCore agentic reasoning step</a> <span class="src">step-functions</span></h4><p>Add AI agent reasoning steps to Step Functions workflows via the managed AgentCore harness — run agents in parallel or sequence, add human approval, and trace every agent decision.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/agentcore-identity-secrets-manager/">AgentCore Identity — bring-your-own secrets</a> <span class="src">agentcore</span></h4><p>Reference existing Secrets Manager secret ARNs in AgentCore Identity Credential Providers, keeping full ownership of secrets governance including custom CMKs, tagging, and automatic rotation.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/aws-blocks-preview/">AWS Blocks — open-source TypeScript framework (preview)</a> <span class="src">dev-tools</span></h4><p>Run a fully functional local environment (Postgres, auth, real-time messaging) with no AWS account, then deploy the same code to production AWS services with zero changes — and drop into AWS CDK whenever you need direct resource control.</p></div>
+
+<div class="li"><h4><a href="https://kiro.dev/blog/kiro-pro-max/">Kiro Pro Max</a> <span class="src">kiro</span></h4><p>A new Kiro tier with higher usage limits, access to the latest frontier models, and additional agentic capabilities for professional developers doing sustained, high-volume work.</p></div>
+
+<div class="li"><h4><a href="https://strandsagents.com/blog/reduced-cost-better-isolation-more-resilience/">Strands Agents — new capabilities</a> <span class="src">strands</span></h4><p>The open-source agent toolkit adds better context management in the Harness SDK, an isolated execution environment (Strands Shell), and chaos testing plus red teaming in Strands Evals.</p></div>
+
+<h2 id="compute">Compute &amp; Serverless</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/now-available-amazon-ec2-m9g-and-m9gd-instances-powered-by-new-aws-graviton5-processors/">Amazon EC2 M9g and M9gd — first Graviton5 instances</a> <span class="src">ec2</span></h4><p>Up to 25% better compute than Graviton4 (35% for web apps and ML inference, 30% for databases). Graviton5 is the first AWS processor with PCIe Gen6 and DDR5-8800 and a 5× larger L3 cache, and the release debuts the Nitro Isolation Engine — making Nitro the first formally verified cloud hypervisor.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/announcing-amazon-ec2-g7-instances-accelerated-by-nvidia-rtx-pro-4500-blackwell-server-edition-gpus/">Amazon EC2 G7 instances — NVIDIA RTX PRO 4500 Blackwell</a> <span class="src">ec2</span></h4><p>AWS is the first major cloud to support NVIDIA RTX PRO 4500 Blackwell Server Edition GPUs. With custom 6th-gen Intel Xeon, G7 delivers up to 4.6× AI inference and 2.1× graphics performance versus G6.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/aws-lambda-microvms/">AWS Lambda MicroVMs</a> <span class="src">lambda</span></h4><p>A new serverless primitive giving each user or job VM-level isolation with near-instant launch/resume and the ability to suspend and resume for up to 8 hours. Built on Firecracker — ideal for running user- or AI-generated code in multi-tenant apps without trading off isolation, speed, or state.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/amazon-ecs-introduces-new-high-resolution-metrics-for-faster-service-auto-scaling/">Amazon ECS — faster service auto scaling</a> <span class="src">ecs</span></h4><p>High-resolution (20-second) metrics cut scale-out trigger time from 363s to 86s (76% faster) and total scale-and-provision time from 386s to 109s (72% faster) in AWS benchmarks.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-ecs-managed-instances-neuron/">Amazon ECS Managed Instances — Trainium &amp; Inferentia</a> <span class="src">ecs</span></h4><p>Create ECS Managed Instances capacity providers with Inferentia2, Trainium1, and Trainium2, and let ECS automatically allocate accelerator resources to your workload.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-distro-kubernetes-version-1-36/">Amazon EKS supports Kubernetes 1.36</a> <span class="src">eks</span></h4><p>Kubernetes 1.36 promotes User Namespaces to GA and adds Mutating Admission Policies, in-place pod-level vertical scaling, and resource health status reporting — across EKS and EKS Distro.</p></div>
+
+<h2 id="storage">Storage, Data &amp; Analytics</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/amazon-s3-annotations-attach-rich-queryable-context-directly-to-your-objects/">Amazon S3 annotations</a> <span class="src">s3</span></h4><p>Attach up to 1 GB of rich, mutable, queryable context directly to S3 objects — purpose-built for AI agents and autonomous workflows that need to discover, understand, and act on data at scale without a separate metadata system.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/introducing-the-next-generation-of-amazon-opensearch-serverless-for-building-your-agentic-ai-applications/">Next-gen Amazon OpenSearch Serverless</a> <span class="src">opensearch</span></h4><p>A fully managed search and vector engine for agentic AI: scales from zero to thousands of requests/sec (~20× faster than before), up to 60% cheaper than peak-provisioned clusters, with GPU acceleration and new SEARCH and VECTORSEARCH collection types.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/improve-your-application-resilience-with-amazon-cognito-multi-region-replication/">Amazon Cognito — multi-Region replication</a> <span class="src">cognito</span></h4><p>Synchronize user and machine identity data — credentials, user-pool config, federation — to a standby Region in near real time, so signed-in users keep working through a primary-Region disruption. Available across 16 Regions.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/aws-cur2.0-athena-redshift/">AWS Cost and Usage Report 2.0 — Athena &amp; Redshift integration</a> <span class="src">billing</span></h4><p>CUR 2.0 exports are now delivered in the optimal format for your chosen query engine, with supporting infrastructure templates, table definitions, and data-loading instructions.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-location-service/amazon-location-new-public-transit-intermodal-routing/">Amazon Location Service — transit &amp; intermodal routing</a> <span class="src">location</span></h4><p>The Routes API adds Transit and Intermodal travel modes to plan journeys combining public transportation with walking, driving, taxi, and rental segments across 13 Regions.</p></div>
+
+<h2 id="security">Security, Networking &amp; Operations</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-guardduty/">Amazon GuardDuty — AI-powered investigations (preview)</a> <span class="src">guardduty</span></h4><p>Automatically analyzes findings to separate true threats from benign activity, examining 90 days of context with knowledge graphs and threat intel, and returns a disposition assessment with confidence scoring, MITRE ATT&amp;CK classification, and recommendations in minutes.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-route-53-resolver-dns/">Palo Alto Advanced DNS Security on Route 53 Resolver DNS Firewall (preview)</a> <span class="src">route-53</span></h4><p>Enforce Palo Alto Networks DNS threat protections directly on Route 53 DNS Firewall rules — no separate firewalls or VPC changes — by subscribing through the embedded AWS Marketplace widget.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/ec2-image-watermarks-allowed-images/">Amazon EC2 AMI Watermarks</a> <span class="src">ec2</span></h4><p>Embed custom identifiers in private AMIs that carry forward to every derived AMI across copies, Regions, and account shares — combine with Allowed AMIs and Declarative Policies to restrict launches to approved images, at no cost.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/aws-management-console-private/">AWS Management Console Private Access</a> <span class="src">console</span></h4><p>Reach the AWS Console from VPCs without internet connectivity, so enterprises can manage infrastructure through the console while keeping strict network controls in air-gapped environments.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/aws-workload-credentials-provider/">AWS Workload Credentials Provider</a> <span class="src">security</span></h4><p>A lightweight client-side provider that automates deployment of ACM-exported certificates and local caching of Secrets Manager secrets across AWS and non-AWS workloads — handling shrinking certificate lifetimes automatically on Windows and Linux.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/aws-local-zones-hanoi-vietnam/">AWS Local Zone in Hanoi, Vietnam</a> <span class="src">infrastructure</span></h4><p>One of the first APAC Local Zones with Amazon S3 and EBS Local Snapshots support, helping customers meet data-residency requirements by storing and backing up data locally.</p></div>
+
+<h2 id="cx">Customer Experience &amp; Marketplace</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-connect-customer-agentic-cx-preview/">Amazon Connect Customer — Agentic CX designer (preview)</a> <span class="src">connect</span></h4><p>A no-code canvas where business teams design and deploy AI-powered self-service across voice and digital, blending agentic and deterministic AI in one governed flow. Includes Live Sync, which drives a customer's web or mobile screen in real time as they speak or type.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/aws-marketplace-storefront/">AWS Marketplace Storefront (GA)</a> <span class="src">marketplace</span></h4><p>Partners can spin up their own branded catalog of solutions and services on their website or app in hours, simplifying how channel partners and ISVs manage their cloud marketplace business.</p></div>
+
+<h2 id="prices">Price Reductions</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/s3-vectors-reduces-query-charges-80-percent-large-indexes/">Amazon S3 Vectors — up to 80% lower query charges</a> <span class="src">s3</span></h4><p>Query charges for large vector indexes drop by up to 80%, lowering costs for similarity search across large-scale AI, RAG, and semantic-search workloads — applied automatically, no app changes.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-gamelift-servers-free-network-bandwidth/">Amazon GameLift Servers — free network bandwidth</a> <span class="src">gamelift</span></h4><p>Network bandwidth in and out of AWS is now free for all gen-6-and-later instance types (On-Demand and Spot, no commitment) — you pay only for instance hours.</p></div>
+
+<div class="cl cw"><span class="ico">⚠️</span><div>A few late-June Summit follow-ups spilled into early July's roundup and sit just outside this month's window. And on the models side, access to Claude Fable 5 and Mythos 5 remained revoked through the back half of June pending the export-control review noted above — worth checking Anthropic's site for the latest status.</div></div>
+
+<h2 id="wrap">The Month in a Paragraph</h2>
+<p>June 2026 was defined by <strong>AWS Summit New York City</strong>, where Swami Sivasubramanian's keynote organized a wall of launches into four kinds of agents — for working (autonomous agents in Amazon Quick), securing (the new AWS Continuum service), building (Kiro, DevOps Agent, and Transform in one loop), and the ones customers create, powered by a now-GA <strong>Bedrock AgentCore harness</strong> with Web Search, Managed Knowledge Base, and the AWS Context service. The model catalog expanded dramatically — <strong>Claude Opus 4.8</strong>, OpenAI's GPT-5.5/GPT-5.4 and Codex reaching GA, Google's Gemma 4, and xAI's Grok 4.3 all landing on Bedrock — though the Mythos-class Claude Fable 5 was pulled days after launch to comply with a US export-control directive. Underneath the AI story, the fundamentals were strong: the first <strong>Graviton5</strong> instances (with Nitro now a formally verified hypervisor), NVIDIA Blackwell G7 GPUs, Lambda MicroVMs, S3 annotations, a next-gen OpenSearch Serverless, and a round of price cuts on S3 Vectors and GameLift. If the spring was about giving agents capabilities, June was about giving them a stage — and the infrastructure to run at scale.</p>
+
+</div>
+  </article>
+  <aside class="sr">
+    <div class="tt">On this page</div>
+    <ul class="tl" id="toc"></ul>
+    <div class="rt">Related Posts</div>
+    <a href="aws-may-2026-roundup.html" class="rp"><div class="rc">cloud</div><div class="rx">What's New with AWS — May 2026</div></a>
+    <a href="aws-certification-maintenance.html" class="rp"><div class="rc">cloud</div><div class="rx">Keep Your AWS Cert Without Retaking the Exam</div></a>
+    <a href="aws-aurora-postgresql.html" class="rp"><div class="rc">cloud</div><div class="rx">Aurora PostgreSQL at Scale</div></a>
+    <a href="aws-monitoring-alerting-webapp.html" class="rp"><div class="rc">devops</div><div class="rx">Monitoring &amp; Alerting a Web App on AWS</div></a>
+  </aside>
+</div>
+<script>
+window.addEventListener('scroll',()=>{const a=document.querySelector('article'),r=a.getBoundingClientRect(),t=a.offsetHeight-window.innerHeight,s=Math.max(0,-r.top);document.getElementById('rp').style.width=Math.min(100,(s/t)*100)+'%'});
+const hs=document.querySelectorAll('.prose h2,.prose h3'),toc=document.getElementById('toc');
+hs.forEach((h,i)=>{h.id=h.id||'s'+i;const li=document.createElement('li'),a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent;if(h.tagName==='H3')a.style.paddingLeft='1.25rem';li.appendChild(a);toc.appendChild(li)});
+const obs=new IntersectionObserver(e=>{e.forEach(e=>{const a=toc.querySelector('a[href="#'+e.target.id+'"]');if(a)a.classList.toggle('active',e.isIntersecting)})},{rootMargin:'-20% 0px -70% 0px'});hs.forEach(h=>obs.observe(h));</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>What's New with AWS — January 2026: The Month in Review — Sabin Joshi</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--bg2:#111;--bg3:#161616;--border:#222;--border2:#2a2a2a;--accent:#00ff88;--accent2:#00ccff;--accent3:#ff6b35;--muted:#555;--text:#d4d4d4;--dim:#888;--white:#f0f0f0;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999}
+.page{display:grid;grid-template-columns:240px 1fr 220px;max-width:1400px;margin:0 auto;min-height:100vh}
+.sl{border-right:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.sr{border-left:1px solid var(--border);padding:2rem 1.5rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--mono);font-size:.95rem;color:var(--accent);font-weight:700;margin-bottom:2rem;display:flex;align-items:center;gap:.4rem}
+.logo span{color:var(--dim)}
+nav{display:flex;flex-direction:column;gap:.2rem;margin-bottom:auto}
+nav a{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:.4rem .6rem;border-radius:4px;display:flex;align-items:center;transition:all .15s}
+nav a::before{content:'> ';color:var(--muted)}
+nav a:hover{color:var(--accent);background:rgba(0,255,136,.05)}
+nav a:hover::before{color:var(--accent)}
+.sf{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem}
+.sf a{font-family:var(--mono);font-size:.7rem;color:var(--dim);transition:color .15s}
+.sf a:hover{color:var(--accent)}
+.sb{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:1.2rem}
+.sd{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+article{padding:3rem 3.5rem;min-width:0;animation:fu .5s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.bl{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:inline-flex;align-items:center;gap:.4rem;margin-bottom:2rem;transition:color .15s;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px}
+.bl:hover{color:var(--accent);border-color:rgba(0,255,136,.3)}
+.ph{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.mb{display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+.b{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;padding:.2rem .5rem;border-radius:2px}
+.bc{color:var(--accent2);background:rgba(0,204,255,.08);border:1px solid rgba(0,204,255,.2)}
+.bf{color:var(--accent);background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2)}
+.bd,.bt{font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+.ds{color:var(--muted);font-size:.6rem}
+h1.pt{font-size:2rem;font-weight:700;color:var(--white);line-height:1.2;margin-bottom:1rem;letter-spacing:-.03em}
+.ps{font-size:.95rem;color:var(--dim);max-width:640px;line-height:1.65}
+.ar{display:flex;align-items:center;gap:.75rem;margin-top:1.5rem}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.an{font-size:.82rem;font-weight:600;color:var(--white)}
+.ao{font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+.tb{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem}
+.tg{font-family:var(--mono);font-size:.65rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:.2rem .5rem;border-radius:2px}
+.prose{max-width:760px}
+.prose h2{font-size:1.3rem;font-weight:700;color:var(--white);margin:2.5rem 0 1rem;padding-left:.75rem;border-left:3px solid var(--accent);letter-spacing:-.02em}
+.prose h3{font-size:1.05rem;font-weight:600;color:var(--white);margin:2rem 0 .75rem;font-family:var(--mono)}
+.prose p{margin-bottom:1.1rem;color:var(--text);font-size:.93rem}
+.prose ul,.prose ol{margin:0 0 1.1rem 1.5rem;color:var(--text);font-size:.93rem}
+.prose li{margin-bottom:.55rem}
+.prose strong{color:var(--white);font-weight:600}
+.prose a.lnk{color:var(--accent2);border-bottom:1px solid rgba(0,204,255,.25);transition:all .15s}
+.prose a.lnk:hover{color:var(--accent);border-color:rgba(0,255,136,.4)}
+.prose code{font-family:var(--mono);font-size:.82rem;background:var(--bg3);border:1px solid var(--border);padding:.15rem .35rem;border-radius:3px;color:var(--accent2)}
+.prose pre{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto}
+.prose pre code{background:none;border:none;padding:0;font-size:.8rem;color:var(--text);line-height:1.7}
+.cl{border-radius:6px;padding:1rem 1.25rem;margin:1.5rem 0;display:flex;gap:.75rem;align-items:flex-start;font-size:.88rem}
+.ci{background:rgba(0,204,255,.06);border:1px solid rgba(0,204,255,.2);color:var(--dim)}
+.cw{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);color:var(--dim)}
+.ct{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--dim)}
+.ico{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin:1.5rem 0}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1rem;text-align:center}
+.sn{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);line-height:1}
+.sl2{font-size:.75rem;color:var(--dim);margin-top:.35rem}
+/* launch item */
+.li{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--border2);border-radius:6px;padding:1rem 1.25rem;margin-bottom:.9rem;transition:border-color .15s}
+.li:hover{border-left-color:var(--accent)}
+.li h4{font-size:.95rem;font-weight:600;color:var(--white);margin-bottom:.4rem;font-family:var(--sans);display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+.li h4 a{color:var(--white);transition:color .15s}
+.li h4 a:hover{color:var(--accent)}
+.li p{font-size:.86rem;color:var(--dim);margin:0;line-height:1.6}
+.li .src{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.tt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.75rem}
+.tl{list-style:none;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.tl li a{font-family:var(--mono);font-size:.72rem;color:var(--dim);display:block;padding:.25rem .5rem;border-radius:3px;border-left:2px solid var(--border);transition:all .15s;line-height:1.4}
+.tl li a:hover,.tl li a.active{color:var(--accent);border-color:var(--accent);background:rgba(0,255,136,.04)}
+.rt{font-family:var(--mono);font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2rem 0 .75rem}
+.rp{display:block;padding:.6rem .5rem;border-radius:4px;margin-bottom:.25rem;transition:background .15s}
+.rp:hover{background:rgba(0,255,136,.04)}
+.rc{font-family:var(--mono);font-size:.6rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
+.rx{font-size:.78rem;color:var(--text);line-height:1.35}
+.rpr{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:1000;transition:width .1s}
+@media(max-width:1200px){.page{grid-template-columns:220px 1fr}.sr{display:none}}
+@media(max-width:768px){.page{grid-template-columns:1fr}.sl{display:none}article{padding:2rem 1.25rem}}</style>
+</head>
+<body>
+<div class="rpr" id="rp"></div>
+<div class="page">
+  <aside class="sl">
+    <div class="logo"><span>⚡</span> Sabin.dev</div>
+    <nav>
+      <a href="../index.html">Blog</a>
+    </nav>
+    <div class="sb"><span class="sd"></span>status: building</div>
+    <div class="sf">
+      <a href="https://github.com/SabiNjoshi1">GitHub</a>
+      <a href="https://www.linkedin.com/in/sabin-joshi/">LinkedIn</a>
+    </div>
+  </aside>
+  <article>
+    <a href="../index.html" class="bl">← back to blog</a>
+    <div class="ph">
+      <div class="mb"><span class="b bc">cloud</span><span class="b bf">Featured</span><span class="ds">·</span><span class="bd">Feb 2, 2026</span><span class="ds">·</span><span class="bt">10 min read</span></div>
+      <h1 class="pt">What's New with AWS — January 2026: The Month in Review</h1>
+      <p class="ps">AWS opened 2026 by shipping the year's first wave of launches — new Blackwell and Intel Xeon 6 EC2 families, the general availability of the AWS European Sovereign Cloud, .NET 10 on Lambda, and a batch of container, database, and agentic-AI updates. Here's the themed roundup, with every item linked back to source.</p>
+      <div class="ar"><div class="av">SJ</div><div><div class="an">Sabin Joshi</div><div class="ao">DevOps Engineer</div></div></div>
+      <div class="tb"><span class="tg">#aws</span><span class="tg">#whats-new</span><span class="tg">#ec2</span><span class="tg">#lambda</span><span class="tg">#kiro</span><span class="tg">#sovereign-cloud</span><span class="tg">#roundup</span></div>
+    </div>
+    <div class="prose">
+
+<p>After the firehose of re:Invent 2025, January is usually AWS's chance to catch its breath — but "quieter" here still means a steady stream of new instance families, region expansions, and developer-facing improvements. The headline was the general availability of the <strong>AWS European Sovereign Cloud</strong>, alongside two brand-new EC2 GA families (Blackwell-powered <strong>G7e</strong> and Intel Xeon 6 <strong>X8i</strong>) and .NET 10 support on Lambda.</p>
+
+<p>Below is a roundup of the month's most notable launches, grouped by theme. Every item links straight to its AWS source.</p>
+
+<div class="cl ci"><span class="ico">ℹ️</span><div><strong>A note on scope.</strong> AWS pushes far more to its <em>What's New</em> feed than any single post can capture — often dozens of items a week, many of them regional expansions or incremental availability updates. This covers the headline, developer-relevant launches AWS itself highlighted in its weekly roundups for the month. For the exhaustive, item-by-item list, the canonical source is the <a class="lnk" href="https://aws.amazon.com/new/">What's New with AWS</a> page.</div></div>
+
+<div class="sg">
+  <div class="sc"><div class="sn">4</div><div class="sl2">weekly roundups</div></div>
+  <div class="sc"><div class="sn">GA</div><div class="sl2">EU Sovereign Cloud</div></div>
+  <div class="sc"><div class="sn">768 GB</div><div class="sl2">G7e total GPU memory</div></div>
+  <div class="sc"><div class="sn">3.9 GHz</div><div class="sl2">X8i all-core turbo</div></div>
+</div>
+
+<h2 id="regions">Regions &amp; Sovereignty</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/opening-the-aws-european-sovereign-cloud/">AWS European Sovereign Cloud is now generally available</a> <span class="src">regions</span></h4><p>First announced back in 2023, the independent European cloud infrastructure reached general availability for all customers this month — built to meet the most stringent sovereignty requirements of European customers, with a comprehensive set of AWS services.</p></div>
+
+<h2 id="compute">Compute</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/announcing-amazon-ec2-g7e-instances-accelerated-by-nvidia-rtx-pro-6000-blackwell-server-edition-gpus/">Amazon EC2 G7e instances (GA)</a> <span class="src">ec2</span></h4><p>Accelerated by NVIDIA RTX PRO 6000 Blackwell Server Edition GPUs — up to 2.3× better inference performance than G6e, double the GPU memory, and up to 8 GPUs for 768 GB total, enough to run 70B-parameter models at FP8 on a single GPU. Ideal for generative AI inference, spatial computing, and scientific workloads.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/blogs/aws/amazon-ec2-x8i-instances-powered-by-custom-intel-xeon-6-processors-are-generally-available-for-memory-intensive-workloads/">Amazon EC2 X8i instances (GA)</a> <span class="src">ec2</span></h4><p>Memory-optimized instances on custom Intel Xeon 6 processors with a 3.9 GHz sustained all-core turbo (available only on AWS). SAP-certified, delivering the highest performance and fastest memory bandwidth among comparable Intel processors in the cloud.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/aws-lambda-dot-net-10/">AWS Lambda now supports .NET 10</a> <span class="src">lambda</span></h4><p>Build serverless apps on .NET 10 as both a managed runtime and a container base image, with AWS automatically applying runtime and base-image updates as they become available.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-ecs-tmpfs-mounts-aws-fargate-managed-instances/">Amazon ECS adds tmpfs mounts on Fargate &amp; Managed Instances</a> <span class="src">ecs</span></h4><p>Create memory-backed file systems for Linux containers without writing data to task storage — previously only available on the EC2 launch type.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-ec2-m8i-instances-additional-regions/">EC2 M8i, C8i/C8i-flex, R8i/R8i-flex, and I7ie — additional Regions</a> <span class="src">ec2</span></h4><p>A batch of current-gen instance families expanded into more AWS Regions this month, widening availability for compute-, general-purpose-, memory-, and storage-optimized workloads.</p></div>
+
+<h2 id="containers">Containers &amp; Registry</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-ecr-cross-repository-layer-sharing/">Amazon ECR now supports cross-repository layer sharing</a> <span class="src">ecr</span></h4><p>Share common image layers across repositories via blob mounting — faster image pushes by reusing existing layers, and lower storage costs by storing common layers once and referencing them everywhere.</p></div>
+
+<h2 id="networking">Networking</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/aws-client-vpn-onboarding-quickstart-setup/">AWS Client VPN onboarding quickstart</a> <span class="src">vpn</span></h4><p>A new quickstart cuts the number of steps required to set up a Client VPN endpoint — a small but welcome reduction in onboarding friction.</p></div>
+
+<h2 id="data">Databases, Analytics &amp; Integration</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-mq-http-based-rabbitmq-brokers/">Amazon MQ — HTTP-based authentication for RabbitMQ</a> <span class="src">amazon-mq</span></h4><p>Configure HTTP-based auth on RabbitMQ brokers through the associated configuration file, giving you more flexible authentication options.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-mq-certificate-based-authentication-mutual-tls-rabbitmq/">Amazon MQ — mutual TLS certificate auth for RabbitMQ</a> <span class="src">amazon-mq</span></h4><p>RabbitMQ brokers now also support certificate-based authentication with mutual TLS, strengthening broker-level security.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/apache-airflow-2-11-support-amazon-managed-workflows/">Amazon MWAA supports Apache Airflow 2.11</a> <span class="src">mwaa</span></h4><p>Create Airflow 2.11 environments in Managed Workflows for Apache Airflow — a version that introduces changes to help you prepare for the eventual upgrade to Airflow 3.</p></div>
+
+<h2 id="management">Management &amp; Operations</h2>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/aws-config-new-resource-types/">AWS Config adds new resource types</a> <span class="src">config</span></h4><p>Discover, assess, audit, and remediate additional resource types across key services including Amazon EC2, Amazon SageMaker, and Amazon S3 Tables.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-cloudwatch-database-insights-on-demand-analysis-available-additional-regions/">CloudWatch Database Insights expands to four more Regions</a> <span class="src">cloudwatch</span></h4><p>On-demand analysis is now available in Asia Pacific (New Zealand), Asia Pacific (Taipei), Asia Pacific (Thailand), and Mexico (Central) — using ML to surface performance bottlenecks and specific remediation advice.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-corretto-january-2026-quarterly-updates/">Amazon Corretto January 2026 quarterly updates</a> <span class="src">corretto</span></h4><p>Quarterly security and critical patches for the LTS OpenJDK builds — Corretto 25.0.2, 21.0.10, 17.0.18, 11.0.30, and 8u482 are now available.</p></div>
+
+<h2 id="ai">AI, Agents &amp; Customer Experience</h2>
+
+<div class="li"><h4><a href="https://kiro.dev/changelog/cli/1-24/">Kiro CLI — new features (v1.24)</a> <span class="src">kiro</span></h4><p>Granular controls for web-fetch URLs (allowlists/blocklists to restrict which URLs the agent can access), keyboard shortcuts for custom agents, enhanced diff views, and smoother multi-agent sessions.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/3p-agent-in-quick/">Amazon Quick Suite — new AI-agent integrations</a> <span class="src">quick-suite</span></h4><p>New integrations added to the AI-agent and built-in actions library, including GitHub, Notion, Canva, Box, Linear, Hugging Face, Monday.com, HubSpot, and Intercom.</p></div>
+
+<div class="li"><h4><a href="https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-connect-conditional-logic-real-time-updates-step-by-step-guides/">Amazon Connect — conditional logic &amp; real-time updates in Step-by-Step Guides</a> <span class="src">connect</span></h4><p>Managers can build dynamic guided experiences that adapt to user input — conditional UIs with dropdowns that show/hide fields, change defaults, or adjust required fields — plus automatic data refresh so agents always work with current information.</p></div>
+
+<h2 id="carryover">Carried Over From Late December</h2>
+<p>The year's first roundup (January 5) recapped a set of launches that actually shipped in the closing weeks of December 2025. Worth a quick mention since many teams were on break when they landed:</p>
+<div class="cl ct"><span class="ico">📦</span><div>
+<strong>EC2 M8gn &amp; M8gb</strong> (Graviton4, up to 600 Gbps networking) · <strong>AWS Direct Connect</strong> resilience testing via Fault Injection Service · <strong>176 new Security Hub controls</strong> in AWS Control Tower · <strong>AWS Transform</strong> hybrid data-center network conversion · <strong>NVIDIA Nemotron 3 Nano</strong> on Amazon Bedrock (256K context) · <strong>EC2 AZ ID</strong> support across APIs · <strong>ECS Managed Instances</strong> now supports EC2 Spot (up to 90% off).
+</div></div>
+
+<h2 id="wrap">The Month in a Paragraph</h2>
+<p>January 2026 was AWS's post-re:Invent breather, but it still shipped a meaningful opening wave for the year. The headline was the <strong>general availability of the AWS European Sovereign Cloud</strong> — the independent, EU-operated infrastructure first announced in 2023, now live for customers with the strictest data-sovereignty requirements. Around that landmark came fresh silicon in two new GA EC2 families (NVIDIA Blackwell-powered <strong>G7e</strong> for generative-AI inference and Intel Xeon 6 <strong>X8i</strong> for memory-heavy and SAP workloads), plus a steady stream of developer quality-of-life wins: <strong>.NET 10 on Lambda</strong>, ECS tmpfs mounts on Fargate, ECR cross-repository layer sharing, an AWS Client VPN quickstart, and new Kiro CLI controls. Nothing re:Invent-sized — but a solid, practical start to the year that set the stage for a busier February.</p>
+
+</div>
+  </article>
+  <aside class="sr">
+    <div class="tt">On this page</div>
+    <ul class="tl" id="toc"></ul>
+    <div class="rt">Related Posts</div>
+    <a href="aws-february-2026-roundup.html" class="rp"><div class="rc">cloud</div><div class="rx">What's New with AWS — February 2026</div></a>
+    <a href="aws-devops-agent-ga.html" class="rp"><div class="rc">devops</div><div class="rx">AWS DevOps Agent is Generally Available</div></a>
+    <a href="aws-certification-maintenance.html" class="rp"><div class="rc">cloud</div><div class="rx">Keep Your AWS Cert Without Retaking the Exam</div></a>
+    <a href="aws-aurora-postgresql.html" class="rp"><div class="rc">cloud</div><div class="rx">Aurora PostgreSQL at Scale</div></a>
+  </aside>
+</div>
+<script>
+window.addEventListener('scroll',()=>{const a=document.querySelector('article'),r=a.getBoundingClientRect(),t=a.offsetHeight-window.innerHeight,s=Math.max(0,-r.top);document.getElementById('rp').style.width=Math.min(100,(s/t)*100)+'%'});
+const hs=document.querySelectorAll('.prose h2,.prose h3'),toc=document.getElementById('toc');
+hs.forEach((h,i)=>{h.id=h.id||'s'+i;const li=document.createElement('li'),a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent;if(h.tagName==='H3')a.style.paddingLeft='1.25rem';li.appendChild(a);toc.appendChild(li)});
+const obs=new IntersectionObserver(e=>{e.forEach(e=>{const a=toc.querySelector('a[href="#'+e.target.id+'"]');if(a)a.classList.toggle('active',e.isIntersecting)})},{rootMargin:'-20% 0px -70% 0px'});hs.forEach(h=>obs.observe(h));</script>
+</body>
+</html>
